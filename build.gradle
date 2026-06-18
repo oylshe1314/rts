@@ -1,0 +1,28 @@
+plugins {
+    id 'java'
+    id 'com.bmuschko.docker-spring-boot-application' version '10.0.0' apply false
+}
+
+allprojects {
+
+    group 'org.sk.rts'
+    compileJava {
+        version 25
+    }
+
+    repositories {
+        mavenCentral()
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = "UTF-8"
+//        options.compilerArgs << "-Xlint:deprecation"
+    }
+
+    tasks.withType(GroovyCompile).tap {
+        configureEach {
+            groovyOptions.encoding = "UTF-8"
+            options.encoding = "UTF-8"
+        }
+    }
+}

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package user;
+
+option java_package = "com.sk.rts.application.proto.caching";
+
+option java_multiple_files = true;
+
+message MsgUserDevice {
+    int64 id = 1;
+    string deviceNo = 2;
+    string caller = 3;
+    string version = 4;
+    string channel = 5;
+    string platform = 6;
+    string serialNo = 7;
+}

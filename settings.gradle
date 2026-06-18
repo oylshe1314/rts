@@ -1,0 +1,3 @@
+rootProject.name = 'rts'
+include ':common'
+include ':user'

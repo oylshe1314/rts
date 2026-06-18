@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package user;
+
+option java_package = "com.sk.rts.application.proto.caching";
+
+option java_multiple_files = true;
+
+message MsgUserToken {
+    string subject = 1;
+    string token = 2;
+    int64 issueTime = 3;
+    int64 expiration = 4;
+    int64 userId = 5;
+    int64 deviceId = 6;
+}
