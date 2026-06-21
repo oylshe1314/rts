@@ -14,9 +14,11 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 public class AuthService {
 
-    private final CacheService cacheService;
+    public Mono<UserAuthDetails> passwordLogin(String username, String password, @Nullable UserRemoteDetails remoteDetails) {
+        throw new UnsupportedOperationException("Not implements.");
+    }
 
-    public Mono<UserAuthDetails> login(String username, String password, @Nullable UserRemoteDetails remoteDetails) {
+    public Mono<UserAuthDetails> captchaLogin(String username, String password, @Nullable UserRemoteDetails remoteDetails) {
         throw new UnsupportedOperationException("Not implements.");
     }
 

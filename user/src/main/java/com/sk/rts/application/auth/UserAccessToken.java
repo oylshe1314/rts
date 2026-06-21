@@ -1,5 +1,6 @@
 package com.sk.rts.application.auth;
 
+import com.sk.rts.application.proto.caching.MsgUserToken;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,4 +19,11 @@ public class UserAccessToken {
     private Long issueTime;
 
     private Long expiration;
+
+    public UserAccessToken(MsgUserToken userToken) {
+        this.subject = userToken.getSubject();
+        this.token = userToken.getToken();
+        this.issueTime = userToken.getIssueTime();
+        this.expiration = userToken.getExpiration();
+    }
 }

@@ -22,6 +22,22 @@ import java.util.Collections;
 @AllArgsConstructor
 public class UserAuthDetails implements org.springframework.security.core.userdetails.UserDetails {
 
+    public static String buildSubject(String username, String deviceNo) {
+        return username + ":" + deviceNo;
+    }
+
+    public static String buildTokenKey(String subject) {
+        return "message:user:token:" + subject;
+    }
+
+    public static String buildDetailsKey(String username) {
+        return "message:user:details:" + username;
+    }
+
+    public static String buildDeviceKey(String deviceNo) {
+        return "message:user:details:" + deviceNo;
+    }
+
     private MsgUserDetails details;
     private MsgUserDevice device;
 
@@ -68,5 +84,6 @@ public class UserAuthDetails implements org.springframework.security.core.userde
         deviceBuilder.setChannel(device.getChannel());
         deviceBuilder.setPlatform(device.getPlatform());
         deviceBuilder.setSerialNo(device.getSerialNo());
+        this.device = deviceBuilder.build();
     }
 }

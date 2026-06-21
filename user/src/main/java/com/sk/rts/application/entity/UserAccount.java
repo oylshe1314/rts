@@ -8,11 +8,23 @@ import lombok.Setter;
 @Setter
 public class UserAccount extends BaseEntity {
 
+    /**
+     * 用户名
+     */
     private String username;
 
+    /**
+     * 手机
+     */
     private String email;
 
+    /**
+     * 邮箱
+     */
     private String phone;
 
+    /**
+     * 密码
+     */
     private String password;
 }

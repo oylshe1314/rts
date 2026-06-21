@@ -11,14 +11,14 @@ public class PasswordLoginDto {
 
     @NotBlank
     @Schema(description = "用户名")
-    private final  String username;
+    private final  String account;
 
     @NotBlank
     @Schema(description = "密码")
     private final String password;
 
-    public PasswordLoginDto(@JsonProperty("username") String username, @JsonProperty("password") String password) {
-        this.username = username;
+    public PasswordLoginDto(@JsonProperty("account") String account, @JsonProperty("password") String password) {
+        this.account = account;
         this.password = password;
     }
 }

@@ -55,21 +55,16 @@ public class TokenUtil {
         return token;
     }
 
-    public UserAccessToken generate(long userId, long deviceId) {
+    public UserAccessToken generate(String subject) {
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime expiration = now.plus(tokenProperties.getAccessToken().getExpiration());
-
-        SecretKey secretKey = tokenProperties.getAccessToken().getSecretKey();
-
-        HmacUtils hmacUtils = new HmacUtils(secretKey.getAlgorithm(), secretKey.getEncoded());
-        String subject = hmacUtils.hmacHex(userId + ":" + deviceId);
 
         String token = Jwts.builder()
                 .issuer("rts")
                 .subject(subject)
                 .issuedAt(TimeUtil.toDate(now))
                 .expiration(TimeUtil.toDate(expiration))
-                .signWith(secretKey)
+                .signWith(tokenProperties.getAccessToken().getSecretKey())
                 .compact();
 
         return new UserAccessToken(subject, token, now.toEpochSecond(), expiration.toEpochSecond());

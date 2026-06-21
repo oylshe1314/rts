@@ -1,3 +1,4 @@
 rootProject.name = 'rts'
 include ':common'
+include ':admin'
 include ':user'

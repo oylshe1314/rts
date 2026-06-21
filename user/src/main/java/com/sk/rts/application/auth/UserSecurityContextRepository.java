@@ -33,9 +33,7 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
             return Mono.empty();
         }
 
-        if (!(context.getAuthentication() instanceof UserAuthToken authToken)) {
-            return Mono.error(new StandardStatusException(ResponseStatus.access_denied));
-        } else {
+        if (context.getAuthentication() instanceof UserAuthToken authToken) {
             UserAuthDetails authDetails = (UserAuthDetails) authToken.getPrincipal();
             UserAccessToken accessToken = (UserAccessToken) authToken.getCredentials();
 
@@ -50,14 +48,16 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
             MsgUserToken msgUserToken = tokenBuilder.build();
 
             Request request = Request.cmd(Command.MSET);
-            request.arg("message:user:token:" + msgUserToken.getSubject());
+            request.arg(UserAuthDetails.buildTokenKey(msgUserToken.getSubject()));
             request.arg(msgUserToken.toByteArray());
-            request.arg("message:user:details:" + authDetails.getUserId());
+            request.arg(UserAuthDetails.buildDetailsKey(authDetails.getUsername()));
             request.arg(authDetails.getDetails().toByteArray());
-            request.arg("message:user:device:" + authDetails.getDeviceId());
+            request.arg(UserAuthDetails.buildDeviceKey(authDetails.getDevice().getDeviceNo()));
             request.arg(authDetails.getDevice().toByteArray());
 
             return Mono.create(sink -> redis.send(request).onFailure(sink::error).onSuccess(_ -> sink.success()));
+        } else {
+            return Mono.error(new StandardStatusException(ResponseStatus.access_denied));
         }
     }
 
@@ -69,38 +69,24 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
         }
 
         String subject = tokenUtil.extractSubject(token);
+        String[] keys = subject.split(":");
 
         Request tokenRequest = Request.cmd(Command.GET);
-        tokenRequest.arg(subject);
+        tokenRequest.arg(UserAuthDetails.buildTokenKey(subject));
+        tokenRequest.arg(UserAuthDetails.buildDetailsKey(keys[0]));
+        tokenRequest.arg(UserAuthDetails.buildDeviceKey(keys[1]));
 
-        return Mono.create(sink -> redis.send(tokenRequest).onFailure(sink::error).onSuccess(tokenResponse -> {
+        return Mono.create(sink -> redis.send(tokenRequest).onFailure(sink::error).onSuccess(response -> {
             try {
-                MsgUserToken msgUserToken = MsgUserToken.parseFrom(tokenResponse.toBytes());
+                MsgUserToken msgUserToken = MsgUserToken.parseFrom(response.get(0).toBytes());
+                if (msgUserToken.getToken().equals(token)) {
+                    MsgUserDetails msgUserDetails = MsgUserDetails.parseFrom(response.get(1).toBytes());
+                    MsgUserDevice msgUserDevice = MsgUserDevice.parseFrom(response.get(2).toBytes());
 
-                Request request = Request.cmd(Command.MGET);
-                request.arg("message:user:details:" + msgUserToken.getUserId());
-                request.arg("message:user:device:" + msgUserToken.getDeviceId());
-
-                UserAccessToken accessToken = new UserAccessToken(
-                        msgUserToken.getSubject(),
-                        msgUserToken.getToken(),
-                        msgUserToken.getIssueTime(),
-                        msgUserToken.getExpiration()
-                );
-
-                redis.send(request).onFailure(sink::error).onSuccess(response -> {
-                    try {
-                        MsgUserDetails msgUserDetails = MsgUserDetails.parseFrom(response.get(0).toBytes());
-                        MsgUserDevice msgUserDevice = MsgUserDevice.parseFrom(response.get(0).toBytes());
-
-                        UserAuthDetails authDetails = new UserAuthDetails(msgUserDetails, msgUserDevice);
-                        UserAuthToken authResult = new UserAuthToken(authDetails, accessToken);
-
-                        sink.success(new SecurityContextImpl(authResult));
-                    } catch (Exception e) {
-                        sink.error(e);
-                    }
-                });
+                    sink.success(new SecurityContextImpl(new UserAuthToken(new UserAuthDetails(msgUserDetails, msgUserDevice), new UserAccessToken(msgUserToken))));
+                } else {
+                    sink.error(new StandardStatusException(ResponseStatus.token_expired));
+                }
             } catch (Exception e) {
                 sink.error(e);
             }

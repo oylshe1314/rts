@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package user;
+
+option java_package = "com.sk.rts.application.proto.caching";
+
+option java_multiple_files = true;
+
+message MsgAdminToken {
+    string username = 1;
+    string token = 2;
+    int64 issueTime = 3;
+    int64 expiration = 4;
+    int64 roleId = 5;
+    int64 adminId = 6;
+}

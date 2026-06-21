@@ -30,7 +30,7 @@ public class UserAuthManager implements ReactiveAuthenticationManager {
 
         UserRemoteDetails remoteDetails = (UserRemoteDetails) authRequest.getDetails();
 
-        return authService.login(username, password, remoteDetails).flatMap(authDetails -> authService.generateToken(authDetails).map(tokenDetails -> {
+        return authService.passwordLogin(username, password, remoteDetails).flatMap(authDetails -> authService.generateToken(authDetails).map(tokenDetails -> {
             UserAuthToken authResult = new UserAuthToken(authDetails, tokenDetails.getAccessToken());
             authResult.setDetails(tokenDetails);
             return authResult;

@@ -28,6 +28,7 @@ dependencies {
     implementation "io.vertx:vertx-redis-client:${vertxVersion}"
 
     implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
+    implementation "org.postgresql:postgresql:${postgresqlVersion}"
 
     implementation "io.jsonwebtoken:jjwt:0.13.0"
     implementation "commons-codec:commons-codec:1.22.0"
