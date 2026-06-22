@@ -20,6 +20,7 @@ import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +32,7 @@ public class OperationRecordService {
 
     private final Pool pool;
     private final DSLContext dslContext;
+
     private final OperationRecordRepository operationRecordRepository;
 
     /**
@@ -43,7 +45,7 @@ public class OperationRecordService {
         return pageRequestDtoMono.flatMap(pageRequestDto -> {
             OperationRecordQueryDto queryDto = pageRequestDto.getQuery();
 
-            SelectWhereStep<?> pageQuery = dslContext.select(Tables.OPERATION_RECORD.ID, Tables.OPERATION_RECORD.OPERATOR_ID, Tables.OPERATION_RECORD.OPERATOR, Tables.OPERATION_RECORD.OPERATION, Tables.OPERATION_RECORD.ARGUMENTS, Tables.OPERATION_RECORD.REMARK, Tables.OPERATION_RECORD.LOGIN_IP, Tables.OPERATION_RECORD.OPERATE_TIME).from(Tables.OPERATION_RECORD);
+            SelectWhereStep<?> pageQuery = dslContext.select(Tables.OPERATION_RECORD.ID, Tables.OPERATION_RECORD.OPERATOR_ID, Tables.OPERATION_RECORD.OPERATOR, Tables.OPERATION_RECORD.OPERATION, Tables.OPERATION_RECORD.ARGUMENTS, Tables.OPERATION_RECORD.REMARK, Tables.OPERATION_RECORD.LOGIN_IP, Tables.OPERATION_RECORD.CREATE_TIME).from(Tables.OPERATION_RECORD);
             SelectWhereStep<?> countQuery = dslContext.selectCount().from(Tables.OPERATION_RECORD);
 
             List<Condition> conditions = new ArrayList<>();
@@ -79,37 +81,34 @@ public class OperationRecordService {
             String sql = pageQuery.getSQL();
             log.debug("SQL: {}", sql);
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(sql).execute(Tuple.tuple(pageQuery.getBindValues()))
-                    .map(rows -> rows.stream().map(row -> {
-                                OperationRecord record = new OperationRecord();
-                                record.setId(row.getLong(0));
-                                record.setOperatorId(row.getLong(1));
-                                record.setOperator(row.getString(2));
-                                record.setOperation(row.getString(3));
-                                record.setOperateArgs(row.getString(4));
-                                record.setRemark(row.getString(5));
-                                record.setLoginIp(row.getString(6));
-                                record.setOperateTime(row.getOffsetDateTime(7));
-
-                                return new OperationRecordDto(record);
-                            }).toList()
-                    )
+                    .map(rows -> rows.stream().map(row -> new OperationRecordDto(OperationRecord.fromRow(row))).toList())
                     .flatMap(records -> {
-                                if (records.size() < pageRequestDto.getPageSize()) {
-                                    return Future.succeededFuture(new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), records.size(), records));
-                                }
+                        if (records.size() < pageRequestDto.getPageSize()) {
+                            return Future.succeededFuture(new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), records.size(), records));
+                        }
 
-                                return connection.preparedQuery(countQuery.getSQL()).execute(Tuple.tuple(countQuery.getBindValues()))
-                                        .map(rows -> new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), rows.iterator().next().getLong(0), records));
-                            }
-                    )
-                    .onComplete(ar -> connection.close())
+                        return connection.preparedQuery(countQuery.getSQL()).execute(Tuple.tuple(countQuery.getBindValues())).map(rows -> new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), rows.iterator().next().getLong(0), records));
+                    })
+                    .onComplete(_ -> connection.close())
                     .onSuccess(sink::success)
                     .onFailure(sink::error)
             ));
         });
     }
 
-    public Mono<Void> add(String operation, String operateArgs, String remark, AdminAuthDetails operator) {
-        return Mono.create(sink -> this.pool.getConnection().onFailure(sink::error).onSuccess(connection -> operationRecordRepository.add(connection, operation, operateArgs, remark, operator).onSuccess(v -> sink.success()).onFailure(sink::error)));
+    public Mono<Void> add(String operation, String arguments, String remark, AdminAuthDetails operator) {
+        OperationRecord record = new OperationRecord();
+        record.setOperatorId(operator.getAdminId());
+        record.setOperator(operator.getUsername());
+        record.setOperation(operation);
+        record.setArguments(arguments);
+        record.setRemark(remark);
+        record.setLoginIp(operator.getAdminDetails().getLoginIp());
+        record.setCreateTime(OffsetDateTime.now());
+        return Mono.create(sink -> this.pool.getConnection().map(connection -> operationRecordRepository.insert(connection, record)
+                .onComplete(_ -> connection.close())
+                .onSuccess(_ -> sink.success())
+                .onFailure(sink::error)
+        ));
     }
 }

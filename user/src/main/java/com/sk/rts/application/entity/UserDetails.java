@@ -1,6 +1,8 @@
 package com.sk.rts.application.entity;
 
 import com.sk.rts.application.entity.base.BaseEntity;
+import com.sk.rts.application.proto.caching.MsgUserDetails;
+import io.vertx.sqlclient.Row;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,7 +26,7 @@ public class UserDetails extends BaseEntity {
     /**
      * 性别
      */
-    private Long gender;
+    private Integer gender;
 
     /**
      * 出生日期
@@ -35,4 +37,36 @@ public class UserDetails extends BaseEntity {
      * 创建时间
      */
     private OffsetDateTime createTime;
+
+    private UserAccount account;
+
+    private UserDevice device;
+
+    public MsgUserDetails toProto() {
+        MsgUserDetails.Builder detailsBuilder = MsgUserDetails.newBuilder();
+        detailsBuilder.setId(this.getId());
+        detailsBuilder.setUsername(this.getAccount().getUsername());
+        detailsBuilder.setEmail(this.getAccount().getEmail());
+        detailsBuilder.setPhone(this.getAccount().getPhone());
+        detailsBuilder.setPassword(this.getAccount().getPassword());
+        detailsBuilder.setNickname(this.getNickname());
+        detailsBuilder.setAvatar(this.getAvatar());
+        detailsBuilder.setCreateTime(this.getCreateTime().toEpochSecond());
+        return detailsBuilder.build();
+    }
+
+    public static UserDetails fromRow(Row row) {
+        return fromRow(row, 0);
+    }
+
+    public static UserDetails fromRow(Row row, int indexOffset) {
+        UserDetails details = new UserDetails();
+        details.setId(row.getLong(indexOffset + 0));
+        details.setNickname(row.getString(indexOffset + 1));
+        details.setAvatar(row.getString(indexOffset + 2));
+        details.setGender(row.getInteger(indexOffset + 3));
+        details.setBirthday(row.getLocalDate(indexOffset + 4));
+        details.setCreateTime(row.getOffsetDateTime(indexOffset + 5));
+        return details;
+    }
 }

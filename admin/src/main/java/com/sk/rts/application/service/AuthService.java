@@ -35,14 +35,12 @@ import java.util.Collection;
 @AllArgsConstructor
 public class AuthService {
 
-    // 数据库访问
     private final Pool pool;
-    // SQL构建
     private final DSLContext dslContext;
-    // 密码编码器
-    private final PasswordEncoder passwordEncoder;
-    // 操作记录服务
+
     private final OperationRecordRepository operationRecordRepository;
+
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 管理员登录认证

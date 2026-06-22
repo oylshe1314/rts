@@ -1,6 +1,7 @@
 plugins {
     id "java"
     id "org.springframework.boot" version "${springBootVersion}"
+    id "org.jooq.jooq-codegen-gradle" version "${jooqVersion}"
     id 'com.google.protobuf' version '0.10.0'
     id "com.bmuschko.docker-spring-boot-application" version "10.0.0"
 }
@@ -30,11 +31,100 @@ dependencies {
     implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
     implementation "org.postgresql:postgresql:${postgresqlVersion}"
 
+    compileOnly "org.jooq:jooq-codegen:${jooqVersion}"
+    jooqCodegen "org.postgresql:postgresql:${postgresqlVersion}"
+
     implementation "io.jsonwebtoken:jjwt:0.13.0"
     implementation "commons-codec:commons-codec:1.22.0"
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+}
+
+jooq {
+    version = "${jooqVersion}"
+
+    configuration {
+        jdbc {
+            url = "jdbc:postgresql://localhost:5432/rts"
+            username = "rts_server"
+            password = "3r6g5xfyUu8s+wnD@Vm"
+            driver = "org.postgresql.Driver"
+        }
+
+        generator {
+            database {
+                name = "org.jooq.meta.postgres.PostgresDatabase"
+
+                inputSchema = 'public'
+
+                excludes = "INFORMATION_SCHEMA\\.* |PG_CATALOG\\.* |flyway_schema_history"
+
+                includes = '.*'
+                excludes = 'admin|menu|role|role_menu_authority|operation_record'
+            }
+
+            generate {
+                tables = true
+                globalTableReferences = true
+
+                records = false
+                pojos = false
+                daos = false
+                interfaces = false
+                immutablePojos = false
+                serializablePojos = false
+                fluentSetters = false
+                javaTimeTypes = true
+                validationAnnotations = false
+                springAnnotations = false
+                jpaAnnotations = false
+
+                defaultCatalog = false
+
+                indexes = false
+                keys = false
+                relations = false
+
+                comments = false
+                commentsOnTables = false
+                commentsOnColumns = false
+                commentsOnCatalogs = false
+                commentsOnSchemas = false
+                commentsOnUDTs = false
+                commentsOnAttributes = false
+                commentsOnPackages = false
+                commentsOnRoutines = false
+                commentsOnParameters = false
+                commentsOnSequences = false
+                commentsOnLinks = false
+                commentsOnQueues = false
+
+                udts = false
+                routines = false
+                sequences = false
+                queues = false
+                links = false
+            }
+            target {
+                packageName = "com.sk.rts.application.jooq"
+            }
+            strategy {
+                name = 'org.jooq.codegen.DefaultGeneratorStrategy'
+
+                matchers {
+                    tables {
+                        table {
+                            tableClass {
+                                transform = "PASCAL"
+                                expression = "table_\$0"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 sourceSets {

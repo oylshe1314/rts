@@ -1,6 +1,5 @@
 package com.sk.rts.application.auth;
 
-
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.service.AuthService;
@@ -29,6 +28,9 @@ public class UserAuthManager implements ReactiveAuthenticationManager {
         String password = (String) authRequest.getCredentials();
 
         UserRemoteDetails remoteDetails = (UserRemoteDetails) authRequest.getDetails();
+        if (remoteDetails == null) {
+            return Mono.error(new BadCredentialsException("", new StandardStatusException(ResponseStatus.internal_error)));
+        }
 
         return authService.passwordLogin(username, password, remoteDetails).flatMap(authDetails -> authService.generateToken(authDetails).map(tokenDetails -> {
             UserAuthToken authResult = new UserAuthToken(authDetails, tokenDetails.getAccessToken());

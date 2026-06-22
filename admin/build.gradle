@@ -41,7 +41,7 @@ dependencies {
 }
 
 jooq {
-    version = '3.21.4'
+    version = 'jooqVersion'
 
     configuration {
         jdbc {
@@ -60,7 +60,6 @@ jooq {
                 excludes = "INFORMATION_SCHEMA\\.* |PG_CATALOG\\.* |flyway_schema_history"
 
                 includes = '.*'
-//                includes = 'admin|menu|role|role_menu_authority|operation_record'
             }
 
             generate {
@@ -107,7 +106,6 @@ jooq {
             }
             target {
                 packageName = "com.sk.rts.application.jooq"
-//                directory = "src/main/java"
             }
             strategy {
                 name = 'org.jooq.codegen.DefaultGeneratorStrategy'

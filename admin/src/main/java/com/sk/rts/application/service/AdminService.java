@@ -40,18 +40,14 @@ public class AdminService {
     // 默认管理员的ID，默认管理员禁止删除或者禁用。
     private static final Long DEFAULT_ADMIN_ID = 1L;
 
-    // 密码编码器
-    private final PasswordEncoder passwordEncoder;
-    // 数据库访问
     private final Pool pool;
-    // SQL构建
     private final DSLContext dslContext;
-    // 管理员仓库
+
     private final AdminRepository adminRepository;
-    // 角色仓库
     private final RoleRepository roleRepository;
-    // 操作记录服务
     private final OperationRecordRepository operationRecordRepository;
+
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 获取管理员选择列表
@@ -177,13 +173,9 @@ public class AdminService {
 
                     admin.setRole(role);
 
-                    InsertResultStep<?> query = dslContext.insertInto(Tables.ADMIN, Tables.ADMIN.ROLE_ID, Tables.ADMIN.USERNAME, Tables.ADMIN.PASSWORD, Tables.ADMIN.PHONE, Tables.ADMIN.EMAIL, Tables.ADMIN.NICKNAME, Tables.ADMIN.AVATAR, Tables.ADMIN.STATUS, Tables.ADMIN.REMARK, Tables.ADMIN.CREATE_BY, Tables.ADMIN.CREATE_TIME, Tables.ADMIN.UPDATE_BY, Tables.ADMIN.UPDATE_TIME).values(admin.getRoleId(), admin.getUsername(), admin.getPassword(), admin.getPhone(), admin.getEmail(), admin.getNickname(), admin.getAvatar(), admin.getStatus(), admin.getRemark(), admin.getCreateBy(), admin.getCreateTime(), admin.getUpdateBy(), admin.getUpdateTime()).returning(Tables.ADMIN.ID);
-
-                    String sql = query.getSQL();
-                    log.debug("SQL: {}", sql);
-                    return connection.preparedQuery(sql).execute(Tuple.tuple(query.getBindValues()))
-                            .compose(rows -> {
-                                admin.setId(rows.iterator().next().getLong(0));
+                    return adminRepository.insert(connection, admin)
+                            .compose(id -> {
+                                admin.setId(id);
                                 return operationRecordRepository.add(connection, "add", "admin", admin.getId().toString(), operator);
                             })
                             .compose(_ -> connection.transaction().commit())

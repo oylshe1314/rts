@@ -30,14 +30,12 @@ import java.util.function.Consumer;
 @AllArgsConstructor
 public class SettingService {
 
-    // 数据库访问仓库
     private final Pool pool;
-    // SQL构建
     private final DSLContext dslContext;
-    // 密码编码器
-    private final PasswordEncoder passwordEncoder;
-    // 操作记录仓库
+
     private final OperationRecordRepository operationRecordRepository;
+
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 管理员信息修改

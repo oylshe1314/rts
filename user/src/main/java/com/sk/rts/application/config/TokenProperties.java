@@ -54,6 +54,11 @@ public class TokenProperties {
         private Boolean enabled = false;
 
         /**
+         * 重复刷新窗口期(秒)
+         */
+        private Duration repeatPhase = Duration.ofSeconds(60);
+
+        /**
          * 有效时间(天)
          */
         private Duration expiration = Duration.ofDays(14);

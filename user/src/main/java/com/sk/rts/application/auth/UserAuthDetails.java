@@ -1,8 +1,5 @@
 package com.sk.rts.application.auth;
 
-import com.sk.rts.application.entity.UserAccount;
-import com.sk.rts.application.entity.UserDetails;
-import com.sk.rts.application.entity.UserDevice;
 import com.sk.rts.application.proto.caching.MsgUserDetails;
 import com.sk.rts.application.proto.caching.MsgUserDevice;
 import lombok.AllArgsConstructor;
@@ -35,7 +32,7 @@ public class UserAuthDetails implements org.springframework.security.core.userde
     }
 
     public static String buildDeviceKey(String deviceNo) {
-        return "message:user:details:" + deviceNo;
+        return "message:user:device:" + deviceNo;
     }
 
     private MsgUserDetails details;
@@ -46,7 +43,11 @@ public class UserAuthDetails implements org.springframework.security.core.userde
     }
 
     public long getDeviceId() {
-        return details.getId();
+        return device.getId();
+    }
+
+    public String getDeviceNo() {
+        return device.getDeviceNo();
     }
 
     @Override
@@ -62,28 +63,5 @@ public class UserAuthDetails implements org.springframework.security.core.userde
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return Collections.emptyList();
-    }
-
-    public UserAuthDetails(UserDetails details, UserAccount account, UserDevice device) {
-        MsgUserDetails.Builder detailsBuilder = MsgUserDetails.newBuilder();
-        detailsBuilder.setId(details.getId());
-        detailsBuilder.setUsername(account.getUsername());
-        detailsBuilder.setEmail(account.getEmail());
-        detailsBuilder.setPhone(account.getPhone());
-        detailsBuilder.setPassword(account.getPassword());
-        detailsBuilder.setNickname(details.getNickname());
-        detailsBuilder.setAvatar(details.getAvatar());
-        detailsBuilder.setCreateTime(details.getCreateTime());
-        this.details = detailsBuilder.build();
-
-        MsgUserDevice.Builder deviceBuilder = MsgUserDevice.newBuilder();
-        deviceBuilder.setId(device.getId());
-        deviceBuilder.setDeviceNo(device.getDeviceNo());
-        deviceBuilder.setCaller(device.getCaller());
-        deviceBuilder.setVersion(device.getVersion());
-        deviceBuilder.setChannel(device.getChannel());
-        deviceBuilder.setPlatform(device.getPlatform());
-        deviceBuilder.setSerialNo(device.getSerialNo());
-        this.device = deviceBuilder.build();
     }
 }

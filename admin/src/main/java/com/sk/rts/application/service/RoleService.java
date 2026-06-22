@@ -41,15 +41,11 @@ public class RoleService {
     // 默认角色的ID，默认角色禁止删除或者禁用
     protected static final Long DEFAULT_ROLE_ID = 1L;
 
-    // 数据库访问仓库
     private final Pool pool;
-    // SQL构建
     private final DSLContext dslContext;
-    // 角色仓库
+
     private final RoleRepository roleRepository;
-    // 管理员仓库
     private final AdminRepository adminRepository;
-    // 操作记录仓库
     private final OperationRecordRepository operationRecordRepository;
 
     /**
@@ -145,13 +141,9 @@ public class RoleService {
                     role.setStatus(Status.enable.value());
                     role.initOperation(addDto.getRemark(), operator.getUsername());
 
-                    InsertResultStep<?> query = dslContext.insertInto(Tables.ROLE, Tables.ROLE.NAME, Tables.ROLE.STATUS, Tables.ROLE.REMARK, Tables.ROLE.CREATE_BY, Tables.ROLE.CREATE_TIME, Tables.ROLE.UPDATE_BY, Tables.ROLE.UPDATE_TIME).values(role.getName(), role.getStatus(), role.getRemark(), role.getCreateBy(), role.getCreateTime(), role.getUpdateBy(), role.getUpdateTime()).returning(Tables.ROLE.ID);
-
-                    String sql = query.getSQL();
-                    log.debug("SQL: {}", sql);
-                    return connection.preparedQuery(sql).execute(Tuple.tuple(query.getBindValues()))
-                            .compose(rows -> {
-                                role.setId(rows.iterator().next().getLong(0));
+                    return roleRepository.insert(connection, role)
+                            .compose(id -> {
+                                role.setId(id);
                                 return operationRecordRepository.add(connection, "add", "role", role.getId().toString(), operator);
                             })
                             .compose(_ -> connection.transaction().commit())

@@ -39,13 +39,10 @@ public class MenuService {
             19L, 20L, 21L, 22L, 23L, 24L, 25L, 26L, 27L
     ));
 
-    // 数据库访问
     private final Pool pool;
-    // SQL构建
     private final DSLContext dslContext;
-    // 菜单仓库
+
     private final MenuRepository menuRepository;
-    // 操作记录服务
     private final OperationRecordRepository operationRecordRepository;
 
     /**
@@ -194,9 +191,9 @@ public class MenuService {
 
                         String sql = query.getSQL();
                         log.debug("SQL: {}", sql);
-                        return connection.preparedQuery(sql).execute(Tuple.tuple(query.getBindValues()))
-                                .compose(rows -> {
-                                    menu.setId(rows.iterator().next().getLong(0));
+                        return menuRepository.insert(connection, menu)
+                                .compose(id -> {
+                                    menu.setId(id);
                                     return operationRecordRepository.add(connection, "add", "menu", menu.getId().toString(), operator);
                                 })
                                 .compose(_ -> connection.transaction().commit())

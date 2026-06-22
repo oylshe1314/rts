@@ -48,40 +48,39 @@ comment on column menu.update_by is '修改者(管理员)';
 comment on column menu.update_time is '修改时间';
 
 -- 插入基础菜单，基础菜单应不能禁用和删除
-insert into menu(id, parent_id, type, name, icon, component, path, sort_by, status, remark, create_by, create_time, update_by, update_time)
-values (1, 0, 1, '菜单管理', 'Menu', '', '', 1, 1, '菜单管理目录', 'admin', current_timestamp, 'admin', current_timestamp),
-       (2, 1, 2, '菜单列表', 'List', '', '/menu/list', 1, 1, '菜单列表菜单', 'admin', current_timestamp, 'admin', current_timestamp),
-       (3, 2, 3, '菜单查询', '', '', '/menu/query', 0, 1, '菜单查询接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (4, 2, 3, '菜单添加', '', '', '/menu/add', 0, 1, '菜单添加接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (5, 2, 3, '菜单修改', '', '', '/menu/update', 0, 1, '菜单修改接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (6, 2, 3, '菜单删除', '', '', '/menu/delete', 0, 1, '菜单删除接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (7, 2, 3, '菜单状态修改', '''', '/menu/status/change', 0, 1, '菜单状态修改接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (8, 0, 1, '管理员', 'Role', '', '', 1, 1, '管理员目录', 'admin', current_timestamp, 'admin', current_timestamp),
-       (9, 8, 2, '角色列表', 'List', '', '/admin/role/list', 2, 1, '角色列表菜单', 'admin', current_timestamp, 'admin', current_timestamp),
-       (10, 9, 3, '角色查询', '', '', '/admin/role/query', 0, 1, '角色查询接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (11, 9, 3, '角色添加', '', '', '/admin/role/add', 0, 1, '角色添加接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (12, 9, 3, '角色修改', '', '', '/admin/role/update', 0, 1, '角色修改接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (13, 9, 3, '角色删除', '', '', '/admin/role/delete', 0, 1, '角色删除接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (14, 9, 3, '角色状态修改', '', '', '/admin/role/status/change', 0, 1, '角色状态修改接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (15, 9, 3, '角色权限查询', '', '', '/admin/role/authority/query', 0, 1, '角色权限查询接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (16, 9, 3, '角色权限修改', '', '', '/admin/role/authority/change', 0, 1, '角色权限修改接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (17, 8, 2, '管理员', 'List', '', '/admin/list', 3, 1, '管理员列表菜单', 'admin', current_timestamp, 'admin', current_timestamp),
-       (18, 17, 3, '管理员查询', '', '', '/admin/query', 0, 1, '管理员查询接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (19, 17, 3, '管理员添加', '', '', '/admin/add', 0, 1, '管理员添加接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (20, 17, 3, '管理员修改', '', '', '/admin/update', 0, 1, '管理员修改接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (21, 17, 3, '管理员删除', '', '', '/admin/delete', 0, 1, '管理员删除接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (22, 17, 3, '管理员状态修改', '', '', '/admin/status/change', 0, 1, '管理员状态修改接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (23, 0, 1, '设置', 'Setting', '', '', 999, 1, '设置目录', 'admin', current_timestamp, 'admin', current_timestamp),
-       (24, 23, 2, '详细信息', '', '', '/setting/detail', 999, 1, '详细信息菜单', 'admin', current_timestamp, 'admin', current_timestamp),
-       (25, 24, 3, '详细信息修改', '', '', '/setting/detail/change', 0, 1, '详细信息修改接口', 'admin', current_timestamp, 'admin', current_timestamp),
-       (26, 23, 2, '修改密码', '', '', '/setting/password', 999, 1, '修改密码菜单', 'admin', current_timestamp, 'admin', current_timestamp),
-       (27, 26, 3, '密码修改', '', '', '/setting/password/change', 0, 1, '密码修改接口', 'admin', current_timestamp, 'admin', current_timestamp);
+insert into menu(id, parent_id, type, name, icon, component, path, sort_by, status, remark, create_by, update_by)
+values (1, 0, 1, '菜单管理', 'Menu', '', '', 1, 1, '菜单管理目录', 'admin', 'admin'),
+       (2, 1, 2, '菜单列表', 'List', '', '/menu/list', 1, 1, '菜单列表菜单', 'admin', 'admin'),
+       (3, 2, 3, '菜单查询', '', '', '/menu/query', 0, 1, '菜单查询接口', 'admin', 'admin'),
+       (4, 2, 3, '菜单添加', '', '', '/menu/add', 0, 1, '菜单添加接口', 'admin', 'admin'),
+       (5, 2, 3, '菜单修改', '', '', '/menu/update', 0, 1, '菜单修改接口', 'admin', 'admin'),
+       (6, 2, 3, '菜单删除', '', '', '/menu/delete', 0, 1, '菜单删除接口', 'admin', 'admin'),
+       (7, 2, 3, '菜单状态修改', '', '', '/menu/status/change', 0, 1, '菜单状态修改接口', 'admin', 'admin'),
+       (8, 0, 1, '管理员', 'Role', '', '', 1, 1, '管理员目录', 'admin', 'admin'),
+       (9, 8, 2, '角色列表', 'List', '', '/admin/role/list', 2, 1, '角色列表菜单', 'admin', 'admin'),
+       (10, 9, 3, '角色查询', '', '', '/admin/role/query', 0, 1, '角色查询接口', 'admin', 'admin'),
+       (11, 9, 3, '角色添加', '', '', '/admin/role/add', 0, 1, '角色添加接口', 'admin', 'admin'),
+       (12, 9, 3, '角色修改', '', '', '/admin/role/update', 0, 1, '角色修改接口', 'admin', 'admin'),
+       (13, 9, 3, '角色删除', '', '', '/admin/role/delete', 0, 1, '角色删除接口', 'admin', 'admin'),
+       (14, 9, 3, '角色状态修改', '', '', '/admin/role/status/change', 0, 1, '角色状态修改接口', 'admin', 'admin'),
+       (15, 9, 3, '角色权限查询', '', '', '/admin/role/authority/query', 0, 1, '角色权限查询接口', 'admin', 'admin'),
+       (16, 9, 3, '角色权限修改', '', '', '/admin/role/authority/change', 0, 1, '角色权限修改接口', 'admin', 'admin'),
+       (17, 8, 2, '管理员', 'List', '', '/admin/list', 3, 1, '管理员列表菜单', 'admin', 'admin'),
+       (18, 17, 3, '管理员查询', '', '', '/admin/query', 0, 1, '管理员查询接口', 'admin', 'admin'),
+       (19, 17, 3, '管理员添加', '', '', '/admin/add', 0, 1, '管理员添加接口', 'admin', 'admin'),
+       (20, 17, 3, '管理员修改', '', '', '/admin/update', 0, 1, '管理员修改接口', 'admin', 'admin'),
+       (21, 17, 3, '管理员删除', '', '', '/admin/delete', 0, 1, '管理员删除接口', 'admin', 'admin'),
+       (22, 17, 3, '管理员状态修改', '', '', '/admin/status/change', 0, 1, '管理员状态修改接口', 'admin', 'admin'),
+       (23, 0, 1, '设置', 'Setting', '', '', 999, 1, '设置目录', 'admin', 'admin'),
+       (24, 23, 2, '详细信息', '', '', '/setting/detail', 999, 1, '详细信息菜单', 'admin', 'admin'),
+       (25, 24, 3, '详细信息修改', '', '', '/setting/detail/change', 0, 1, '详细信息修改接口', 'admin', 'admin'),
+       (26, 23, 2, '修改密码', '', '', '/setting/password', 999, 1, '修改密码菜单', 'admin', 'admin'),
+       (27, 26, 3, '密码修改', '', '', '/setting/password/change', 0, 1, '密码修改接口', 'admin', 'admin');
 
-insert into menu(id, parent_id, type, name, icon, component, path, sort_by, status, remark, create_by, create_time, update_by, update_time)
-values (28, 0, 1, '操作记录', 'List', '', '', 2, 1, '操作记录', 'admin', current_timestamp, 'admin', current_timestamp),
-       (29, 28, 2, '操作记录', '', '', '/operation/record/list', 0, 1, '操作记录', 'admin', current_timestamp, 'admin', current_timestamp),
-       (30, 29, 3, '操作记录查询', '', '', '/operation/record/query', 0, 1, '操作记录查询', 'admin', current_timestamp, 'admin', current_timestamp);
-
+insert into menu(id, parent_id, type, name, icon, component, path, sort_by, status, remark, create_by, update_by)
+values (28, 0, 1, '操作记录', 'List', '', '', 2, 1, '操作记录', 'admin', 'admin'),
+       (29, 28, 2, '操作记录', '', '', '/operation/record/list', 0, 1, '操作记录', 'admin', 'admin'),
+       (30, 29, 3, '操作记录查询', '', '', '/operation/record/query', 0, 1, '操作记录查询', 'admin', 'admin');
 
 -- 恢复menu表id序列
 SELECT setval('menu_id_seq', (select max(id) from menu), false);
@@ -202,14 +201,14 @@ SELECT setval('admin_id_seq', (select max(id) from admin), false);
 
 create table operation_record
 (
-    id           bigint      not null primary key generated always as identity,
-    operator_id  bigint      not null,
-    operator     text        not null,
-    operation    text        not null,
-    arguments    text        not null,
-    remark       text        not null,
-    login_ip     text        not null,
-    operate_time timestamptz not null
+    id          bigint      not null primary key generated always as identity,
+    operator_id bigint      not null,
+    operator    text        not null,
+    operation   text        not null,
+    arguments   text        not null,
+    remark      text        not null,
+    login_ip    text        not null,
+    create_time timestamptz not null
 );
 
 create index idx_operation_record_operator_id on operation_record (operator_id);
@@ -221,7 +220,7 @@ comment on column operation_record.operation is '操作, login, logout, add, upd
 comment on column operation_record.arguments is '操作参数，表名，登录账号等';
 comment on column operation_record.remark is '备注';
 comment on column operation_record.login_ip is '操作员登录IP';
-comment on column operation_record.operate_time is '操作时间';
+comment on column operation_record.create_time is '操作时间';
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -234,6 +233,8 @@ create table user_detail
     birthday    date   not null default '0001-01-01',
     create_time text   not null default current_timestamp
 );
+
+grant select, insert, update on user_detail to rts_server;
 
 comment on table user_detail is '用户信息表';
 comment on column user_detail.nickname is '昵称';
@@ -249,13 +250,13 @@ create table user_account
     username text   not null,
     phone    text   not null,
     email    text   not null,
-    password text   not null
+    password text not null,
+    constraint unique_user_account_username unique (username),
+    constraint unique_user_account_phone unique (phone),
+    constraint unique_user_account_email unique (email)
 );
 
-
-create index idx_user_account_username on user_account (username);
-create index idx_user_account_phone on user_account (phone);
-create index idx_user_account_email on user_account (email);
+grant select, insert, update on user_account to rts_server;
 
 comment on table user_account is '用户账号表';
 comment on column user_account.username is '用户名';
@@ -266,25 +267,54 @@ comment on column user_account.password is '密码';
 
 create table user_device
 (
-    id          bigint not null primary key generated always as identity,
-    user_id     bigint not null,
-    deviceNo    text   not null,
-    caller      text   not null,
-    version     text   not null,
-    channel     text   not null,
-    platform    text   not null,
-    serialNo    text   not null,
-    create_time text   not null default current_timestamp
+    id          bigint      not null primary key generated always as identity,
+    user_id     bigint      not null,
+    device_no   text        not null,
+    platform    text        not null,
+    serial_no   text        not null,
+    channel     text        not null,
+    caller      text        not null,
+    version     text        not null,
+    create_time timestamptz not null default current_timestamp,
+    constraint unique_user_device_device_no unique (device_no)
 );
 
+grant select, insert, update on user_device to rts_server;
+
 create index idx_user_device_user_id on user_device (user_id);
+create index idx_user_device_device_no on user_device (device_no);
 
 comment on table user_device is '用户设备表';
 comment on column user_device.user_id is '用户ID';
-comment on column user_device.deviceNo is '设备编号';
+comment on column user_device.device_no is '设备编号';
+comment on column user_device.platform is '平台';
+comment on column user_device.serial_no is '序列号';
+comment on column user_device.channel is '渠道';
 comment on column user_device.caller is '客户端';
 comment on column user_device.version is '版本号';
-comment on column user_device.channel is '渠道';
-comment on column user_device.platform is '平台';
-comment on column user_device.serialNo is '序列号';
 comment on column user_device.create_time is '创建时间';
+
+
+create table user_token
+(
+    id           bigint      not null primary key generated always as identity,
+    user_id      bigint      not null,
+    device_id    bigint      not null,
+    hash         text        not null,
+    status       int         not null,
+    issue_time   timestamptz not null,
+    expire_time  timestamptz not null,
+    refresh_time timestamptz not null,
+    constraint unique_user_token_user_and_device_id unique (user_id, device_id)
+);
+
+grant select, insert, update, delete on user_token to rts_server;
+
+comment on table user_token is '刷新TOKEN表';
+comment on column user_token.user_id is '用户表ID';
+comment on column user_token.device_id is '设备表ID';
+comment on column user_token.hash is 'HASH';
+comment on column user_token.status is '状态，1：有效，0：失效';
+comment on column user_token.issue_time is '发布时间';
+comment on column user_token.expire_time is '过期时间';
+comment on column user_token.refresh_time is '刷新时间';

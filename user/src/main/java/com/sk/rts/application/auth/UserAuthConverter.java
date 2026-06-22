@@ -38,7 +38,7 @@ public class UserAuthConverter implements ServerAuthenticationConverter {
             try {
                 PasswordLoginDto loginDto = jsonMapper.readValue(buffer.asInputStream(true), PasswordLoginDto.class);
                 if (validationUtil.validate(loginDto)) {
-                    UserAuthToken authRequest = new UserAuthToken(loginDto.getUsername(), loginDto.getPassword());
+                    UserAuthToken authRequest = new UserAuthToken(loginDto.getAccount(), loginDto.getPassword());
                     authRequest.setDetails(new UserRemoteDetails(request));
                     sink.next(authRequest);
                 } else {
