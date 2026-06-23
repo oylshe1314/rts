@@ -8,15 +8,13 @@ import org.jspecify.annotations.NullMarked;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-@Component
 @NullMarked
 @AllArgsConstructor
-public class UserAuthManager implements ReactiveAuthenticationManager {
+public abstract class UserAuthManager implements ReactiveAuthenticationManager {
 
-    private AuthService authService;
+    protected final AuthService authService;
 
     @Override
     public Mono<Authentication> authenticate(Authentication authentication) {
@@ -24,18 +22,20 @@ public class UserAuthManager implements ReactiveAuthenticationManager {
             return Mono.error(new BadCredentialsException("", new StandardStatusException(ResponseStatus.internal_error)));
         }
 
-        String username = (String) authRequest.getPrincipal();
-        String password = (String) authRequest.getCredentials();
+        String principal = (String) authRequest.getPrincipal();
+        String credentials = (String) authRequest.getCredentials();
 
         UserRemoteDetails remoteDetails = (UserRemoteDetails) authRequest.getDetails();
         if (remoteDetails == null) {
             return Mono.error(new BadCredentialsException("", new StandardStatusException(ResponseStatus.internal_error)));
         }
 
-        return authService.passwordLogin(username, password, remoteDetails).flatMap(authDetails -> authService.generateToken(authDetails).map(tokenDetails -> {
-            UserAuthToken authResult = new UserAuthToken(authDetails, tokenDetails.getAccessToken());
-            authResult.setDetails(tokenDetails);
-            return authResult;
+        return authenticate(principal, credentials, remoteDetails).flatMap(authDetails -> authService.generateToken(authDetails).map(tokenDetails -> {
+                UserAuthToken authResult = new UserAuthToken(authDetails, tokenDetails.getAccessToken());
+                authResult.setDetails(tokenDetails);
+                return authResult;
         }));
     }
+
+    protected abstract Mono<UserAuthDetails> authenticate(String principal, String credentials, UserRemoteDetails remoteDetails);
 }

@@ -22,11 +22,6 @@ public enum Status {
         return value == null || value == disable.value() ? disable : enable;
     }
 
-    public static String desc(int value) {
-        Status status = valueOf(value);
-        return status == null ? "未知" : status.desc();
-    }
-
     public static boolean enable(Integer value) {
         return value != null && value != 0;
     }

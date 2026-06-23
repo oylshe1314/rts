@@ -10,6 +10,10 @@ public enum Platform {
     fuchsia,
     ;
 
+    public int value() {
+        return ordinal();
+    }
+
     public static Platform parse(String platform) {
         return switch (platform) {
             case "web" -> web;

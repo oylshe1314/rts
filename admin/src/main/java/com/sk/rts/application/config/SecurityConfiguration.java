@@ -1,9 +1,6 @@
 package com.sk.rts.application.config;
 
-import com.sk.rts.application.auth.AdminAuthConverter;
-import com.sk.rts.application.auth.AdminAuthToken;
-import com.sk.rts.application.auth.AdminAuthManager;
-import com.sk.rts.application.auth.ApiPathAuthority;
+import com.sk.rts.application.auth.*;
 import com.sk.rts.application.handler.AdminAccessDeniedHandler;
 import com.sk.rts.application.handler.AdminLoginHandler;
 import com.sk.rts.application.handler.AdminLogoutHandler;
@@ -21,7 +18,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.authorization.AuthorizationContext;
-import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher;
 import org.springframework.util.PathMatcher;
 import reactor.core.publisher.Mono;
@@ -48,19 +44,18 @@ public class SecurityConfiguration {
     private final AdminLoginHandler adminLoginHandler;
     private final AdminLogoutHandler adminLogoutHandler;
     private final AdminAccessDeniedHandler adminAccessDeniedHandler;
-    private final ServerSecurityContextRepository securityContextRepository;
+    private final AdminSecurityContextRepository adminSecurityContextRepository;
 
     @Bean
     public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity httpSecurity) throws Exception {
         httpSecurity.cors(ServerHttpSecurity.CorsSpec::disable);
         httpSecurity.csrf(ServerHttpSecurity.CsrfSpec::disable);
         httpSecurity.formLogin(ServerHttpSecurity.FormLoginSpec::disable);
-//        httpSecurity.sessionManagement(sessionManagementSpec -> sessionManagementSpec.concurrentSessions(concurrentSessionsSpec -> concurrentSessionsSpec.maximumSessions(SessionLimit.of(1))));
-        httpSecurity.securityContextRepository(securityContextRepository);
+        httpSecurity.securityContextRepository(adminSecurityContextRepository);
         httpSecurity.httpBasic(httpBasic -> httpBasic.authenticationEntryPoint(adminAccessDeniedHandler));
         httpSecurity.exceptionHandling(exceptionHandling -> exceptionHandling.accessDeniedHandler(adminAccessDeniedHandler));
         httpSecurity.authorizeExchange(exchangeSpec -> exchangeSpec
-                .pathMatchers(PATTERN_DOC, PATTERN_API_DOC, PATTERN_ERROR, PATTERN_OPEN).permitAll()
+                .pathMatchers(PATTERN_DOC, PATTERN_API_DOC, PATTERN_ERROR, PATTERN_OPEN, PATH_USER_PASSWORD_RESET).permitAll()
                 .pathMatchers(PATTERN_COMMON).authenticated()
                 .anyExchange().access(this::apiPathAuthorize)
         );
@@ -81,7 +76,7 @@ public class SecurityConfiguration {
         webFilter.setServerAuthenticationConverter(adminAuthConverter);
         webFilter.setAuthenticationSuccessHandler(adminLoginHandler);
         webFilter.setAuthenticationFailureHandler(adminLoginHandler);
-        webFilter.setSecurityContextRepository(securityContextRepository);
+        webFilter.setSecurityContextRepository(adminSecurityContextRepository);
         return webFilter;
     }
 

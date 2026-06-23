@@ -99,7 +99,7 @@ public class AuthService {
         return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                 .map(rows -> {
                     if (rows.size() == 0) {
-                        throw new BadCredentialsException("", new StandardStatusException("", "账号或密码不正确"));
+                        throw new BadCredentialsException("", new StandardStatusException("user.username.incorrect", "账号或密码不正确"));
                     }
 
                     Row row = rows.iterator().next();
@@ -113,7 +113,7 @@ public class AuthService {
                 })
                 .flatMap(details -> {
                     if (!passwordEncoder.matches(password, details.getAccount().getPassword())) {
-                        return Future.failedFuture(new BadCredentialsException("", new StandardStatusException("", "账号或密码不正确")));
+                        return Future.failedFuture(new BadCredentialsException("", new StandardStatusException("user.password.incorrect", "账号或密码不正确")));
                     }
 
                     if (details.getDevice() == null) {
@@ -180,6 +180,10 @@ public class AuthService {
     }
 
     public Mono<UserTokenDetails> refreshToken(String token, UserRemoteDetails remoteDetails) {
+        return Mono.error(new UnsupportedOperationException("Not implements."));
+    }
+
+    public Mono<Void> logout(UserAuthDetails authDetails) {
         return Mono.error(new UnsupportedOperationException("Not implements."));
     }
 }
