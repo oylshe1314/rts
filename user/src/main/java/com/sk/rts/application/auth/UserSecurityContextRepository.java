@@ -63,12 +63,12 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
         String subject = tokenUtil.extractSubject(token);
         String[] keys = subject.split(":");
 
-        Request tokenRequest = Request.cmd(Command.GET);
-        tokenRequest.arg(UserAuthDetails.buildTokenKey(subject));
-        tokenRequest.arg(UserAuthDetails.buildDetailsKey(keys[0]));
-        tokenRequest.arg(UserAuthDetails.buildDeviceKey(keys[1]));
+        Request redisRequest = Request.cmd(Command.GET);
+        redisRequest.arg(UserAuthDetails.buildTokenKey(subject));
+        redisRequest.arg(UserAuthDetails.buildDetailsKey(keys[0]));
+        redisRequest.arg(UserAuthDetails.buildDeviceKey(keys[1]));
 
-        return Mono.create(sink -> redis.send(tokenRequest).onFailure(sink::error).onSuccess(response -> {
+        return Mono.create(sink -> redis.send(redisRequest).onFailure(sink::error).onSuccess(response -> {
             try {
                 if (response.get(0) != null) {
                     MsgAccessToken msgUserToken = MsgAccessToken.parseFrom(response.get(0).toBytes());

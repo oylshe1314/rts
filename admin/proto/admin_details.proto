@@ -6,8 +6,6 @@ option java_package = "com.sk.rts.application.proto.caching";
 
 option java_multiple_files = true;
 
-import "api_path_authority.proto";
-
 message MsgAdminDetails {
     int64 id = 1;
     int64 roleId = 2;
@@ -18,7 +16,6 @@ message MsgAdminDetails {
     string email = 7;
     string nickname = 8;
     string avatar = 9;
-    int32 status = 10;
-    string loginIp = 11;
-    repeated MsgApiPathAuthority authority = 12;
+    string loginIp = 10;
+    repeated string authority = 11;
 }

@@ -14,6 +14,7 @@ import org.jooq.SelectLimitPercentStep;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Repository
@@ -92,8 +93,6 @@ public class MenuRepository {
                         menu.getUpdateBy(),
                         menu.getUpdateTime())
                 .returning(Tables.MENU.ID);
-        String sql = query.getSQL();
-        log.debug("SQL: {}", sql);
-        return connection.preparedQuery(sql).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.iterator().next().getLong(0));
+        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.iterator().next().getLong(0));
     }
 }

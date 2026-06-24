@@ -9,8 +9,6 @@ import com.sk.rts.application.entity.enums.MenuType;
 import com.sk.rts.application.entity.enums.Status;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
-import com.sk.rts.application.proto.caching.MsgAdminDetails;
-import com.sk.rts.application.proto.caching.MsgApiPathAuthority;
 import com.sk.rts.application.repository.OperationRecordRepository;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.Pool;
@@ -21,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.jooq.SelectConditionStep;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -50,7 +47,7 @@ public class AuthService {
      * @param remoteDetails 客户端信息
      * @return 管理员详情对象，包含权限信息
      */
-    public Mono<AdminAuthDetails> login(String username, String password, @Nullable AdminRemoteDetails remoteDetails) {
+    public Mono<AdminAuthDetails> login(String username, String password, AdminRemoteDetails remoteDetails) {
         SelectConditionStep<?> adminQuery = dslContext.select(Tables.ADMIN.ID, Tables.ADMIN.ROLE_ID, Tables.ADMIN.USERNAME, Tables.ADMIN.PASSWORD, Tables.ADMIN.PHONE, Tables.ADMIN.EMAIL, Tables.ADMIN.NICKNAME, Tables.ADMIN.AVATAR, Tables.ADMIN.STATUS, Tables.ROLE.ID, Tables.ROLE.NAME, Tables.ROLE.STATUS).from(Tables.ADMIN).innerJoin(Tables.ROLE).on(Tables.ROLE.ID.eq(Tables.ADMIN.ROLE_ID)).where(Tables.ADMIN.USERNAME.eq(username));
 
         return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(adminQuery.getSQL())
@@ -97,25 +94,13 @@ public class AuthService {
                         return Future.failedFuture(new BadCredentialsException("", new StandardStatusException("账号或密码错误")));
                     }
 
-                    MsgAdminDetails.Builder msgAdminDetailsBuilder = MsgAdminDetails.newBuilder();
-                    msgAdminDetailsBuilder.setId(admin.getId());
-                    msgAdminDetailsBuilder.setRoleId(admin.getRoleId());
-                    msgAdminDetailsBuilder.setRoleName(admin.getRole().getName());
-                    msgAdminDetailsBuilder.setUsername(admin.getUsername());
-                    msgAdminDetailsBuilder.setPassword(admin.getPassword());
-                    msgAdminDetailsBuilder.setPhone(admin.getPhone());
-                    msgAdminDetailsBuilder.setEmail(admin.getEmail());
-                    msgAdminDetailsBuilder.setNickname(admin.getNickname());
-                    msgAdminDetailsBuilder.setAvatar(admin.getAvatar());
-                    msgAdminDetailsBuilder.setStatus(admin.getStatus());
+                    AdminAuthDetails authDetails = new AdminAuthDetails(admin, remoteDetails);
 
-                    if (remoteDetails != null) {
-                        msgAdminDetailsBuilder.setLoginIp(remoteDetails.getRemoteAddress());
-                    }
-
-                    AdminAuthDetails authDetails = new AdminAuthDetails(msgAdminDetailsBuilder.build());
-
-                    SelectConditionStep<?> authoritiesQuery = dslContext.select(Tables.MENU.PATH).from(Tables.ROLE_MENU_AUTHORITY).innerJoin(Tables.MENU).on(Tables.MENU.ID.eq(Tables.ROLE_MENU_AUTHORITY.MENU_ID)).where(Tables.ROLE_MENU_AUTHORITY.ROLE_ID.eq(admin.getRoleId())).and(Tables.MENU.TYPE.eq(MenuType.api.value()));
+                    SelectConditionStep<?> authoritiesQuery = dslContext.select(
+                                    Tables.MENU.PATH)
+                            .from(Tables.ROLE_MENU_AUTHORITY)
+                            .innerJoin(Tables.MENU).on(Tables.MENU.ID.eq(Tables.ROLE_MENU_AUTHORITY.MENU_ID))
+                            .where(Tables.ROLE_MENU_AUTHORITY.ROLE_ID.eq(admin.getRoleId())).and(Tables.MENU.TYPE.eq(MenuType.api.value()));
                     return connection.preparedQuery(authoritiesQuery.getSQL()).execute(Tuple.tuple(authoritiesQuery.getBindValues()))
                             .map(rows -> rows.stream().map(row -> new ApiPathAuthority(row.getString(0))).collect(authDetails::getAuthorities, Collection::add, Collection::addAll))
                             .flatMap(_ -> operationRecordRepository.add(connection, "login", authDetails.getUsername(), "", authDetails))

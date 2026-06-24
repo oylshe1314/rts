@@ -14,6 +14,9 @@ import com.sk.rts.application.repository.AdminRepository;
 import com.sk.rts.application.repository.OperationRecordRepository;
 import com.sk.rts.application.repository.RoleRepository;
 import io.vertx.core.Future;
+import io.vertx.redis.client.Command;
+import io.vertx.redis.client.Redis;
+import io.vertx.redis.client.Request;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
@@ -43,6 +46,8 @@ public class AdminService {
     private final Pool pool;
     private final DSLContext dslContext;
 
+    private final Redis redis;
+
     private final AdminRepository adminRepository;
     private final RoleRepository roleRepository;
     private final OperationRecordRepository operationRecordRepository;
@@ -56,18 +61,27 @@ public class AdminService {
      * @return 管理员选择列表
      */
     public Mono<List<AdminSelectDto>> adminSelectList(@Nullable Long roleId) {
-        SelectWhereStep<?> query = dslContext.select(Tables.ADMIN.ID, Tables.ADMIN.ROLE_ID, Tables.ADMIN.USERNAME, Tables.ADMIN.NICKNAME, Tables.ADMIN.AVATAR).from(Tables.ADMIN);
+        Select<?> query = dslContext.select(
+                        Tables.ADMIN.ID,
+                        Tables.ADMIN.ROLE_ID,
+                        Tables.ADMIN.USERNAME,
+                        Tables.ADMIN.NICKNAME,
+                        Tables.ADMIN.AVATAR)
+                .from(Tables.ADMIN);
         if (roleId != null) {
-            query.where(Tables.ADMIN.ROLE_ID.eq(roleId));
+            query = ((SelectWhereStep<?>) query).where(Tables.ADMIN.ROLE_ID.eq(roleId));
         }
 
-        return Flux.<AdminSelectDto>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).onComplete(_ -> connection.close()))
+        String sql = query.getSQL();
+        List<Object> args = query.getBindValues();
+        return Flux.<AdminSelectDto>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(sql).execute(Tuple.tuple(args))
+                .onComplete(_ -> connection.close())
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
                     rows.forEach(row -> sink.next(new AdminSelectDto(row.getLong(0), row.getLong(1), row.getString(2), row.getString(3), row.getString(4))));
                     sink.complete();
                 })
-        ).collectList();
+        )).collectList();
     }
 
     /**
@@ -76,15 +90,15 @@ public class AdminService {
      * @param pageRequestDtoMono 分页查询参数
      * @return 分页查询结果
      */
-    public Mono<PageResultDto<AdminDto>> query(Mono<PageQueryDto<AdminQueryDto>> pageRequestDtoMono) {
+    public Mono<PageResultDto<AdminDto>> query(Mono<PageQueryDto<@Nullable AdminQueryDto>> pageRequestDtoMono) {
         return pageRequestDtoMono.flatMap(pageRequestDto -> {
             AdminQueryDto queryDto = pageRequestDto.getQuery();
 
             TableAdmin a = Tables.ADMIN.as("a");
             TableRole r = Tables.ROLE.as("r");
 
-            SelectWhereStep<?> pageQuery = dslContext.select(a.ID, a.ROLE_ID, a.USERNAME, a.PASSWORD, a.PHONE, a.EMAIL, a.NICKNAME, a.AVATAR, a.STATUS, a.REMARK, a.CREATE_BY, a.CREATE_TIME, a.UPDATE_BY, a.UPDATE_TIME, r.ID, r.NAME).from(a).innerJoin(r).on(r.ID.eq(a.ROLE_ID));
-            SelectWhereStep<?> countQuery = dslContext.selectCount().from(a).innerJoin(r).on(r.ID.eq(a.ROLE_ID));
+            Select<?> pageQuery = dslContext.select(a.ID, a.ROLE_ID, a.USERNAME, a.PASSWORD, a.PHONE, a.EMAIL, a.NICKNAME, a.AVATAR, a.STATUS, a.REMARK, a.CREATE_BY, a.CREATE_TIME, a.UPDATE_BY, a.UPDATE_TIME, r.ID, r.NAME).from(a).innerJoin(r).on(r.ID.eq(a.ROLE_ID));
+            Select<?> countQuery = dslContext.selectCount().from(a).innerJoin(r).on(r.ID.eq(a.ROLE_ID));
 
             List<Condition> conditions = new ArrayList<>();
             if (queryDto != null) {
@@ -102,32 +116,38 @@ public class AdminService {
                 }
             }
 
-            if (conditions.size() > 0) {
-                pageQuery.where(conditions);
-                countQuery.where(conditions);
+            if (!conditions.isEmpty()) {
+                pageQuery = ((SelectWhereStep<?>) pageQuery).where(conditions);
+                countQuery = ((SelectWhereStep<?>) countQuery).where(conditions);
             }
 
             if (pageRequestDto.getSort() == null) {
-                pageQuery.orderBy(a.ID.asc());
+                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(a.ID.asc());
             } else {
-                if (Boolean.TRUE.equals(pageRequestDto.getDesc())) {
-                    pageQuery.orderBy(a.field(pageRequestDto.getSort()).desc());
-                } else {
-                    pageQuery.orderBy(a.field(pageRequestDto.getSort()));
+                OrderField<?> sortField = a.field(pageRequestDto.getSort());
+                if (sortField == null) {
+                    return Mono.error(new StandardStatusException(ResponseStatus.parameter_error));
                 }
+
+                if (Boolean.TRUE.equals(pageRequestDto.getDesc())) {
+                    sortField = ((Field<?>) sortField).desc();
+                }
+
+                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(sortField);
             }
 
-            pageQuery.offset(pageRequestDto.getOffset()).limit(pageRequestDto.getPageSize());
+            pageQuery = ((SelectLimitStep<?>) pageQuery).offset(pageRequestDto.getOffset()).limit(pageRequestDto.getPageSize());
 
-            String sql = pageQuery.getSQL();
-            log.debug("SQL: {}", sql);
-            return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(sql).execute(Tuple.of(pageQuery.getBindValues()))
+            String pageSql = pageQuery.getSQL();
+            String countSql = countQuery.getSQL();
+            List<Object> pageArgs = pageQuery.getBindValues();
+            List<Object> countArgs = countQuery.getBindValues();
+            return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(pageSql).execute(Tuple.tuple(pageArgs))
                     .map(rows -> rows.stream().map(row -> {
                                 Admin admin = Admin.fromRow(row);
                                 admin.setRole(new Role());
                                 admin.getRole().setId(row.getLong(14));
                                 admin.getRole().setName(row.getString(15));
-
                                 return new AdminDto(admin);
                             }).toList()
                     )
@@ -136,8 +156,7 @@ public class AdminService {
                             return Future.succeededFuture(new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), admins.size(), admins));
                         }
 
-                        return connection.preparedQuery(countQuery.getSQL()).execute(Tuple.tuple(countQuery.getBindValues()))
-                                .map(rows -> new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), rows.iterator().next().getLong(0), admins));
+                        return connection.preparedQuery(countSql).execute(Tuple.tuple(countArgs)).map(rows -> new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), rows.iterator().next().getLong(0), admins));
                     })
                     .onComplete(_ -> connection.close())
                     .onSuccess(sink::success)
@@ -158,7 +177,7 @@ public class AdminService {
         return addDtoMono.flatMap(addDto -> Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                 .compose(_ -> adminRepository.existsByUsername(connection, addDto.getUsername()).flatMap(exists -> exists ? Future.failedFuture(new StandardStatusException("用户名已存在")) : Future.succeededFuture()))
                 .compose(_ -> adminRepository.existsByNickname(connection, addDto.getNickname()).flatMap(exists -> exists ? Future.failedFuture(new StandardStatusException("昵称已存在")) : Future.succeededFuture()))
-                .compose(_ -> roleRepository.getForUpdate(connection, addDto.getRoleId()).flatMap(role -> role == null ? Future.failedFuture(new StandardStatusException("角色不存在")) : Future.succeededFuture(role)).flatMap(role -> !Status.enable(role.getStatus()) ? Future.failedFuture(new StandardStatusException("角色已禁用")) : Future.succeededFuture(role)))
+                .compose(_ -> roleRepository.getForUpdate(connection, addDto.getRoleId()).flatMap(role -> role == null ? Future.failedFuture(new StandardStatusException("角色不存在")) : Future.succeededFuture(role)))
                 .compose(role -> {
                     Admin admin = new Admin();
                     admin.setRoleId(role.getId());
@@ -171,11 +190,10 @@ public class AdminService {
                     admin.setStatus(Status.enable.value());
                     admin.initOperation(addDto.getRemark(), operator.getUsername());
 
-                    admin.setRole(role);
-
                     return adminRepository.insert(connection, admin)
                             .compose(id -> {
                                 admin.setId(id);
+                                admin.setRole(role);
                                 return operationRecordRepository.add(connection, "add", "admin", admin.getId().toString(), operator);
                             })
                             .compose(_ -> connection.transaction().commit())
@@ -212,7 +230,7 @@ public class AdminService {
                                     return Future.failedFuture(new StandardStatusException("角色不存在"));
                                 }
 
-                                if (!Status.enable(role.getStatus())) {
+                                if (Status.disable(role.getStatus())) {
                                     return Future.failedFuture(new StandardStatusException("角色已禁用"));
                                 }
 
@@ -240,12 +258,7 @@ public class AdminService {
                     })
                     .compose(admin -> {
                         if (updateDto.getPassword() != null) {
-                            String password = passwordEncoder.encode(updateDto.getPassword());
-                            if (password == null) {
-                                return Future.failedFuture(new StandardStatusException(ResponseStatus.internal_error));
-                            }
-
-                            admin.setPassword(password);
+                            admin.setPassword(passwordEncoder.encode(updateDto.getPassword()));
                             values.put(Tables.ADMIN.PASSWORD, admin.getPassword());
                         }
 
@@ -269,11 +282,9 @@ public class AdminService {
                         values.put(Tables.ADMIN.UPDATE_BY, admin.getUpdateBy());
                         values.put(Tables.ADMIN.UPDATE_TIME, admin.getUpdateTime());
 
-                        UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN).set(values).where(Tables.ADMIN.ID.eq(admin.getId()));
+                        Update<?> query = dslContext.update(Tables.ADMIN).set(values).where(Tables.ADMIN.ID.eq(admin.getId()));
 
-                        String sql = query.getSQL();
-                        log.debug("SQL: {}", sql);
-                        return connection.preparedQuery(sql).execute(Tuple.tuple(query.getBindValues()))
+                        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                                 .compose(_ -> operationRecordRepository.add(connection, "update", "admin", admin.getId().toString(), operator))
                                 .compose(_ -> connection.transaction().commit())
                                 .onComplete(_ -> connection.close())
@@ -298,16 +309,30 @@ public class AdminService {
                 return Mono.error(new StandardStatusException("默认管理员禁止删除"));
             }
 
-            DeleteConditionStep<?> query = dslContext.deleteFrom(Tables.ADMIN).where(Tables.ADMIN.ID.in(ids));
+            return Mono.create(sink -> {
+                Set<String> keys = ids.stream().map(AdminAuthDetails::buildDetailsKey).collect(Collectors.toSet());
 
-            return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
-                    .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                    .compose(_ -> operationRecordRepository.add(connection, "delete", "admin", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
-                    .compose(_ -> connection.transaction().commit())
-                    .onComplete(_ -> connection.close())
-                    .onSuccess(sink::success)
-                    .onFailure(sink::error)
-            ));
+                Request request = Request.cmd(Command.EXISTS);
+                keys.forEach(request::arg);
+
+                redis.send(request)
+                        .map(response -> response.toLong() > 0)
+                        .flatMap(exists -> {
+                            if (exists) {
+                                return Future.failedFuture(new StandardStatusException("无法删除已登录的管理员"));
+                            }
+
+                            Delete<?> query = dslContext.deleteFrom(Tables.ADMIN).where(Tables.ADMIN.ID.in(ids));
+                            return pool.getConnection().flatMap(connection -> connection.begin()
+                                    .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
+                                    .compose(_ -> operationRecordRepository.add(connection, "delete", "admin", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
+                                    .compose(_ -> connection.transaction().commit())
+                                    .onComplete(_ -> connection.close())
+                            );
+                        })
+                        .onSuccess(sink::success)
+                        .onFailure(sink::error);
+            });
         });
     }
 
@@ -326,7 +351,7 @@ public class AdminService {
 
             Status state = Status.valueOf(changeDto.getStatus());
 
-            UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.STATUS, state.value()).set(Tables.ADMIN.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN.ID.in(ids));
+            Update<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.STATUS, state.value()).set(Tables.ADMIN.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN.ID.in(ids));
 
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))

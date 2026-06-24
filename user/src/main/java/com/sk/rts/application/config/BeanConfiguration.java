@@ -9,15 +9,16 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.util.AntPathMatcher;
-import org.springframework.util.PathMatcher;
 
+import java.util.Random;
 
-/**
- * 配置类，用于定义应用程序中需要的Bean组件
- */
 @SpringBootConfiguration
 public class BeanConfiguration {
+
+    @Bean
+    public Random random() {
+        return new Random(System.currentTimeMillis());
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {

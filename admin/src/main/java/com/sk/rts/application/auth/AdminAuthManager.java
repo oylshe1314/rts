@@ -4,6 +4,8 @@ import com.sk.rts.application.component.TokenUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.service.AuthService;
+import com.sk.rts.application.util.CodecUtil;
+import com.sk.rts.application.util.FeistelUtil;
 import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -30,9 +32,12 @@ public class AdminAuthManager implements ReactiveAuthenticationManager {
         String password = (String) authToken.getCredentials();
 
         AdminRemoteDetails adminRemoteDetails = (AdminRemoteDetails) authToken.getDetails();
+        if (adminRemoteDetails == null) {
+            return Mono.error(new BadCredentialsException("", new StandardStatusException(ResponseStatus.internal_error)));
+        }
 
         return authService.login(username, password, adminRemoteDetails).map(adminDetails -> {
-            AdminAccessToken tokenDetail = tokenUtil.generate(adminDetails.getUsername());
+            AdminAccessToken tokenDetail = tokenUtil.generate(CodecUtil.encode64(FeistelUtil.encode(adminDetails.getId())));
             return new AdminAuthToken(adminDetails, tokenDetail);
         });
     }

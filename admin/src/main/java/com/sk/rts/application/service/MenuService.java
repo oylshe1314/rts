@@ -5,6 +5,7 @@ import com.sk.rts.application.dto.*;
 import com.sk.rts.application.entity.Menu;
 import com.sk.rts.application.entity.enums.MenuType;
 import com.sk.rts.application.entity.enums.Status;
+import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
 import com.sk.rts.application.jooq.tables.TableMenu;
@@ -17,6 +18,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -52,14 +54,16 @@ public class MenuService {
      * @return 菜单选择列表
      */
     public Mono<List<MenuSelectDto>> menuSelectList(Integer type) {
-        SelectConditionStep<?> query = dslContext.select(Tables.MENU.ID, Tables.MENU.NAME).from(Tables.MENU).where(Tables.MENU.TYPE.eq(type));
-        return Flux.<MenuSelectDto>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).onComplete(_ -> connection.close()))
+        Select<?> query = dslContext.select(Tables.MENU.ID, Tables.MENU.NAME).from(Tables.MENU).where(Tables.MENU.TYPE.eq(type));
+
+        return Flux.<MenuSelectDto>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+                .onComplete(_ -> connection.close())
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
                     rows.forEach(row -> sink.next(new MenuSelectDto(row.getLong(0), row.getString(1))));
                     sink.complete();
                 })
-        ).collectList();
+        )).collectList();
     }
 
     /**
@@ -68,15 +72,15 @@ public class MenuService {
      * @param pageRequestDtoMono 分页查询参数
      * @return 分页查询结果
      */
-    public Mono<PageResultDto<MenuDto>> query(Mono<PageQueryDto<MenuQueryDto>> pageRequestDtoMono) {
+    public Mono<PageResultDto<MenuDto>> query(Mono<PageQueryDto<@Nullable MenuQueryDto>> pageRequestDtoMono) {
         return pageRequestDtoMono.flatMap(pageRequestDto -> {
             MenuQueryDto queryDto = pageRequestDto.getQuery();
 
             TableMenu m = Tables.MENU.as("m");
             TableMenu p = Tables.MENU.as("p");
 
-            SelectWhereStep<?> pageQuery = dslContext.select(m.ID, m.PARENT_ID, m.TYPE, m.NAME, m.ICON, m.PATH, m.SORT_BY, m.STATUS, m.REMARK, m.CREATE_BY, m.CREATE_TIME, m.UPDATE_BY, m.UPDATE_TIME, p.ID, p.NAME).from(m).leftJoin(p).on(p.ID.eq(m.PARENT_ID));
-            SelectWhereStep<?> countQuery = dslContext.selectCount().from(m).leftJoin(p).on(p.ID.eq(m.PARENT_ID));
+            Select<?> pageQuery = dslContext.select(m.ID, m.PARENT_ID, m.TYPE, m.NAME, m.ICON, m.PATH, m.SORT_BY, m.STATUS, m.REMARK, m.CREATE_BY, m.CREATE_TIME, m.UPDATE_BY, m.UPDATE_TIME, p.ID, p.NAME).from(m).leftJoin(p).on(p.ID.eq(m.PARENT_ID));
+            Select<?> countQuery = dslContext.selectCount().from(m).leftJoin(p).on(p.ID.eq(m.PARENT_ID));
 
             List<Condition> conditions = new ArrayList<>();
             if (queryDto != null) {
@@ -94,26 +98,33 @@ public class MenuService {
                 }
             }
 
-            if (conditions.size() > 0) {
-                pageQuery.where(conditions);
-                countQuery.where(conditions);
+            if (!conditions.isEmpty()) {
+                pageQuery = ((SelectWhereStep<?>) pageQuery).where(conditions);
+                countQuery = ((SelectWhereStep<?>) countQuery).where(conditions);
             }
 
             if (pageRequestDto.getSort() == null) {
-                pageQuery.orderBy(m.ID.asc());
+                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(m.ID.asc());
             } else {
-                if (Boolean.TRUE.equals(pageRequestDto.getDesc())) {
-                    pageQuery.orderBy(m.field(pageRequestDto.getSort()).desc());
-                } else {
-                    pageQuery.orderBy(m.field(pageRequestDto.getSort()));
+                OrderField<?> sortField = m.field(pageRequestDto.getSort());
+                if (sortField == null) {
+                    return Mono.error(new StandardStatusException(ResponseStatus.parameter_error));
                 }
+
+                if (Boolean.TRUE.equals(pageRequestDto.getDesc())) {
+                    sortField = ((Field<?>) sortField).desc();
+                }
+
+                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(sortField);
             }
 
-            pageQuery.offset(pageRequestDto.getOffset()).limit(pageRequestDto.getPageSize());
+            pageQuery = ((SelectLimitStep<?>) pageQuery).offset(pageRequestDto.getOffset()).limit(pageRequestDto.getPageSize());
 
-            String sql = pageQuery.getSQL();
-            log.debug("SQL: {}", sql);
-            return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(sql).execute(Tuple.tuple(pageQuery.getBindValues()))
+            String pageSql = pageQuery.getSQL();
+            String countSql = countQuery.getSQL();
+            List<Object> pageArgs = pageQuery.getBindValues();
+            List<Object> countArgs = countQuery.getBindValues();
+            return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(pageSql).execute(Tuple.tuple(pageArgs))
                     .map(rows -> rows.stream().map(row -> {
                                 Menu menu = Menu.fromRow(row);
                                 if (menu.getParentId() != 0L) {
@@ -130,8 +141,7 @@ public class MenuService {
                             return Future.succeededFuture(new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), menus.size(), menus));
                         }
 
-                        return connection.preparedQuery(countQuery.getSQL()).execute(Tuple.tuple(countQuery.getBindValues()))
-                                .map(rows -> new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), rows.iterator().next().getLong(0), menus));
+                        return connection.preparedQuery(countSql).execute(Tuple.tuple(countArgs)).map(rows -> new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), rows.iterator().next().getLong(0), menus));
                     })
                     .onComplete(_ -> connection.close())
                     .onSuccess(sink::success)
@@ -187,10 +197,6 @@ public class MenuService {
 
                         menu.setParent(parent);
 
-                        InsertResultStep<?> query = dslContext.insertInto(Tables.MENU, Tables.MENU.PARENT_ID, Tables.MENU.TYPE, Tables.MENU.NAME, Tables.MENU.ICON, Tables.MENU.PATH, Tables.MENU.SORT_BY, Tables.MENU.STATUS, Tables.MENU.REMARK, Tables.MENU.CREATE_BY, Tables.MENU.CREATE_TIME, Tables.MENU.UPDATE_BY, Tables.MENU.UPDATE_TIME).values(menu.getParentId(), menu.getType(), menu.getName(), menu.getIcon(), menu.getPath(), menu.getSortBy(), menu.getStatus(), menu.getRemark(), menu.getCreateBy(), menu.getCreateTime(), menu.getUpdateBy(), menu.getUpdateTime()).returning(Tables.MENU.ID);
-
-                        String sql = query.getSQL();
-                        log.debug("SQL: {}", sql);
                         return menuRepository.insert(connection, menu)
                                 .compose(id -> {
                                     menu.setId(id);
@@ -310,11 +316,9 @@ public class MenuService {
                         values.put(Tables.MENU.UPDATE_BY, menu.getUpdateBy());
                         values.put(Tables.MENU.UPDATE_TIME, menu.getUpdateTime());
 
-                        UpdateConditionStep<?> query = dslContext.update(Tables.MENU).set(values).where(Tables.MENU.ID.eq(menu.getId()));
+                        Update<?> query = dslContext.update(Tables.MENU).set(values).where(Tables.MENU.ID.eq(menu.getId()));
 
-                        String sql = query.getSQL();
-                        log.debug("SQL: {}", sql);
-                        return connection.preparedQuery(sql).execute(Tuple.tuple(query.getBindValues()))
+                        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                                 .compose(_ -> operationRecordRepository.add(connection, "add", "menu", menu.getId().toString(), operator))
                                 .compose(_ -> connection.transaction().commit())
                                 .onComplete(_ -> connection.close())
@@ -345,7 +349,7 @@ public class MenuService {
                             return Future.failedFuture(new StandardStatusException("请先删除子菜单"));
                         }
 
-                        DeleteConditionStep<?> query = dslContext.deleteFrom(Tables.MENU).where(Tables.MENU.ID.in(ids));
+                        Delete<?> query = dslContext.deleteFrom(Tables.MENU).where(Tables.MENU.ID.in(ids));
 
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()));
                     })
@@ -373,7 +377,7 @@ public class MenuService {
 
             Status state = Status.valueOf(changeDto.getStatus());
 
-            UpdateConditionStep<?> query = dslContext.update(Tables.MENU).set(Tables.MENU.STATUS, state.value()).set(Tables.MENU.UPDATE_BY, operator.getUsername()).set(Tables.MENU.UPDATE_TIME, OffsetDateTime.now()).where(Tables.MENU.STATUS.in(ids));
+            Update<?> query = dslContext.update(Tables.MENU).set(Tables.MENU.STATUS, state.value()).set(Tables.MENU.UPDATE_BY, operator.getUsername()).set(Tables.MENU.UPDATE_TIME, OffsetDateTime.now()).where(Tables.MENU.STATUS.in(ids));
 
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))

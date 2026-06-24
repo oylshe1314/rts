@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class AdminAccessToken {
 
-    private String username;
+    private String subject;
 
     private String token;
 
@@ -19,7 +19,7 @@ public class AdminAccessToken {
     private Long expiration;
 
     public AdminAccessToken(MsgAdminToken adminToken) {
-        this.username = adminToken.getUsername();
+        this.subject = adminToken.getSubject();
         this.token = adminToken.getToken();
         this.issueTime = adminToken.getIssueTime();
         this.expiration = adminToken.getExpiration();

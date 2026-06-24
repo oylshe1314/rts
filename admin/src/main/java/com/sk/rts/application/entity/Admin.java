@@ -1,6 +1,7 @@
 package com.sk.rts.application.entity;
 
 import com.sk.rts.application.entity.base.StatusEntity;
+import com.sk.rts.application.proto.caching.MsgAdminDetails;
 import io.vertx.sqlclient.Row;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

@@ -3,10 +3,10 @@ package com.sk.rts.application.service;
 import com.sk.rts.application.auth.*;
 import com.sk.rts.application.component.TokenUtil;
 import com.sk.rts.application.config.TokenProperties;
-import com.sk.rts.application.entity.UserToken;
 import com.sk.rts.application.entity.UserAccount;
 import com.sk.rts.application.entity.UserDetails;
 import com.sk.rts.application.entity.UserDevice;
+import com.sk.rts.application.entity.UserToken;
 import com.sk.rts.application.entity.enums.Platform;
 import com.sk.rts.application.entity.enums.Status;
 import com.sk.rts.application.exception.StandardStatusException;
@@ -28,7 +28,9 @@ import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
-import org.jooq.SelectConditionStep;
+import org.jooq.Select;
+import org.jooq.SelectJoinStep;
+import org.jooq.SelectWhereStep;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -71,7 +73,7 @@ public class AuthService {
         TableUserAccount a = Tables.USER_ACCOUNT.as("a");
         TableUserDevice d = Tables.USER_DEVICE.as("d");
 
-        SelectConditionStep<?> query = dslContext.select(
+        Select<?> query = dslContext.select(
                         u.ID, // 0
                         u.NICKNAME, // 1
                         u.AVATAR, // 2
@@ -92,9 +94,13 @@ public class AuthService {
                         d.SERIAL_NO, // 17
                         d.CREATE_TIME) // 18
                 .from(u)
-                .innerJoin(a).on(a.ID.eq(u.ID))
-                .leftJoin(d).on(d.USER_ID.eq(u.ID))
-                .where(a.USERNAME.eq(account)).or(a.PHONE.eq(account)).or(a.EMAIL.eq(account));
+                .innerJoin(a).on(a.ID.eq(u.ID));
+
+        if (platform != Platform.web) {
+            ((SelectJoinStep<?>) query).leftJoin(d).on(d.USER_ID.eq(u.ID)).and(d.SERIAL_NO.eq(remoteDetails.getDevice()));
+        }
+
+        ((SelectWhereStep<?>) query).where(a.USERNAME.eq(account)).or(a.PHONE.eq(account)).or(a.EMAIL.eq(account));
 
         return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                 .map(rows -> {

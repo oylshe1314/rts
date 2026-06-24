@@ -23,12 +23,12 @@ public class OperationRecordRepository {
 
     public Future<Void> add(SqlConnection connection, String operation, String arguments, String remark, AdminAuthDetails operator) {
         OperationRecord record = new OperationRecord();
-        record.setOperatorId(operator.getAdminId());
+        record.setOperatorId(operator.getId());
         record.setOperator(operator.getUsername());
         record.setOperation(operation);
         record.setArguments(arguments);
         record.setRemark(remark);
-        record.setLoginIp(operator.getAdminDetails().getLoginIp());
+        record.setLoginIp(operator.getLoginIp());
         record.setCreateTime(OffsetDateTime.now());
         return insert(connection, record).flatMap(_ -> Future.succeededFuture());
     }
@@ -52,8 +52,6 @@ public class OperationRecordRepository {
                         record.getLoginIp(),
                         record.getCreateTime())
                 .returning(Tables.OPERATION_RECORD.ID);
-        String sql = query.getSQL();
-        log.debug("SQL: {}", sql);
-        return connection.preparedQuery(sql).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.iterator().next().getLong(0));
+        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.iterator().next().getLong(0));
     }
 }

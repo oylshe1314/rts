@@ -6,6 +6,7 @@ import com.sk.rts.application.entity.Menu;
 import com.sk.rts.application.entity.Role;
 import com.sk.rts.application.entity.RoleMenuAuthority;
 import com.sk.rts.application.entity.enums.Status;
+import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
 import com.sk.rts.application.jooq.tables.TableMenu;
@@ -20,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -54,14 +56,15 @@ public class RoleService {
      * @return 角色选择列表
      */
     public Mono<List<RoleSelectDto>> roleSelectList() {
-        SelectWhereStep<?> query = dslContext.select(Tables.ROLE.ID, Tables.ROLE.NAME).from(Tables.ROLE);
-        return Flux.<RoleSelectDto>create(sink -> pool.getConnection().flatMap(connection -> connection.query(query.getSQL()).execute().onComplete(_ -> connection.close()))
+        Select<?> query = dslContext.select(Tables.ROLE.ID, Tables.ROLE.NAME).from(Tables.ROLE);
+        return Flux.<RoleSelectDto>create(sink -> pool.getConnection().flatMap(connection -> connection.query(query.getSQL()).execute()
+                .onComplete(_ -> connection.close())
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
                     rows.forEach(row -> sink.next(new RoleSelectDto(row.getLong(0), row.getString(1))));
                     sink.complete();
                 })
-        ).collectList();
+        )).collectList();
     }
 
     /**
@@ -70,12 +73,12 @@ public class RoleService {
      * @param pageRequestDtoMono 分页查询参数
      * @return 分页查询结果
      */
-    public Mono<PageResultDto<RoleDto>> query(Mono<PageQueryDto<RoleQueryDto>> pageRequestDtoMono) {
+    public Mono<PageResultDto<RoleDto>> query(Mono<PageQueryDto<@Nullable RoleQueryDto>> pageRequestDtoMono) {
         return pageRequestDtoMono.flatMap(pageRequestDto -> {
             RoleQueryDto queryDto = pageRequestDto.getQuery();
 
-            SelectWhereStep<?> pageQuery = dslContext.select(Tables.ROLE.ID, Tables.ROLE.NAME, Tables.ROLE.STATUS, Tables.ROLE.REMARK, Tables.ROLE.CREATE_BY, Tables.ROLE.CREATE_TIME, Tables.ROLE.UPDATE_BY, Tables.ROLE.UPDATE_TIME).from(Tables.ROLE);
-            SelectWhereStep<?> countQuery = dslContext.selectCount().from(Tables.ROLE);
+            Select<?> pageQuery = dslContext.select(Tables.ROLE.ID, Tables.ROLE.NAME, Tables.ROLE.STATUS, Tables.ROLE.REMARK, Tables.ROLE.CREATE_BY, Tables.ROLE.CREATE_TIME, Tables.ROLE.UPDATE_BY, Tables.ROLE.UPDATE_TIME).from(Tables.ROLE);
+            Select<?> countQuery = dslContext.selectCount().from(Tables.ROLE);
 
             List<Condition> conditions = new ArrayList<>();
 
@@ -85,37 +88,40 @@ public class RoleService {
                 }
             }
 
-            if (conditions.size() > 0) {
-                pageQuery.where(conditions);
-                countQuery.where(conditions);
+            if (!conditions.isEmpty()) {
+                pageQuery = ((SelectWhereStep<?>) pageQuery).where(conditions);
+                countQuery = ((SelectWhereStep<?>) countQuery).where(conditions);
             }
-
 
             if (pageRequestDto.getSort() == null) {
-                pageQuery.orderBy(Tables.ROLE.ID.asc());
+                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(Tables.OPERATION_RECORD.ID.asc());
             } else {
-                if (Boolean.TRUE.equals(pageRequestDto.getDesc())) {
-                    pageQuery.orderBy(Tables.ROLE.field(pageRequestDto.getSort()).desc());
-                } else {
-                    pageQuery.orderBy(Tables.ROLE.field(pageRequestDto.getSort()));
+                OrderField<?> sortField = Tables.OPERATION_RECORD.field(pageRequestDto.getSort());
+                if (sortField == null) {
+                    return Mono.error(new StandardStatusException(ResponseStatus.parameter_error));
                 }
+
+                if (Boolean.TRUE.equals(pageRequestDto.getDesc())) {
+                    sortField = ((Field<?>) sortField).desc();
+                }
+
+                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(sortField);
             }
 
-            pageQuery.offset(pageRequestDto.getOffset()).limit(pageRequestDto.getPageSize());
+            pageQuery = ((SelectLimitStep<?>) pageQuery).offset(pageRequestDto.getOffset()).limit(pageRequestDto.getPageSize());
 
-            String sql = pageQuery.getSQL();
-            log.debug("SQL: {}", sql);
-            return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(sql)
-                    .execute(Tuple.tuple(pageQuery.getBindValues()))
+            String pageSql = pageQuery.getSQL();
+            String countSql = countQuery.getSQL();
+            List<Object> pageArgs = pageQuery.getBindValues();
+            List<Object> countArgs = countQuery.getBindValues();
+            return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(pageSql).execute(Tuple.tuple(pageArgs))
                     .map(rows -> rows.stream().map(row -> new RoleDto(Role.fromRow(row))).toList())
                     .flatMap(roles -> {
                         if (roles.size() < pageRequestDto.getPageSize()) {
                             return Future.succeededFuture(new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), roles.size(), roles));
                         }
 
-                        return connection.preparedQuery(countQuery.getSQL())
-                                .execute(Tuple.tuple(countQuery.getBindValues()))
-                                .map(rows -> new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), rows.iterator().next().getLong(0), roles));
+                        return connection.preparedQuery(countSql).execute(Tuple.tuple(countArgs)).map(rows -> new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), rows.iterator().next().getLong(0), roles));
                     })
                     .onComplete(_ -> connection.close())
                     .onSuccess(sink::success)
@@ -193,11 +199,9 @@ public class RoleService {
                         values.put(Tables.ROLE.UPDATE_BY, role.getUpdateBy());
                         values.put(Tables.ROLE.UPDATE_TIME, role.getUpdateTime());
 
-                        UpdateConditionStep<?> query = dslContext.update(Tables.ROLE).set(values).where(Tables.ROLE.ID.eq(role.getId()));
+                        Update<?> query = dslContext.update(Tables.ROLE).set(values).where(Tables.ROLE.ID.eq(role.getId()));
 
-                        String sql = query.getSQL();
-                        log.debug("SQL: {}", sql);
-                        return connection.preparedQuery(sql).execute(Tuple.tuple(query.getBindValues()))
+                        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                                 .compose(_ -> operationRecordRepository.add(connection, "update", "role", role.getId().toString(), operator))
                                 .compose(_ -> connection.transaction().commit())
                                 .onComplete(_ -> connection.close())
@@ -221,7 +225,7 @@ public class RoleService {
                 return Mono.error(new StandardStatusException("默认角色禁止删除"));
             }
 
-            DeleteConditionStep<?> query = dslContext.deleteFrom(Tables.ROLE).where(Tables.ROLE.ID.in(ids));
+            Delete<?> query = dslContext.deleteFrom(Tables.ROLE).where(Tables.ROLE.ID.in(ids));
 
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> adminRepository.existsByRoleIdIn(connection, ids))
@@ -256,7 +260,7 @@ public class RoleService {
 
             Status state = Status.valueOf(changeDto.getStatus());
 
-            UpdateConditionStep<?> query = dslContext.update(Tables.ROLE).set(Tables.ROLE.STATUS, state.value()).set(Tables.ROLE.UPDATE_BY, operator.getUsername()).set(Tables.ROLE.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ROLE.ID.in(ids));
+            Update<?> query = dslContext.update(Tables.ROLE).set(Tables.ROLE.STATUS, state.value()).set(Tables.ROLE.UPDATE_BY, operator.getUsername()).set(Tables.ROLE.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ROLE.ID.in(ids));
 
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
@@ -279,12 +283,9 @@ public class RoleService {
         TableMenu m = Tables.MENU.as("m");
         TableRoleMenuAuthority a = Tables.ROLE_MENU_AUTHORITY.as("a");
 
-        SelectConditionStep<?> query = dslContext.select(m.ID, m.PARENT_ID, m.NAME, m.SORT_BY, a.ROLE_ID).from(m).leftJoin(a).on(a.MENU_ID.eq(m.ID)).and(a.ROLE_ID.eq(id)).where(m.STATUS.eq(Status.enable.value()));
+        Select<?> query = dslContext.select(m.ID, m.PARENT_ID, m.NAME, m.SORT_BY, a.ROLE_ID).from(m).leftJoin(a).on(a.MENU_ID.eq(m.ID)).and(a.ROLE_ID.eq(id)).where(m.STATUS.eq(Status.enable.value()));
 
-        String sql = query.getSQL();
-        log.debug("SQL: {}", sql);
-        return Mono.<List<RoleMenuAuthorityDto>>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(sql)
-                .execute(Tuple.tuple(query.getBindValues()))
+        return Mono.<List<RoleMenuAuthorityDto>>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                 .map(rows -> rows.stream().map(row -> {
                             Menu menu = new Menu();
                             menu.setId(row.getLong(0));
@@ -326,13 +327,19 @@ public class RoleService {
                         }
                     }
 
-                    DeleteConditionStep<?> deleteQuery = dslContext.deleteFrom(Tables.ROLE_MENU_AUTHORITY).where(Tables.ROLE_MENU_AUTHORITY.ROLE_ID.eq(setDto.getRoleId()));
-                    InsertValuesStep2<?, Long, Long> insertQuery = dslContext.insertInto(Tables.ROLE_MENU_AUTHORITY, Tables.ROLE_MENU_AUTHORITY.ROLE_ID, Tables.ROLE_MENU_AUTHORITY.MENU_ID);
+                    Delete<?> deleteQuery = dslContext.deleteFrom(Tables.ROLE_MENU_AUTHORITY).where(Tables.ROLE_MENU_AUTHORITY.ROLE_ID.eq(setDto.getRoleId()));
+                    Insert<?> insertQuery = dslContext.insertInto(Tables.ROLE_MENU_AUTHORITY, Tables.ROLE_MENU_AUTHORITY.ROLE_ID, Tables.ROLE_MENU_AUTHORITY.MENU_ID);
 
-                    menuIds.forEach(menuId -> insertQuery.values(role.getId(), menuId));
+                    for (Long menuId : menuIds) {
+                        insertQuery = ((InsertValuesStep2<?, Long, Long>) insertQuery).values(role.getId(), menuId);
+                    }
 
-                    return connection.preparedQuery(deleteQuery.getSQL()).execute(Tuple.tuple(deleteQuery.getBindValues()))
-                            .compose(_ -> connection.preparedQuery(insertQuery.getSQL()).execute(Tuple.tuple(insertQuery.getBindValues())))
+                    String deleteSql = deleteQuery.getSQL();
+                    String insertSql = insertQuery.getSQL();
+                    List<Object> deleteArgs = insertQuery.getBindValues();
+                    List<Object> insertArgs = insertQuery.getBindValues();
+                    return connection.preparedQuery(deleteSql).execute(Tuple.tuple(deleteArgs))
+                            .compose(_ -> connection.preparedQuery(insertSql).execute(Tuple.tuple(insertArgs)))
                             .compose(_ -> operationRecordRepository.add(connection, "setAuthorities", setDto.getRoleId().toString(), setDto.getMenuIds().stream().map(Object::toString).collect(Collectors.joining(",")), operator))
                             .compose(_ -> connection.transaction().commit());
                 })
@@ -350,8 +357,8 @@ public class RoleService {
      */
     public Mono<List<RoleMenuAuthorityCompareDto>> compareAuthorities(Mono<MultipleIdDto> idsDtoMono) {
         return idsDtoMono.flatMap(idsDto -> {
-            SelectConditionStep<?> authoritiesQuery = dslContext.select(Tables.ROLE_MENU_AUTHORITY.ROLE_ID, Tables.ROLE_MENU_AUTHORITY.MENU_ID).where(Tables.ROLE_MENU_AUTHORITY.ROLE_ID.in(idsDto.getIds()));
-            SelectConditionStep<?> menuQuery = dslContext.select(Tables.MENU.ID, Tables.MENU.PARENT_ID, Tables.MENU.NAME, Tables.MENU.SORT_BY).where(Tables.MENU.STATUS.eq(Status.enable.value()));
+            Select<?> authoritiesQuery = dslContext.select(Tables.ROLE_MENU_AUTHORITY.ROLE_ID, Tables.ROLE_MENU_AUTHORITY.MENU_ID).where(Tables.ROLE_MENU_AUTHORITY.ROLE_ID.in(idsDto.getIds()));
+            Select<?> menuQuery = dslContext.select(Tables.MENU.ID, Tables.MENU.PARENT_ID, Tables.MENU.NAME, Tables.MENU.SORT_BY).where(Tables.MENU.STATUS.eq(Status.enable.value()));
 
             return Mono.<List<RoleMenuAuthorityCompareDto>>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(authoritiesQuery.getSQL())
                     .execute(Tuple.tuple(menuQuery.getBindValues()))
@@ -394,7 +401,7 @@ public class RoleService {
         TableRoleMenuAuthority a = Tables.ROLE_MENU_AUTHORITY.as("a");
         TableMenu m = Tables.MENU.as("m");
 
-        SelectConditionStep<?> query = dslContext.select(a.ID, a.ROLE_ID, a.MENU_ID, m.ID, m.PARENT_ID, m.TYPE, m.NAME, m.ICON, m.PATH, m.SORT_BY).from(a).innerJoin(m).on(m.ID.eq(a.MENU_ID)).where(a.ROLE_ID.eq(authDetails.getRoleId())).and(m.STATUS.eq(Status.enable.value()));
+        Select<?> query = dslContext.select(a.ID, a.ROLE_ID, a.MENU_ID, m.ID, m.PARENT_ID, m.TYPE, m.NAME, m.ICON, m.PATH, m.SORT_BY).from(a).innerJoin(m).on(m.ID.eq(a.MENU_ID)).where(a.ROLE_ID.eq(authDetails.getRoleId())).and(m.STATUS.eq(Status.enable.value()));
         return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(query.getSQL())
                 .execute(Tuple.tuple(query.getBindValues()))
                 .map(rows -> {

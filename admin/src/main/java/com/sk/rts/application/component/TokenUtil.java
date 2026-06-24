@@ -55,19 +55,19 @@ public class TokenUtil {
         return token;
     }
 
-    public AdminAccessToken generate(String username) {
+    public AdminAccessToken generate(String subject) {
         OffsetDateTime now = OffsetDateTime.now();
         OffsetDateTime expiration = now.plusSeconds(tokenProperties.getExpiration().toSeconds());
 
         String token = Jwts.builder()
                 .issuer("rts")
-                .subject(username)
+                .subject(subject)
                 .issuedAt(TimeUtil.toDate(now))
                 .expiration(TimeUtil.toDate(expiration))
                 .signWith(tokenProperties.getSecretKey())
                 .compact();
 
-        return new AdminAccessToken(username, token, now.toEpochSecond(), expiration.toEpochSecond());
+        return new AdminAccessToken(subject, token, now.toEpochSecond(), expiration.toEpochSecond());
     }
 
     private Claims parse(String token) throws JwtException {
