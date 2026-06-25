@@ -6,9 +6,6 @@ import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.proto.caching.MsgAdminDetails;
 import com.sk.rts.application.proto.caching.MsgAdminToken;
-import com.sk.rts.application.strategy.LoginConflictStrategy;
-import com.sk.rts.application.util.CodecUtil;
-import com.sk.rts.application.util.FeistelUtil;
 import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.Request;
@@ -80,7 +77,7 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
                 MsgAdminToken msgAdminToken = msgAdminTokenBuilder.build();
 
                 MsgAdminDetails.Builder msgAdminDetailsBuilder = MsgAdminDetails.newBuilder();
-                msgAdminDetailsBuilder.setId(authDetails.getId());
+                msgAdminDetailsBuilder.setId(authDetails.getAdminId());
                 msgAdminDetailsBuilder.setRoleId(authDetails.getRoleId());
                 msgAdminDetailsBuilder.setRoleName(authDetails.getRoleName());
                 msgAdminDetailsBuilder.setUsername(authDetails.getUsername());
@@ -89,15 +86,15 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
                 msgAdminDetailsBuilder.setEmail(authDetails.getEmail());
                 msgAdminDetailsBuilder.setNickname(authDetails.getNickname());
                 msgAdminDetailsBuilder.setAvatar(authDetails.getAvatar());
-                for (ApiPathAuthority authority : authDetails.getAuthorities()) {
+                for (ApiPatternAuthority authority : authDetails.getAuthorities()) {
                     msgAdminDetailsBuilder.addAuthority(authority.getAuthority());
                 }
 
                 Request request = Request.cmd(Command.EVAL);
                 request.arg(SAVE_SCRIPT);
                 request.arg(2);
-                request.arg(AdminAuthDetails.buildTokenKey(msgAdminToken.getSubject()));
-                request.arg(AdminAuthDetails.buildDetailsKey(authDetails.getId()));
+                request.arg(AdminAuthUtil.buildTokenKey(msgAdminToken.getSubject()));
+                request.arg(AdminAuthUtil.buildDetailsKey(authDetails.getAdminId()));
                 request.arg(msgAdminTokenBuilder.build().toByteArray());
                 request.arg(msgAdminDetailsBuilder.build().toByteArray());
                 request.arg(tokenProperties.getExpiration().toSeconds());
@@ -118,7 +115,7 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
         }
 
         String subject = tokenUtil.extractSubject(token);
-        long adminId = FeistelUtil.decode(CodecUtil.decode64(subject));
+        long adminId = AdminAuthUtil.parseSubject(subject);
 
         Request redisRequest = Request.cmd(Command.EVAL);
         redisRequest.arg(QUERY_SCRIPT);

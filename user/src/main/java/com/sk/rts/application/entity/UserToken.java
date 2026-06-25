@@ -47,20 +47,6 @@ public class UserToken extends BaseEntity {
      */
     private OffsetDateTime refreshTime;
 
-    public MsgRefreshToken toProto() {
-        MsgRefreshToken.Builder msgRefreshTokenBuilder = MsgRefreshToken.newBuilder();
-        msgRefreshTokenBuilder.setKey(this.getUserId() + ":" + this.getDeviceId());
-        msgRefreshTokenBuilder.setId(this.getId());
-        msgRefreshTokenBuilder.setUserId(this.getUserId());
-        msgRefreshTokenBuilder.setDeviceId(this.getDeviceId());
-        msgRefreshTokenBuilder.setHash(this.getHash());
-        msgRefreshTokenBuilder.setStatus(this.getStatus());
-        msgRefreshTokenBuilder.setIssueTime(this.getIssueTime().toEpochSecond());
-        msgRefreshTokenBuilder.setExpireTime(this.getExpireTime().toEpochSecond());
-        msgRefreshTokenBuilder.setRefreshTime(this.getRefreshTime().toEpochSecond());
-        return msgRefreshTokenBuilder.build();
-    }
-
     public static UserToken fromRow(Row row) {
         return fromRow(row, 0);
     }

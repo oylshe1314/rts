@@ -1,9 +1,6 @@
 package com.sk.rts.application.service;
 
-import com.sk.rts.application.auth.AdminAccessToken;
-import com.sk.rts.application.auth.AdminAuthDetails;
-import com.sk.rts.application.auth.AdminRemoteDetails;
-import com.sk.rts.application.auth.ApiPathAuthority;
+import com.sk.rts.application.auth.*;
 import com.sk.rts.application.dto.SingleIdDto;
 import com.sk.rts.application.entity.Admin;
 import com.sk.rts.application.entity.Role;
@@ -111,8 +108,8 @@ public class AuthService {
                             .innerJoin(Tables.MENU).on(Tables.MENU.ID.eq(Tables.ROLE_MENU_AUTHORITY.MENU_ID))
                             .where(Tables.ROLE_MENU_AUTHORITY.ROLE_ID.eq(admin.getRoleId())).and(Tables.MENU.TYPE.eq(MenuType.api.value()));
                     return connection.preparedQuery(authoritiesQuery.getSQL()).execute(Tuple.tuple(authoritiesQuery.getBindValues()))
-                            .map(rows -> rows.stream().map(row -> new ApiPathAuthority(row.getString(0))).collect(authDetails::getAuthorities, Collection::add, Collection::addAll))
-                            .flatMap(_ -> operationRecordRepository.add(connection, "login", String.valueOf(authDetails.getId()), "", authDetails))
+                            .map(rows -> rows.stream().map(row -> new ApiPatternAuthority(row.getString(0))).collect(authDetails::getAuthorities, Collection::add, Collection::addAll))
+                            .flatMap(_ -> operationRecordRepository.add(connection, "login", String.valueOf(authDetails.getAdminId()), "", authDetails))
                             .map(authDetails);
                 })
                 .onComplete(_ -> connection.close())
@@ -128,12 +125,12 @@ public class AuthService {
      * @param authDetails 管理员认证信息
      */
     public Mono<Void> logout(AdminAuthDetails authDetails, AdminAccessToken accessToken) {
-        long adminId = authDetails.getId();
+        long adminId = authDetails.getAdminId();
         String subject = accessToken.getSubject();
 
         Request request = Request.cmd(Command.DEL);
-        request.arg(AdminAuthDetails.buildDetailsKey(adminId));
-        request.arg(AdminAuthDetails.buildTokenKey(subject));
+        request.arg(AdminAuthUtil.buildDetailsKey(adminId));
+        request.arg(AdminAuthUtil.buildTokenKey(subject));
 
         return Mono.create(sink -> redis.send(request).flatMap(_ -> operationRecordRepository.add("logout", String.valueOf(adminId), "", authDetails)).onSuccess(sink::success).onFailure(sink::error));
     }
@@ -150,8 +147,8 @@ public class AuthService {
             String subject = CodecUtil.encode64(FeistelUtil.encode(adminId));
 
             Request request = Request.cmd(Command.DEL);
-            request.arg(AdminAuthDetails.buildDetailsKey(adminId));
-            request.arg(AdminAuthDetails.buildTokenKey(subject));
+            request.arg(AdminAuthUtil.buildDetailsKey(adminId));
+            request.arg(AdminAuthUtil.buildTokenKey(subject));
 
             return Mono.create(sink -> redis.send(request).flatMap(_ -> operationRecordRepository.add("kickout", String.valueOf(adminId), "", operator)).onSuccess(sink::success).onFailure(sink::error));
         });

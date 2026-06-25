@@ -2,7 +2,6 @@ package com.sk.rts.application.dto;
 
 import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.dto.base.BaseDto;
-import com.sk.rts.application.proto.caching.MsgAdminDetails;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,7 +30,7 @@ public class AdminDetailDto extends BaseDto {
     private final String avatar;
 
     public AdminDetailDto(AdminAuthDetails authDetails) {
-        super(authDetails.getId());
+        super(authDetails.getAdminId());
         this.roleName = authDetails.getRoleName();
         this.username = authDetails.getUsername();
         this.phone = authDetails.getPhone();

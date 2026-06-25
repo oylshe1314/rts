@@ -7,7 +7,6 @@ import lombok.Setter;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.stream.Collectors;
@@ -17,7 +16,7 @@ import java.util.stream.Collectors;
 @NullMarked
 public class AdminAuthDetails implements UserDetails {
 
-    private Long id;
+    private Long adminId;
     private Long roleId;
     private String roleName;
     private String username;
@@ -27,10 +26,10 @@ public class AdminAuthDetails implements UserDetails {
     private String nickname;
     private String avatar;
     private String loginIp;
-    private Collection<ApiPathAuthority> authorities;
+    private Collection<ApiPatternAuthority> authorities;
 
     public AdminAuthDetails(Admin admin, AdminRemoteDetails remoteDetails) {
-        this.id = admin.getId();
+        this.adminId = admin.getId();
         this.roleId = admin.getRole().getId();
         this.roleName = admin.getRole().getName();
         this.username = admin.getUsername();
@@ -43,8 +42,8 @@ public class AdminAuthDetails implements UserDetails {
         this.authorities = new HashSet<>();
     }
 
-    public AdminAuthDetails(Admin admin, AdminRemoteDetails remoteDetails, Collection<ApiPathAuthority> authorities) {
-        this.id = admin.getId();
+    public AdminAuthDetails(Admin admin, AdminRemoteDetails remoteDetails, Collection<ApiPatternAuthority> authorities) {
+        this.adminId = admin.getId();
         this.roleId = admin.getRole().getId();
         this.roleName = admin.getRole().getName();
         this.username = admin.getUsername();
@@ -58,7 +57,7 @@ public class AdminAuthDetails implements UserDetails {
     }
 
     public AdminAuthDetails(MsgAdminDetails message) {
-        this.id = message.getId();
+        this.adminId = message.getId();
         this.roleId = message.getRoleId();
         this.roleName = message.getRoleName();
         this.username = message.getUsername();
@@ -68,15 +67,7 @@ public class AdminAuthDetails implements UserDetails {
         this.nickname = message.getNickname();
         this.avatar = message.getAvatar();
         this.loginIp = message.getLoginIp();
-        this.authorities = message.getAuthorityList().stream().map(ApiPathAuthority::new).collect(Collectors.toSet());
-    }
-
-    public static String buildTokenKey(String subject) {
-        return "message:admin:token:" + subject;
-    }
-
-    public static String buildDetailsKey(long id) {
-        return "message:admin:details:" + id;
+        this.authorities = message.getAuthorityList().stream().map(ApiPatternAuthority::new).collect(Collectors.toSet());
     }
 }
 

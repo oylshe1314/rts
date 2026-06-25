@@ -224,7 +224,7 @@ comment on column operation_record.create_time is '操作时间';
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-create table user_detail
+create table user_details
 (
     id          bigint not null primary key generated always as identity,
     nickname    text   not null,
@@ -234,14 +234,14 @@ create table user_detail
     create_time text   not null default current_timestamp
 );
 
-grant select, insert, update on user_detail to rts_server;
+grant select, insert, update on user_details to rts_server;
 
-comment on table user_detail is '用户信息表';
-comment on column user_detail.nickname is '昵称';
-comment on column user_detail.avatar is '头像';
-comment on column user_detail.gender is '性别';
-comment on column user_detail.birthday is '出生日期';
-comment on column user_detail.create_time is '创建时间';
+comment on table user_details is '用户信息表';
+comment on column user_details.nickname is '昵称';
+comment on column user_details.avatar is '头像';
+comment on column user_details.gender is '性别';
+comment on column user_details.birthday is '出生日期';
+comment on column user_details.create_time is '创建时间';
 
 
 create table user_account
@@ -272,9 +272,6 @@ create table user_device
     device_no   text        not null,
     platform    text        not null,
     serial_no   text        not null,
-    channel     text        not null,
-    caller      text        not null,
-    version     text        not null,
     create_time timestamptz not null default current_timestamp,
     constraint unique_user_device_device_no unique (device_no)
 );
@@ -288,9 +285,6 @@ comment on column user_device.user_id is '用户ID';
 comment on column user_device.device_no is '设备编号';
 comment on column user_device.platform is '平台';
 comment on column user_device.serial_no is '序列号';
-comment on column user_device.channel is '渠道';
-comment on column user_device.caller is '客户端';
-comment on column user_device.version is '版本号';
 comment on column user_device.create_time is '创建时间';
 
 

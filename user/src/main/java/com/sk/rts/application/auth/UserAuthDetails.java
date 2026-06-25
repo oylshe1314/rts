@@ -1,8 +1,10 @@
 package com.sk.rts.application.auth;
 
+import com.sk.rts.application.entity.UserAccount;
+import com.sk.rts.application.entity.UserDetails;
+import com.sk.rts.application.entity.UserDevice;
 import com.sk.rts.application.proto.caching.MsgUserDetails;
 import com.sk.rts.application.proto.caching.MsgUserDevice;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,52 +18,64 @@ import java.util.Collections;
 @Setter
 @NullMarked
 @NoArgsConstructor
-@AllArgsConstructor
 public class UserAuthDetails implements org.springframework.security.core.userdetails.UserDetails {
 
-    public static String buildSubject(String username, String deviceNo) {
-        return username + ":" + deviceNo;
+    private Long userId;
+    private String username;
+    private String email;
+    private String phone;
+    private String password;
+    private String nickname;
+    private String avatar;
+    private Long registerTime;
+
+    private Long deviceId;
+    private String deviceNo;
+    private String platform;
+    private String serialNo;
+    private Long deviceTime;
+    private String loginIp;
+
+    public UserAuthDetails(UserDetails details, UserRemoteDetails remoteDetails) {
+        this(details, details.getAccount(), details.getDevice(), remoteDetails);
     }
 
-    public static String buildTokenKey(String subject) {
-        return "message:user:token:" + subject;
+    public UserAuthDetails(UserDetails details, UserAccount account, UserDevice device, UserRemoteDetails remoteDetails) {
+        this.userId = details.getId();
+        this.username = account.getUsername();
+        this.email = account.getEmail();
+        this.phone = account.getPhone();
+        this.password = account.getPassword();
+        this.nickname = details.getNickname();
+        this.avatar = details.getAvatar();
+        this.registerTime = details.getCreateTime().toEpochSecond();
+        this.deviceId = device.getId();
+        this.deviceNo = device.getDeviceNo();
+        this.platform = device.getPlatform();
+        this.serialNo = device.getSerialNo();
+        this.deviceTime = device.getCreateTime().toEpochSecond();
+        this.loginIp = remoteDetails.getAddress();
     }
 
-    public static String buildDetailsKey(String username) {
-        return "message:user:details:" + username;
-    }
-
-    public static String buildDeviceKey(String deviceNo) {
-        return "message:user:device:" + deviceNo;
-    }
-
-    private MsgUserDetails details;
-    private MsgUserDevice device;
-
-    public long getUserId() {
-        return details.getId();
-    }
-
-    public long getDeviceId() {
-        return device.getId();
-    }
-
-    public String getDeviceNo() {
-        return device.getDeviceNo();
-    }
-
-    @Override
-    public String getUsername() {
-        return details.getUsername();
-    }
-
-    @Override
-    public String getPassword() {
-        return details.getPassword();
+    public UserAuthDetails(MsgUserDetails details, MsgUserDevice device, UserRemoteDetails remoteDetails) {
+        this.userId = details.getId();
+        this.username = details.getUsername();
+        this.email = details.getEmail();
+        this.phone = details.getPhone();
+        this.password = details.getPassword();
+        this.nickname = details.getNickname();
+        this.avatar = details.getAvatar();
+        this.registerTime = details.getCreateTime();
+        this.deviceId = device.getId();
+        this.deviceNo = device.getDeviceNo();
+        this.platform = device.getPlatform();
+        this.serialNo = device.getSerialNo();
+        this.deviceTime = device.getCreateTime();
+        this.loginIp = remoteDetails.getAddress();
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.emptyList();
+        return Collections.emptySet();
     }
 }

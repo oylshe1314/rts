@@ -2,6 +2,7 @@ package com.sk.rts.application.strategy;
 
 import com.sk.rts.application.auth.AdminAccessToken;
 import com.sk.rts.application.auth.AdminAuthDetails;
+import com.sk.rts.application.auth.AdminAuthUtil;
 import com.sk.rts.application.exception.StandardStatusException;
 import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
@@ -18,10 +19,10 @@ public class DenyLoginStrategy extends AbstractLoginConflictStrategy {
 
     @Override
     public Mono<Void> resolve(AdminAuthDetails authDetails, AdminAccessToken accessToken) {
-        long adminId = authDetails.getId();
+        long adminId = authDetails.getAdminId();
         String subject = accessToken.getSubject();
 
-        Request request = Request.cmd(Command.EXISTS, AdminAuthDetails.buildDetailsKey(adminId), AdminAuthDetails.buildTokenKey(subject));
+        Request request = Request.cmd(Command.EXISTS, AdminAuthUtil.buildDetailsKey(adminId), AdminAuthUtil.buildTokenKey(subject));
 
         return Mono.create(sink -> redis.send(request).onFailure(sink::error).onSuccess(response -> {
             if (response.toLong() < 2) {

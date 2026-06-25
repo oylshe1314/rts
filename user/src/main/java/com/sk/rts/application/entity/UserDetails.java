@@ -42,19 +42,6 @@ public class UserDetails extends BaseEntity {
 
     private UserDevice device;
 
-    public MsgUserDetails toProto() {
-        MsgUserDetails.Builder detailsBuilder = MsgUserDetails.newBuilder();
-        detailsBuilder.setId(this.getId());
-        detailsBuilder.setUsername(this.getAccount().getUsername());
-        detailsBuilder.setEmail(this.getAccount().getEmail());
-        detailsBuilder.setPhone(this.getAccount().getPhone());
-        detailsBuilder.setPassword(this.getAccount().getPassword());
-        detailsBuilder.setNickname(this.getNickname());
-        detailsBuilder.setAvatar(this.getAvatar());
-        detailsBuilder.setCreateTime(this.getCreateTime().toEpochSecond());
-        return detailsBuilder.build();
-    }
-
     public static UserDetails fromRow(Row row) {
         return fromRow(row, 0);
     }

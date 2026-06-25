@@ -1,7 +1,7 @@
 package com.sk.rts.application.service;
 
-import com.sk.rts.application.auth.AdminAccessToken;
 import com.sk.rts.application.auth.AdminAuthDetails;
+import com.sk.rts.application.auth.AdminAuthUtil;
 import com.sk.rts.application.dto.*;
 import com.sk.rts.application.entity.Admin;
 import com.sk.rts.application.entity.Role;
@@ -311,7 +311,7 @@ public class AdminService {
             }
 
             return Mono.create(sink -> {
-                Set<String> keys = ids.stream().map(AdminAuthDetails::buildDetailsKey).collect(Collectors.toSet());
+                Set<String> keys = ids.stream().map(AdminAuthUtil::buildDetailsKey).collect(Collectors.toSet());
 
                 Request request = Request.cmd(Command.EXISTS);
                 keys.forEach(request::arg);

@@ -10,7 +10,6 @@ import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
-import org.jooq.InsertResultStep;
 import org.jooq.ResultQuery;
 import org.springframework.stereotype.Repository;
 
@@ -26,7 +25,7 @@ public class OperationRecordRepository {
 
     public Future<Void> add(String operation, String arguments, String remark, AdminAuthDetails operator) {
         OperationRecord record = new OperationRecord();
-        record.setOperatorId(operator.getId());
+        record.setOperatorId(operator.getAdminId());
         record.setOperator(operator.getUsername());
         record.setOperation(operation);
         record.setArguments(arguments);
@@ -38,7 +37,7 @@ public class OperationRecordRepository {
 
     public Future<Void> add(SqlConnection connection, String operation, String arguments, String remark, AdminAuthDetails operator) {
         OperationRecord record = new OperationRecord();
-        record.setOperatorId(operator.getId());
+        record.setOperatorId(operator.getAdminId());
         record.setOperator(operator.getUsername());
         record.setOperation(operation);
         record.setArguments(arguments);

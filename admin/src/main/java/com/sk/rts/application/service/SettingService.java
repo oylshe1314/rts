@@ -1,7 +1,8 @@
 package com.sk.rts.application.service;
 
 import com.sk.rts.application.auth.AdminAuthDetails;
-import com.sk.rts.application.auth.ApiPathAuthority;
+import com.sk.rts.application.auth.AdminAuthUtil;
+import com.sk.rts.application.auth.ApiPatternAuthority;
 import com.sk.rts.application.dto.ChangeDetailDto;
 import com.sk.rts.application.dto.ChangePasswordDto;
 import com.sk.rts.application.exception.ResponseStatus;
@@ -45,7 +46,7 @@ public class SettingService {
 
     private Future<Void> updateCache(AdminAuthDetails authDetails) {
         MsgAdminDetails.Builder msgAdminDetailsBuilder = MsgAdminDetails.newBuilder();
-        msgAdminDetailsBuilder.setId(authDetails.getId());
+        msgAdminDetailsBuilder.setId(authDetails.getAdminId());
         msgAdminDetailsBuilder.setRoleId(authDetails.getRoleId());
         msgAdminDetailsBuilder.setRoleName(authDetails.getRoleName());
         msgAdminDetailsBuilder.setUsername(authDetails.getUsername());
@@ -54,12 +55,12 @@ public class SettingService {
         msgAdminDetailsBuilder.setEmail(authDetails.getEmail());
         msgAdminDetailsBuilder.setNickname(authDetails.getNickname());
         msgAdminDetailsBuilder.setAvatar(authDetails.getAvatar());
-        for (ApiPathAuthority authority : authDetails.getAuthorities()) {
+        for (ApiPatternAuthority authority : authDetails.getAuthorities()) {
             msgAdminDetailsBuilder.addAuthority(authority.getAuthority());
         }
 
         Request request = Request.cmd(Command.SET);
-        request.arg(AdminAuthDetails.buildDetailsKey(authDetails.getId()));
+        request.arg(AdminAuthUtil.buildDetailsKey(authDetails.getAdminId()));
         request.arg(msgAdminDetailsBuilder.build().toByteArray());
 
         return redis.send(request).mapEmpty();
@@ -99,10 +100,10 @@ public class SettingService {
                 return Mono.error(new StandardStatusException(ResponseStatus.parameter_error));
             }
 
-            UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN).set(values).where(Tables.ADMIN.ID.eq(authDetails.getId()));
+            UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN).set(values).where(Tables.ADMIN.ID.eq(authDetails.getAdminId()));
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                    .compose(_ -> operationRecordRepository.add(connection, "changeDetail", String.valueOf(authDetails.getId()), "", authDetails))
+                    .compose(_ -> operationRecordRepository.add(connection, "changeDetail", String.valueOf(authDetails.getAdminId()), "", authDetails))
                     .compose(_ -> {
                         runs.forEach(Runnable::run);
                         return updateCache(authDetails);
@@ -136,11 +137,11 @@ public class SettingService {
                     return Mono.just(newPassword);
                 })
                 .flatMap(newPassword -> {
-                    UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.PASSWORD, newPassword).where(Tables.ADMIN.ID.eq(authDetails.getId()));
+                    UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.PASSWORD, newPassword).where(Tables.ADMIN.ID.eq(authDetails.getAdminId()));
 
                     return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                             .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                            .compose(_ -> operationRecordRepository.add(connection, "changePassword", String.valueOf(authDetails.getId()), "", authDetails))
+                            .compose(_ -> operationRecordRepository.add(connection, "changePassword", String.valueOf(authDetails.getAdminId()), "", authDetails))
                             .compose(_ -> {
                                 authDetails.setPassword(newPassword);
                                 return updateCache(authDetails);

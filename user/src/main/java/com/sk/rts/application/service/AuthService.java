@@ -12,7 +12,7 @@ import com.sk.rts.application.entity.enums.Status;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
 import com.sk.rts.application.jooq.tables.TableUserAccount;
-import com.sk.rts.application.jooq.tables.TableUserDetail;
+import com.sk.rts.application.jooq.tables.TableUserDetails;
 import com.sk.rts.application.jooq.tables.TableUserDevice;
 import com.sk.rts.application.proto.caching.MsgRefreshToken;
 import com.sk.rts.application.repository.UserDeviceRepository;
@@ -39,6 +39,7 @@ import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -69,7 +70,7 @@ public class AuthService {
             return Mono.error(new BadCredentialsException("", new StandardStatusException("device.serial.error", "设备序列号不正确")));
         }
 
-        TableUserDetail u = Tables.USER_DETAIL.as("u");
+        TableUserDetails u = Tables.USER_DETAILS.as("u");
         TableUserAccount a = Tables.USER_ACCOUNT.as("a");
         TableUserDevice d = Tables.USER_DEVICE.as("d");
 
@@ -97,12 +98,14 @@ public class AuthService {
                 .innerJoin(a).on(a.ID.eq(u.ID));
 
         if (platform != Platform.web) {
-            ((SelectJoinStep<?>) query).leftJoin(d).on(d.USER_ID.eq(u.ID)).and(d.SERIAL_NO.eq(remoteDetails.getDevice()));
+            query =  ((SelectJoinStep<?>) query).leftJoin(d).on(d.USER_ID.eq(u.ID)).and(d.SERIAL_NO.eq(remoteDetails.getDevice()));
         }
 
-        ((SelectWhereStep<?>) query).where(a.USERNAME.eq(account)).or(a.PHONE.eq(account)).or(a.EMAIL.eq(account));
+        query = ((SelectWhereStep<?>) query).where(a.USERNAME.eq(account)).or(a.PHONE.eq(account)).or(a.EMAIL.eq(account));
 
-        return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+        String sql = query.getSQL();
+        List<Object> args = query.getBindValues();
+        return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(sql).execute(Tuple.tuple(args))
                 .map(rows -> {
                     if (rows.size() == 0) {
                         throw new BadCredentialsException("", new StandardStatusException("user.username.incorrect", "账号或密码不正确"));
@@ -128,9 +131,6 @@ public class AuthService {
                         device.setDeviceNo(RandomUtil.randomNumber(8));
                         device.setPlatform(platform.name());
                         device.setSerialNo(remoteDetails.getDevice());
-                        device.setChannel(remoteDetails.getChannel());
-                        device.setCaller(remoteDetails.getCaller());
-                        device.setVersion(remoteDetails.getVersion());
                         device.setCreateTime(OffsetDateTime.now());
 
                         return userDeviceRepository.insert(connection, device).map(id -> {
@@ -142,7 +142,7 @@ public class AuthService {
                         return Future.succeededFuture(details);
                     }
                 })
-                .map(details -> new UserAuthDetails(details.toProto(), details.getDevice().toProto()))
+                .map(details -> new UserAuthDetails(details, remoteDetails))
                 .onSuccess(sink::success)
                 .onFailure(sink::error)
         ));
@@ -153,7 +153,7 @@ public class AuthService {
     }
 
     public Mono<UserTokenDetails> generateToken(UserAuthDetails authDetails) {
-        UserAccessToken userAccessToken = tokenUtil.generate(UserAuthDetails.buildSubject(authDetails.getUsername(), authDetails.getDeviceNo()));
+        UserAccessToken userAccessToken = tokenUtil.generate(UserAuthUtil.buildSubject(authDetails.getUserId(), authDetails.getDeviceId()));
 
         String token = RandomUtil.randomRefreshToken(authDetails.getUserId(), authDetails.getDeviceId());
 
@@ -170,16 +170,7 @@ public class AuthService {
                 .compose(_ -> userRefreshTokenRepository.deleteByUserIdAndDeviceId(connection, authDetails.getUserId(), authDetails.getDeviceId()))
                 .compose(_ -> userRefreshTokenRepository.insert(connection, userToken).onSuccess(userToken::setId))
                 .compose(_ -> connection.transaction().commit())
-                .flatMap(_ -> {
-                    MsgRefreshToken msgRefreshToken = userToken.toProto();
-
-                    Request request = Request.cmd(Command.SET);
-                    request.arg("message:refresh:token" + msgRefreshToken.getKey());
-                    request.arg(msgRefreshToken.toByteArray());
-
-                    return redis.send(request).map(_ -> new UserRefreshToken(token, msgRefreshToken.getIssueTime(), msgRefreshToken.getExpireTime()));
-                })
-                .map(userRefreshToken -> new UserTokenDetails(userAccessToken, userRefreshToken))
+                .map(_ -> new UserTokenDetails(userAccessToken, new UserRefreshToken(token, userToken.getIssueTime().toEpochSecond(), userToken.getExpireTime().toEpochSecond())))
                 .onSuccess(sink::success)
                 .onFailure(sink::error)
         ));

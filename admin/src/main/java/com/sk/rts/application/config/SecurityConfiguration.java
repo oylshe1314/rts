@@ -94,7 +94,7 @@ public class SecurityConfiguration {
             }
 
             if (authentication.getAuthorities().stream().anyMatch(authority -> {
-                if (authority instanceof ApiPathAuthority) {
+                if (authority instanceof ApiPatternAuthority) {
                     return pathMatcher.match(authority.getAuthority(), reqPath);
                 }
                 return false;
