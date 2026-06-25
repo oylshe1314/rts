@@ -1,8 +1,10 @@
 package com.sk.rts.application.service;
 
+import com.sk.rts.application.auth.AdminAccessToken;
 import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.auth.AdminRemoteDetails;
 import com.sk.rts.application.auth.ApiPathAuthority;
+import com.sk.rts.application.dto.SingleIdDto;
 import com.sk.rts.application.entity.Admin;
 import com.sk.rts.application.entity.Role;
 import com.sk.rts.application.entity.enums.MenuType;
@@ -10,7 +12,12 @@ import com.sk.rts.application.entity.enums.Status;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
 import com.sk.rts.application.repository.OperationRecordRepository;
+import com.sk.rts.application.util.CodecUtil;
+import com.sk.rts.application.util.FeistelUtil;
 import io.vertx.core.Future;
+import io.vertx.redis.client.Command;
+import io.vertx.redis.client.Redis;
+import io.vertx.redis.client.Request;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
@@ -34,6 +41,8 @@ public class AuthService {
 
     private final Pool pool;
     private final DSLContext dslContext;
+
+    private final Redis redis;
 
     private final OperationRecordRepository operationRecordRepository;
 
@@ -103,7 +112,7 @@ public class AuthService {
                             .where(Tables.ROLE_MENU_AUTHORITY.ROLE_ID.eq(admin.getRoleId())).and(Tables.MENU.TYPE.eq(MenuType.api.value()));
                     return connection.preparedQuery(authoritiesQuery.getSQL()).execute(Tuple.tuple(authoritiesQuery.getBindValues()))
                             .map(rows -> rows.stream().map(row -> new ApiPathAuthority(row.getString(0))).collect(authDetails::getAuthorities, Collection::add, Collection::addAll))
-                            .flatMap(_ -> operationRecordRepository.add(connection, "login", authDetails.getUsername(), "", authDetails))
+                            .flatMap(_ -> operationRecordRepository.add(connection, "login", String.valueOf(authDetails.getId()), "", authDetails))
                             .map(authDetails);
                 })
                 .onComplete(_ -> connection.close())
@@ -115,9 +124,37 @@ public class AuthService {
     /**
      * 管理员登出
      *
-     * @param adminDetails 管理员认证信息
+     * @param accessToken 管理员TOKEN信息
+     * @param authDetails 管理员认证信息
      */
-    public Mono<Void> logout(AdminAuthDetails adminDetails) {
-        return Mono.create(sink -> pool.getConnection().flatMap(connection -> operationRecordRepository.add(connection, "logout", adminDetails.getUsername(), "", adminDetails)).onSuccess(sink::success).onFailure(sink::error));
+    public Mono<Void> logout(AdminAuthDetails authDetails, AdminAccessToken accessToken) {
+        long adminId = authDetails.getId();
+        String subject = accessToken.getSubject();
+
+        Request request = Request.cmd(Command.DEL);
+        request.arg(AdminAuthDetails.buildDetailsKey(adminId));
+        request.arg(AdminAuthDetails.buildTokenKey(subject));
+
+        return Mono.create(sink -> redis.send(request).flatMap(_ -> operationRecordRepository.add("logout", String.valueOf(adminId), "", authDetails)).onSuccess(sink::success).onFailure(sink::error));
+    }
+
+    /**
+     * 管理员跳出
+     *
+     * @param kickoutDtoMono 踢出参数
+     * @param operator       操作员
+     */
+    public Mono<Void> kickout(Mono<SingleIdDto> kickoutDtoMono, AdminAuthDetails operator) {
+        return kickoutDtoMono.flatMap(kickoutDto -> {
+            long adminId = kickoutDto.getId();
+            String subject = CodecUtil.encode64(FeistelUtil.encode(adminId));
+
+            Request request = Request.cmd(Command.DEL);
+            request.arg(AdminAuthDetails.buildDetailsKey(adminId));
+            request.arg(AdminAuthDetails.buildTokenKey(subject));
+
+            return Mono.create(sink -> redis.send(request).flatMap(_ -> operationRecordRepository.add("kickout", String.valueOf(adminId), "", operator)).onSuccess(sink::success).onFailure(sink::error));
+        });
+
     }
 }

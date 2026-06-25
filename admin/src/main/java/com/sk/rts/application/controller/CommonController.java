@@ -1,7 +1,7 @@
 package com.sk.rts.application.controller;
 
-import com.sk.rts.application.auth.AdminAuthToken;
 import com.sk.rts.application.auth.AdminAuthDetails;
+import com.sk.rts.application.auth.AdminAuthToken;
 import com.sk.rts.application.dto.*;
 import com.sk.rts.application.service.AdminService;
 import com.sk.rts.application.service.MenuService;
@@ -64,5 +64,12 @@ public class CommonController {
     @RequestMapping(value = "/select/admins", method = RequestMethod.GET)
     public Mono<ResponseDto<Collection<AdminSelectDto>>> selectRoles(@RequestParam(required = false) @Nullable @Positive Long roleId) {
         return adminService.adminSelectList(roleId).map(ResponseDto::success);
+    }
+
+    @Operation(summary = "管理员详情")
+    @RequestMapping(value = "/admin/details", method = RequestMethod.GET)
+    public Mono<ResponseDto<AdminDetailDto>> adminDetails(AdminAuthToken authToken) {
+        AdminAuthDetails authDetails = (AdminAuthDetails) authToken.getPrincipal();
+        return Mono.just(ResponseDto.success(new AdminDetailDto(authDetails)));
     }
 }

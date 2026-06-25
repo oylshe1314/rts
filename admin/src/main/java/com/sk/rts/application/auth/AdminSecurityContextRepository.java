@@ -6,6 +6,7 @@ import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.proto.caching.MsgAdminDetails;
 import com.sk.rts.application.proto.caching.MsgAdminToken;
+import com.sk.rts.application.strategy.LoginConflictStrategy;
 import com.sk.rts.application.util.CodecUtil;
 import com.sk.rts.application.util.FeistelUtil;
 import io.vertx.redis.client.Command;
@@ -28,6 +29,13 @@ import reactor.core.publisher.Mono;
 @NullMarked
 @AllArgsConstructor
 public class AdminSecurityContextRepository implements ServerSecurityContextRepository {
+
+    private static final String SAVE_SCRIPT = """
+            redis.call('SET', KEYS[1], ARGV[1])
+            redis.call('SET', KEYS[2], ARGV[2])
+            redis.call('EXPIRE', KEYS[1], ARGV[3])
+            redis.call('EXPIRE', KEYS[2], ARGV[3])
+            """;
 
     private static final String QUERY_SCRIPT = """
             local token_data = redis.call('GET', KEYS[1])
@@ -58,44 +66,46 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
             return Mono.error(new StandardStatusException(ResponseStatus.not_logged_in));
         }
 
-        if (context.getAuthentication() instanceof AdminAuthToken authToken) {
-            AdminAuthDetails authDetails = (AdminAuthDetails) authToken.getPrincipal();
-            AdminAccessToken accessToken = (AdminAccessToken) authToken.getCredentials();
+        if (context.getAuthentication() instanceof AdminAuthToken authToken && authToken.isAuthenticated()) {
+            return Mono.create(sink -> {
+                AdminAuthDetails authDetails = (AdminAuthDetails) authToken.getPrincipal();
+                AdminAccessToken accessToken = (AdminAccessToken) authToken.getCredentials();
 
-            MsgAdminToken.Builder msgAdminTokenBuilder = MsgAdminToken.newBuilder();
-            msgAdminTokenBuilder.setSubject(accessToken.getSubject());
-            msgAdminTokenBuilder.setToken(accessToken.getToken());
-            msgAdminTokenBuilder.setIssueTime(accessToken.getIssueTime());
-            msgAdminTokenBuilder.setExpiration(accessToken.getExpiration());
+                MsgAdminToken.Builder msgAdminTokenBuilder = MsgAdminToken.newBuilder();
+                msgAdminTokenBuilder.setSubject(accessToken.getSubject());
+                msgAdminTokenBuilder.setToken(accessToken.getToken());
+                msgAdminTokenBuilder.setIssueTime(accessToken.getIssueTime());
+                msgAdminTokenBuilder.setExpiration(accessToken.getExpiration());
 
-            MsgAdminToken msgAdminToken = msgAdminTokenBuilder.build();
+                MsgAdminToken msgAdminToken = msgAdminTokenBuilder.build();
 
-            MsgAdminDetails.Builder msgAdminDetailsBuilder = MsgAdminDetails.newBuilder();
-            msgAdminDetailsBuilder.setId(authDetails.getId());
-            msgAdminDetailsBuilder.setRoleId(authDetails.getRoleId());
-            msgAdminDetailsBuilder.setRoleName(authDetails.getRoleName());
-            msgAdminDetailsBuilder.setUsername(authDetails.getUsername());
-            msgAdminDetailsBuilder.setPassword(authDetails.getPassword());
-            msgAdminDetailsBuilder.setPhone(authDetails.getPhone());
-            msgAdminDetailsBuilder.setEmail(authDetails.getEmail());
-            msgAdminDetailsBuilder.setNickname(authDetails.getNickname());
-            msgAdminDetailsBuilder.setAvatar(authDetails.getAvatar());
-            for (ApiPathAuthority authority : authDetails.getAuthorities()) {
-                msgAdminDetailsBuilder.addAuthority(authority.getAuthority());
-            }
+                MsgAdminDetails.Builder msgAdminDetailsBuilder = MsgAdminDetails.newBuilder();
+                msgAdminDetailsBuilder.setId(authDetails.getId());
+                msgAdminDetailsBuilder.setRoleId(authDetails.getRoleId());
+                msgAdminDetailsBuilder.setRoleName(authDetails.getRoleName());
+                msgAdminDetailsBuilder.setUsername(authDetails.getUsername());
+                msgAdminDetailsBuilder.setPassword(authDetails.getPassword());
+                msgAdminDetailsBuilder.setPhone(authDetails.getPhone());
+                msgAdminDetailsBuilder.setEmail(authDetails.getEmail());
+                msgAdminDetailsBuilder.setNickname(authDetails.getNickname());
+                msgAdminDetailsBuilder.setAvatar(authDetails.getAvatar());
+                for (ApiPathAuthority authority : authDetails.getAuthorities()) {
+                    msgAdminDetailsBuilder.addAuthority(authority.getAuthority());
+                }
 
-            Request request = Request.cmd(Command.MSETEX);
-            request.arg(2);
-            request.arg(AdminAuthDetails.buildTokenKey(msgAdminToken.getSubject()));
-            request.arg(msgAdminTokenBuilder.build().toByteArray());
-            request.arg(AdminAuthDetails.buildDetailsKey(authDetails.getId()));
-            request.arg(msgAdminDetailsBuilder.build().toByteArray());
-            request.arg("EX");
-            request.arg(tokenProperties.getExpiration().toSeconds());
+                Request request = Request.cmd(Command.EVAL);
+                request.arg(SAVE_SCRIPT);
+                request.arg(2);
+                request.arg(AdminAuthDetails.buildTokenKey(msgAdminToken.getSubject()));
+                request.arg(AdminAuthDetails.buildDetailsKey(authDetails.getId()));
+                request.arg(msgAdminTokenBuilder.build().toByteArray());
+                request.arg(msgAdminDetailsBuilder.build().toByteArray());
+                request.arg(tokenProperties.getExpiration().toSeconds());
 
-            return Mono.create(sink -> redis.send(request).onSuccess(_ -> sink.success()).onFailure(sink::error));
+                redis.send(request).onSuccess(_ -> sink.success()).onFailure(sink::error);
+            });
         } else {
-            return Mono.error(new StandardStatusException(ResponseStatus.access_denied));
+            return Mono.empty();
         }
     }
 
@@ -107,36 +117,33 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
             return Mono.empty();
         }
 
-        try {
-            String subject = tokenUtil.extractSubject(token);
-            long adminId = FeistelUtil.decode(CodecUtil.decode64(subject));
+        String subject = tokenUtil.extractSubject(token);
+        long adminId = FeistelUtil.decode(CodecUtil.decode64(subject));
 
-            Request redisRequest = Request.cmd(Command.GET);
-            redisRequest.arg(AdminAuthDetails.buildTokenKey(subject));
-            redisRequest.arg(AdminAuthDetails.buildDetailsKey(adminId));
+        Request redisRequest = Request.cmd(Command.EVAL);
+        redisRequest.arg(QUERY_SCRIPT);
+        redisRequest.arg(2);
+        redisRequest.arg(subject);
+        redisRequest.arg(adminId);
+        redisRequest.arg(tokenProperties.getExpiration().toSeconds());
 
-            return Mono.<SecurityContext>create(sink -> redis.send(redisRequest).onFailure(sink::error).onSuccess(response -> {
-                try {
-                    if (response.get(0) != null) {
-                        MsgAdminToken msgAdminToken = MsgAdminToken.parseFrom(response.get(0).toBytes());
-                        if (msgAdminToken.getToken().equals(token)) {
-                            if (response.get(1) != null) {
-                                MsgAdminDetails msgAdminDetails = MsgAdminDetails.parseFrom(response.get(1).toBytes());
+        return Mono.<SecurityContext>create(sink -> redis.send(redisRequest).onFailure(sink::error).onSuccess(response -> {
+            try {
+                if (response != null) {
+                    MsgAdminToken msgAdminToken = MsgAdminToken.parseFrom(response.get(0).toBytes());
+                    if (msgAdminToken.getToken().equals(token)) {
+                        MsgAdminDetails msgAdminDetails = MsgAdminDetails.parseFrom(response.get(1).toBytes());
 
-                                AdminAuthToken authResult = new AdminAuthToken(new AdminAuthDetails(msgAdminDetails), new AdminAccessToken(msgAdminToken));
-                                authResult.setDetails(new AdminRemoteDetails(request));
+                        AdminAuthToken authResult = new AdminAuthToken(new AdminAuthDetails(msgAdminDetails), new AdminAccessToken(msgAdminToken));
+                        authResult.setDetails(new AdminRemoteDetails(request));
 
-                                sink.success(new SecurityContextImpl(authResult));
-                            }
-                        }
+                        sink.success(new SecurityContextImpl(authResult));
                     }
-                    sink.error(new StandardStatusException(ResponseStatus.token_expired));
-                } catch (Exception e) {
-                    sink.error(e);
                 }
-            })).cache();
-        } catch (Exception exception) {
-            return Mono.error(exception);
-        }
+                sink.error(new StandardStatusException(ResponseStatus.token_expired));
+            } catch (Exception e) {
+                sink.error(new StandardStatusException(ResponseStatus.internal_error));
+            }
+        })).cache();
     }
 }

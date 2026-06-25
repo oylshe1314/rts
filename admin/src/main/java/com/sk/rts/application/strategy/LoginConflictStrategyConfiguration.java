@@ -1,27 +1,22 @@
 package com.sk.rts.application.strategy;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import com.sk.rts.application.config.SettingProperties;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 
+@AllArgsConstructor
 @SpringBootConfiguration
 public class LoginConflictStrategyConfiguration {
 
-    private final String strategyClass;
-    private final ApplicationContext applicationContext;
-
-    @Autowired
-    public LoginConflictStrategyConfiguration(@Value("${admin.login.conflict.strategy:com.sk.rts.application.strategy.DenyLoginStrategy}") String strategyClass, ApplicationContext applicationContext) {
-        this.strategyClass = strategyClass;
-        this.applicationContext = applicationContext;
-    }
+    private ApplicationContext applicationContext;
+    private SettingProperties settingProperties;
 
     @Bean
     public LoginConflictStrategy loginConflictStrategy() throws ClassNotFoundException {
-        Class<?> clazz = Class.forName(strategyClass);
+        Class<?> clazz = Class.forName(settingProperties.getLoginConflictStrategy());
         DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) applicationContext.getAutowireCapableBeanFactory();
         return (LoginConflictStrategy) beanFactory.createBean(clazz);
     }

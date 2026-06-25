@@ -8,10 +8,7 @@ import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.DSLContext;
-import org.jooq.InsertResultStep;
-import org.jooq.SelectConditionStep;
-import org.jooq.SelectForUpdateOfStep;
+import org.jooq.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -25,7 +22,7 @@ public class AdminRepository {
     private final DSLContext dslContext;
 
     public Future<Admin> getForUpdate(SqlConnection connection, Long id) {
-        SelectForUpdateOfStep<?> query = dslContext.select(
+        Select<?> query = dslContext.select(
                         Tables.ADMIN.ID,
                         Tables.ADMIN.ROLE_ID,
                         Tables.ADMIN.USERNAME,
@@ -52,22 +49,22 @@ public class AdminRepository {
     }
 
     public Future<Boolean> existsByUsername(SqlConnection connection, String username) {
-        SelectConditionStep<?> query = dslContext.select(Tables.ADMIN.ID).from(Tables.ADMIN).where(Tables.ADMIN.USERNAME.eq(username));
+        Select<?> query = dslContext.select(Tables.ADMIN.ID).from(Tables.ADMIN).where(Tables.ADMIN.USERNAME.eq(username));
         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
     }
 
     public Future<Boolean> existsByNickname(SqlConnection connection, String nickname) {
-        SelectConditionStep<?> query = dslContext.select(Tables.ADMIN.ID).from(Tables.ADMIN).where(Tables.ADMIN.NICKNAME.eq(nickname));
+        Select<?> query = dslContext.select(Tables.ADMIN.ID).from(Tables.ADMIN).where(Tables.ADMIN.NICKNAME.eq(nickname));
         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
     }
 
     public Future<Boolean> existsByRoleIdIn(SqlConnection connection, Collection<Long> roleIds) {
-        SelectConditionStep<?> query = dslContext.select(Tables.ADMIN.ID).from(Tables.ADMIN).where(Tables.ADMIN.ROLE_ID.in(roleIds));
+        Select<?> query = dslContext.select(Tables.ADMIN.ID).from(Tables.ADMIN).where(Tables.ADMIN.ROLE_ID.in(roleIds));
         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
     }
 
     public Future<Long> insert(SqlConnection connection, Admin admin) {
-        InsertResultStep<?> query = dslContext.insertInto(
+        ResultQuery<?> query = dslContext.insertInto(
                         Tables.ADMIN,
                         Tables.ADMIN.ROLE_ID,
                         Tables.ADMIN.USERNAME,

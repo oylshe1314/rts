@@ -7,9 +7,7 @@ import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.DSLContext;
-import org.jooq.InsertResultStep;
-import org.jooq.SelectForUpdateOfStep;
+import org.jooq.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -22,7 +20,7 @@ public class RoleRepository {
     private final DSLContext dslContext;
 
     public Future<Role> getForUpdate(SqlConnection connection, Long id) {
-        SelectForUpdateOfStep<?> query = dslContext.select(
+        Select<?> query = dslContext.select(
                 Tables.ROLE.ID,
                 Tables.ROLE.NAME,
                 Tables.ROLE.CODE,
@@ -42,12 +40,12 @@ public class RoleRepository {
     }
 
     public Future<Boolean> existsByName(SqlConnection connection, String name) {
-        SelectForUpdateOfStep<?> query = dslContext.select(Tables.ROLE.ID).from(Tables.ROLE).where(Tables.ROLE.NAME.eq(name)).forUpdate();
+        Select<?> query = dslContext.select(Tables.ROLE.ID).from(Tables.ROLE).where(Tables.ROLE.NAME.eq(name)).forUpdate();
         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
     }
 
     public Future<Long> insert(SqlConnection connection, Role role) {
-        InsertResultStep<?> query = dslContext.insertInto(
+        ResultQuery<?> query = dslContext.insertInto(
                         Tables.ROLE,
                         Tables.ROLE.NAME,
                         Tables.ROLE.STATUS,

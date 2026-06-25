@@ -102,7 +102,7 @@ public class SettingService {
             UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN).set(values).where(Tables.ADMIN.ID.eq(authDetails.getId()));
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                    .compose(_ -> operationRecordRepository.add(connection, "changeDetail", authDetails.getUsername(), "", authDetails))
+                    .compose(_ -> operationRecordRepository.add(connection, "changeDetail", String.valueOf(authDetails.getId()), "", authDetails))
                     .compose(_ -> {
                         runs.forEach(Runnable::run);
                         return updateCache(authDetails);
@@ -140,7 +140,7 @@ public class SettingService {
 
                     return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                             .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                            .compose(_ -> operationRecordRepository.add(connection, "changePassword", authDetails.getUsername(), "", authDetails))
+                            .compose(_ -> operationRecordRepository.add(connection, "changePassword", String.valueOf(authDetails.getId()), "", authDetails))
                             .compose(_ -> {
                                 authDetails.setPassword(newPassword);
                                 return updateCache(authDetails);

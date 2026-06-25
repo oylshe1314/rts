@@ -1,5 +1,6 @@
 package com.sk.rts.application.dto;
 
+import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.dto.base.BaseDto;
 import com.sk.rts.application.proto.caching.MsgAdminDetails;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -29,7 +30,7 @@ public class AdminDetailDto extends BaseDto {
     @Schema(description = "头像")
     private final String avatar;
 
-    public AdminDetailDto(MsgAdminDetails authDetails) {
+    public AdminDetailDto(AdminAuthDetails authDetails) {
         super(authDetails.getId());
         this.roleName = authDetails.getRoleName();
         this.username = authDetails.getUsername();

@@ -1,26 +1,34 @@
 package com.sk.rts.application.strategy;
 
+import com.sk.rts.application.auth.AdminAccessToken;
 import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.exception.StandardStatusException;
+import io.vertx.redis.client.Command;
+import io.vertx.redis.client.Redis;
+import io.vertx.redis.client.Request;
+import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
 
 @NullMarked
+@AllArgsConstructor
 public class DenyLoginStrategy extends AbstractLoginConflictStrategy {
 
+    private final Redis redis;
+
     @Override
-    protected Mono<WebSession> resolve(ServerWebExchange exchange, AdminAuthDetails adminAuthDetails) {
-        WebSession session = getSession(adminAuthDetails.getUsername());
-        if (session == null) {
-            return exchange.getSession();
-        }
+    public Mono<Void> resolve(AdminAuthDetails authDetails, AdminAccessToken accessToken) {
+        long adminId = authDetails.getId();
+        String subject = accessToken.getSubject();
 
-        if (session.isExpired()) {
-            return exchange.getSession();
-        }
+        Request request = Request.cmd(Command.EXISTS, AdminAuthDetails.buildDetailsKey(adminId), AdminAuthDetails.buildTokenKey(subject));
 
-        return Mono.error(new StandardStatusException("用户已在其他设备登录，请先退出其他设备或者等待会话超时"));
+        return Mono.create(sink -> redis.send(request).onFailure(sink::error).onSuccess(response -> {
+            if (response.toLong() < 2) {
+                sink.success();
+            } else {
+                sink.error(new StandardStatusException("用户已在其他设备登录，请先退出其他设备或者等待会话超时"));
+            }
+        }));
     }
 }

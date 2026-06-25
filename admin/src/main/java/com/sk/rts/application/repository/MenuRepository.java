@@ -7,10 +7,7 @@ import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.DSLContext;
-import org.jooq.InsertResultStep;
-import org.jooq.SelectForUpdateOfStep;
-import org.jooq.SelectLimitPercentStep;
+import org.jooq.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -24,7 +21,7 @@ public class MenuRepository {
     private final DSLContext dslContext;
 
     public Future<Menu> getForUpdate(SqlConnection connection, Long id) {
-        SelectForUpdateOfStep<?> query = dslContext.select(
+        Select<?> query = dslContext.select(
                         Tables.MENU.ID,
                         Tables.MENU.PARENT_ID,
                         Tables.MENU.TYPE,
@@ -50,22 +47,22 @@ public class MenuRepository {
     }
 
     public Future<Boolean> existsByParentIdAndName(SqlConnection connection, Long parentId, String name) {
-        SelectLimitPercentStep<?> query = dslContext.select(Tables.MENU.ID).from(Tables.MENU).where(Tables.MENU.PARENT_ID.eq(parentId)).and(Tables.MENU.NAME.eq(name)).limit(1);
+        Select<?> query = dslContext.select(Tables.MENU.ID).from(Tables.MENU).where(Tables.MENU.PARENT_ID.eq(parentId)).and(Tables.MENU.NAME.eq(name)).limit(1);
         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
     }
 
     public Future<Boolean> existsByTypeAndPath(SqlConnection connection, Integer type, String path) {
-        SelectLimitPercentStep<?> query = dslContext.select(Tables.MENU.ID).from(Tables.MENU).where(Tables.MENU.TYPE.eq(type)).and(Tables.MENU.PATH.eq(path)).limit(1);
+        Select<?> query = dslContext.select(Tables.MENU.ID).from(Tables.MENU).where(Tables.MENU.TYPE.eq(type)).and(Tables.MENU.PATH.eq(path)).limit(1);
         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
     }
 
     public Future<Boolean> existsByParentIdIn(SqlConnection connection, Collection<Long> parentIds) {
-        SelectLimitPercentStep<?> query = dslContext.select(Tables.MENU.ID).from(Tables.MENU).where(Tables.MENU.PARENT_ID.in(parentIds)).limit(1);
+        Select<?> query = dslContext.select(Tables.MENU.ID).from(Tables.MENU).where(Tables.MENU.PARENT_ID.in(parentIds)).limit(1);
         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
     }
 
     public Future<Long> insert(SqlConnection connection, Menu menu) {
-        InsertResultStep<?> query = dslContext.insertInto(
+        ResultQuery<?> query = dslContext.insertInto(
                         Tables.MENU,
                         Tables.MENU.PARENT_ID,
                         Tables.MENU.TYPE,

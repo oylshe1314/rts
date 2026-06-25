@@ -4,6 +4,7 @@ import com.sk.rts.application.component.TokenUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.service.AuthService;
+import com.sk.rts.application.strategy.LoginConflictStrategy;
 import com.sk.rts.application.util.CodecUtil;
 import com.sk.rts.application.util.FeistelUtil;
 import lombok.AllArgsConstructor;
@@ -19,8 +20,11 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 public class AdminAuthManager implements ReactiveAuthenticationManager {
 
-    private final TokenUtil tokenUtil;
     private final AuthService authService;
+
+    private final TokenUtil tokenUtil;
+
+    private final LoginConflictStrategy loginConflictStrategy;
 
     @Override
     public Mono<Authentication> authenticate(Authentication authRequest) {
@@ -31,14 +35,17 @@ public class AdminAuthManager implements ReactiveAuthenticationManager {
         String username = (String) authToken.getPrincipal();
         String password = (String) authToken.getCredentials();
 
-        AdminRemoteDetails adminRemoteDetails = (AdminRemoteDetails) authToken.getDetails();
-        if (adminRemoteDetails == null) {
+        AdminRemoteDetails remoteDetails = (AdminRemoteDetails) authToken.getDetails();
+        if (remoteDetails == null) {
             return Mono.error(new BadCredentialsException("", new StandardStatusException(ResponseStatus.internal_error)));
         }
 
-        return authService.login(username, password, adminRemoteDetails).map(adminDetails -> {
-            AdminAccessToken tokenDetail = tokenUtil.generate(CodecUtil.encode64(FeistelUtil.encode(adminDetails.getId())));
-            return new AdminAuthToken(adminDetails, tokenDetail);
+        return authService.login(username, password, remoteDetails).flatMap(adminDetails -> {
+            String subject = CodecUtil.encode64(FeistelUtil.encode(adminDetails.getId()));
+            AdminAccessToken tokenDetail = tokenUtil.generate(subject);
+            AdminAuthToken authResult = new AdminAuthToken(adminDetails, tokenDetail);
+            authResult.setDetails(remoteDetails);
+            return loginConflictStrategy.handleLoginConflict(authResult).thenReturn(authResult);
         });
     }
 }

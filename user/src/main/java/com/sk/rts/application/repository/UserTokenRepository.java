@@ -45,11 +45,11 @@ public class UserTokenRepository {
 
     public Future<Void> deleteById(SqlConnection connection, Long id) {
         DeleteConditionStep<?> query = dslContext.deleteFrom(Tables.USER_REFRESH_TOKEN).where(Tables.USER_REFRESH_TOKEN.ID.eq(id));
-        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).flatMap(_ -> Future.succeededFuture());
+        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).mapEmpty();
     }
 
     public Future<Void> deleteByUserIdAndDeviceId(SqlConnection connection, Long userId, Long deviceId) {
         DeleteConditionStep<?> query = dslContext.deleteFrom(Tables.USER_REFRESH_TOKEN).where(Tables.USER_REFRESH_TOKEN.USER_ID.eq(userId)).and(Tables.USER_REFRESH_TOKEN.DEVICE_ID.eq(deviceId));
-        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).flatMap(_ -> Future.succeededFuture());
+        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).mapEmpty();
     }
 }

@@ -11,4 +11,8 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties("setting")
 public class SettingProperties {
 
+    /**
+     * 登录冲突策略
+     */
+    private String loginConflictStrategy = "com.sk.rts.application.strategy.DenyLoginStrategy";
 }

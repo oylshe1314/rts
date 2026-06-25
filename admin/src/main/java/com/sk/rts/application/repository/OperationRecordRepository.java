@@ -4,12 +4,14 @@ import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.entity.OperationRecord;
 import com.sk.rts.application.jooq.Tables;
 import io.vertx.core.Future;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.jooq.InsertResultStep;
+import org.jooq.ResultQuery;
 import org.springframework.stereotype.Repository;
 
 import java.time.OffsetDateTime;
@@ -19,7 +21,20 @@ import java.time.OffsetDateTime;
 @AllArgsConstructor
 public class OperationRecordRepository {
 
+    private final Pool pool;
     private final DSLContext dslContext;
+
+    public Future<Void> add(String operation, String arguments, String remark, AdminAuthDetails operator) {
+        OperationRecord record = new OperationRecord();
+        record.setOperatorId(operator.getId());
+        record.setOperator(operator.getUsername());
+        record.setOperation(operation);
+        record.setArguments(arguments);
+        record.setRemark(remark);
+        record.setLoginIp(operator.getLoginIp());
+        record.setCreateTime(OffsetDateTime.now());
+        return pool.getConnection().flatMap(connection -> insert(connection, record)).mapEmpty();
+    }
 
     public Future<Void> add(SqlConnection connection, String operation, String arguments, String remark, AdminAuthDetails operator) {
         OperationRecord record = new OperationRecord();
@@ -30,11 +45,11 @@ public class OperationRecordRepository {
         record.setRemark(remark);
         record.setLoginIp(operator.getLoginIp());
         record.setCreateTime(OffsetDateTime.now());
-        return insert(connection, record).flatMap(_ -> Future.succeededFuture());
+        return insert(connection, record).mapEmpty();
     }
 
     public Future<Long> insert(SqlConnection connection, OperationRecord record) {
-        InsertResultStep<?> query = dslContext.insertInto(
+        ResultQuery<?> query = dslContext.insertInto(
                         Tables.OPERATION_RECORD,
                         Tables.OPERATION_RECORD.OPERATOR_ID,
                         Tables.OPERATION_RECORD.OPERATOR,

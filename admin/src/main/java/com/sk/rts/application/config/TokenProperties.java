@@ -21,9 +21,9 @@ public class TokenProperties {
     private SecretKey secretKey = Keys.hmacShaKeyFor("d6af49e2962ee5700cfe776de1ea7794".getBytes());
 
     /**
-     * 有效时间，默认3个小时
+     * 有效时间，管理后台默认30分钟
      */
-    private Duration expiration = Duration.ofHours(3);
+    private Duration expiration = Duration.ofMinutes(30);
 
     /**
      * 设置安全KEY

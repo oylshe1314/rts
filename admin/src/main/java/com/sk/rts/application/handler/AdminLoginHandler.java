@@ -21,17 +21,14 @@ import tools.jackson.databind.json.JsonMapper;
 @NullMarked
 public class AdminLoginHandler extends CustomRestHandler implements ServerAuthenticationSuccessHandler, ServerAuthenticationFailureHandler {
 
-    private final LoginConflictStrategy loginConflictStrategy;
-
-    public AdminLoginHandler(JsonMapper jsonMapper, LoginConflictStrategy loginConflictStrategy) {
+    public AdminLoginHandler(JsonMapper jsonMapper) {
         super(jsonMapper);
-        this.loginConflictStrategy = loginConflictStrategy;
     }
 
     @Override
     public Mono<Void> onAuthenticationSuccess(WebFilterExchange exchange, Authentication authentication) {
         if (authentication instanceof AdminAuthToken authToken) {
-            return loginConflictStrategy.handleLoginConflict(exchange.getExchange(), authentication).then(respond(exchange.getExchange().getResponse(), ResponseDto.success(new AccessTokenDto((AdminAccessToken) authToken.getCredentials()))));
+            return respond(exchange.getExchange().getResponse(), ResponseDto.success(new AccessTokenDto((AdminAccessToken) authToken.getCredentials())));
         } else {
             return respondException(exchange.getExchange().getResponse(), new StandardStatusException(ResponseStatus.internal_error));
         }
