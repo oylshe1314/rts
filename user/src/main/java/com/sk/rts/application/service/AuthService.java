@@ -49,6 +49,8 @@ public class AuthService {
     private final UserDeviceRepository userDeviceRepository;
     private final UserTokenRepository userTokenRepository;
 
+    private final CacheService cacheService;
+
     private final PasswordEncoder passwordEncoder;
     private final TokenUtil tokenUtil;
     private final TokenProperties tokenProperties;
@@ -90,7 +92,7 @@ public class AuthService {
                 .innerJoin(a).on(a.ID.eq(u.ID));
 
         if (platform != Platform.web) {
-            query =  ((SelectJoinStep<?>) query).leftJoin(d).on(d.USER_ID.eq(u.ID)).and(d.SERIAL_NO.eq(remoteDetails.getDevice()));
+            query = ((SelectJoinStep<?>) query).leftJoin(d).on(d.USER_ID.eq(u.ID)).and(d.SERIAL_NO.eq(remoteDetails.getDevice()));
         }
 
         query = ((SelectWhereStep<?>) query).where(a.USERNAME.eq(account)).or(a.PHONE.eq(account)).or(a.EMAIL.eq(account));
@@ -172,7 +174,11 @@ public class AuthService {
         return Mono.error(new UnsupportedOperationException("Not implements."));
     }
 
-    public Mono<Void> logout(UserAuthDetails authDetails) {
-        return Mono.error(new UnsupportedOperationException("Not implements."));
+    public Mono<Void> logout(UserAuthDetails authDetails, UserAccessToken accessToken) {
+        return Mono.create(sink -> pool.getConnection()
+                .flatMap(connection -> userTokenRepository.deleteByUserIdAndDeviceId(connection, authDetails.getUserId(), authDetails.getDeviceId()))
+                .onSuccess(sink::success)
+                .onFailure(sink::error)
+        ).then(cacheService.removeUserAuthDetails(authDetails, accessToken));
     }
 }

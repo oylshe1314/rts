@@ -35,7 +35,7 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
             UserAuthDetails authDetails = (UserAuthDetails) authToken.getPrincipal();
             UserAccessToken accessToken = (UserAccessToken) authToken.getCredentials();
 
-            return cacheService.saveUserAuthDetails(accessToken, authDetails, tokenProperties.getAccessToken().getExpiration());
+            return cacheService.saveUserAuthDetails(authDetails, accessToken, tokenProperties.getAccessToken().getExpiration());
         } else {
             return Mono.empty();
         }
@@ -63,6 +63,6 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
 
         UserRemoteDetails remoteDetails = new UserRemoteDetails(request);
 
-        return cacheService.queryUserAuthDetails(accessToken, authDetails).doOnSuccess(_ -> authDetails.setLoginIp(remoteDetails.getAddress())).thenReturn(new SecurityContextImpl(new UserAuthToken(authDetails, accessToken)));
+        return cacheService.queryUserAuthDetails(authDetails, accessToken).doOnSuccess(_ -> authDetails.setLoginIp(remoteDetails.getAddress())).thenReturn(new SecurityContextImpl(new UserAuthToken(authDetails, accessToken)));
     }
 }

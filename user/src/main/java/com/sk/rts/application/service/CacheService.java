@@ -33,7 +33,7 @@ public class CacheService {
      * @param authDetails 用户详情
      * @param expiration  过期时间
      */
-    public Mono<Void> saveUserAuthDetails(UserAccessToken accessToken, UserAuthDetails authDetails, Duration expiration) {
+    public Mono<Void> saveUserAuthDetails(UserAuthDetails authDetails, UserAccessToken accessToken, Duration expiration) {
         return Mono.create(sink -> {
             MsgAccessToken.Builder msgAccessTokenBuilder = MsgAccessToken.newBuilder();
             msgAccessTokenBuilder.setSubject(accessToken.getSubject());
@@ -85,7 +85,7 @@ public class CacheService {
      * @param accessToken 访问TOKEn
      * @param authDetails 认证详情
      */
-    public Mono<Void> queryUserAuthDetails(UserAccessToken accessToken, UserAuthDetails authDetails) {
+    public Mono<Void> queryUserAuthDetails(UserAuthDetails authDetails, UserAccessToken accessToken) {
         return Mono.create(sink -> {
             UserAuthUtil.parseSubject(accessToken.getSubject(), authDetails);
 
@@ -128,6 +128,16 @@ public class CacheService {
                     sink.error(new StandardStatusException(ResponseStatus.internal_error));
                 }
             });
+        });
+    }
+
+    public Mono<Void> removeUserAuthDetails(UserAuthDetails authDetails, UserAccessToken accessToken) {
+        return Mono.create(sink -> {
+            Request request = Request.cmd(Command.DEL);
+            request.arg(UserAuthUtil.buildTokenKey(accessToken.getSubject()));
+            request.arg(UserAuthUtil.buildDeviceKey(authDetails.getDeviceId()));
+
+            redis.send(request).onSuccess(_ -> sink.success()).onFailure(sink::error);
         });
     }
 }
