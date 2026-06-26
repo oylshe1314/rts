@@ -12,13 +12,13 @@ public final class UserAuthUtil {
 
     public static void parseSubject(String subject, UserAuthDetails authDetails) {
         UUID uuid = UUID.fromString(subject);
-        authDetails.setUserId(uuid.getMostSignificantBits());
-        authDetails.setDeviceId(uuid.getLeastSignificantBits());
+        authDetails.setUserId(FeistelUtil.decode(uuid.getMostSignificantBits()));
+        authDetails.setDeviceId(FeistelUtil.decode(uuid.getLeastSignificantBits()));
     }
 
     public static long[] parseSubject(String subject) {
         UUID uuid = UUID.fromString(subject);
-        return new long[]{uuid.getMostSignificantBits(), uuid.getLeastSignificantBits()};
+        return new long[]{FeistelUtil.decode(uuid.getMostSignificantBits()), FeistelUtil.decode(uuid.getLeastSignificantBits())};
     }
 
     public static long parseUserId(String subject) {

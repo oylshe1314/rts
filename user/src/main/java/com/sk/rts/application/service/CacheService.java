@@ -9,13 +9,13 @@ import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.proto.caching.MsgAccessToken;
 import com.sk.rts.application.proto.caching.MsgUserDetails;
 import com.sk.rts.application.proto.caching.MsgUserDevice;
-import io.vertx.core.Future;
 import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.Request;
 import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
@@ -26,89 +26,108 @@ public class CacheService {
 
     private final Redis redis;
 
-    public Future<Void> saveUserAuthDetails(UserAccessToken accessToken, UserAuthDetails authDetails, Duration expiration) {
-        MsgAccessToken.Builder msgAccessTokenBuilder = MsgAccessToken.newBuilder();
-        msgAccessTokenBuilder.setSubject(accessToken.getSubject());
-        msgAccessTokenBuilder.setToken(accessToken.getToken());
-        msgAccessTokenBuilder.setIssueTime(accessToken.getIssueTime());
-        msgAccessTokenBuilder.setExpiration(accessToken.getExpiration());
+    /**
+     * 保存用户认证信息
+     *
+     * @param accessToken 访问TOKEN
+     * @param authDetails 用户详情
+     * @param expiration  过期时间
+     */
+    public Mono<Void> saveUserAuthDetails(UserAccessToken accessToken, UserAuthDetails authDetails, Duration expiration) {
+        return Mono.create(sink -> {
+            MsgAccessToken.Builder msgAccessTokenBuilder = MsgAccessToken.newBuilder();
+            msgAccessTokenBuilder.setSubject(accessToken.getSubject());
+            msgAccessTokenBuilder.setToken(accessToken.getToken());
+            msgAccessTokenBuilder.setIssueTime(accessToken.getIssueTime());
+            msgAccessTokenBuilder.setExpiration(accessToken.getExpiration());
 
-        MsgAccessToken msgAccessToken = msgAccessTokenBuilder.build();
+            MsgAccessToken msgAccessToken = msgAccessTokenBuilder.build();
 
-        MsgUserDetails.Builder msgUserDetailsBuilder = MsgUserDetails.newBuilder();
-        msgUserDetailsBuilder.setId(authDetails.getUserId());
-        msgUserDetailsBuilder.setUsername(authDetails.getUsername());
-        msgUserDetailsBuilder.setEmail(authDetails.getEmail());
-        msgUserDetailsBuilder.setPhone(authDetails.getPhone());
-        msgUserDetailsBuilder.setPassword(authDetails.getPassword());
-        msgUserDetailsBuilder.setNickname(authDetails.getNickname());
-        msgUserDetailsBuilder.setAvatar(authDetails.getAvatar());
-        msgUserDetailsBuilder.setCreateTime(authDetails.getRegisterTime());
+            MsgUserDetails.Builder msgUserDetailsBuilder = MsgUserDetails.newBuilder();
+            msgUserDetailsBuilder.setId(authDetails.getUserId());
+            msgUserDetailsBuilder.setUsername(authDetails.getUsername());
+            msgUserDetailsBuilder.setEmail(authDetails.getEmail());
+            msgUserDetailsBuilder.setPhone(authDetails.getPhone());
+            msgUserDetailsBuilder.setPassword(authDetails.getPassword());
+            msgUserDetailsBuilder.setNickname(authDetails.getNickname());
+            msgUserDetailsBuilder.setAvatar(authDetails.getAvatar());
+            msgUserDetailsBuilder.setCreateTime(authDetails.getRegisterTime());
 
-        MsgUserDetails msgUserDetails = msgUserDetailsBuilder.build();
+            MsgUserDetails msgUserDetails = msgUserDetailsBuilder.build();
 
-        MsgUserDevice.Builder msgUserDeviceBuilder = MsgUserDevice.newBuilder();
-        msgUserDeviceBuilder.setId(authDetails.getDeviceId());
-        msgUserDeviceBuilder.setDeviceNo(authDetails.getDeviceNo());
-        msgUserDeviceBuilder.setPlatform(authDetails.getPlatform());
-        msgUserDeviceBuilder.setSerialNo(authDetails.getDeviceNo());
-        msgUserDeviceBuilder.setCreateTime(authDetails.getDeviceTime());
+            MsgUserDevice.Builder msgUserDeviceBuilder = MsgUserDevice.newBuilder();
+            msgUserDeviceBuilder.setId(authDetails.getDeviceId());
+            msgUserDeviceBuilder.setDeviceNo(authDetails.getDeviceNo());
+            msgUserDeviceBuilder.setPlatform(authDetails.getPlatform());
+            msgUserDeviceBuilder.setSerialNo(authDetails.getDeviceNo());
+            msgUserDeviceBuilder.setCreateTime(authDetails.getDeviceTime());
 
-        MsgUserDevice msgUserDevice = msgUserDeviceBuilder.build();
+            MsgUserDevice msgUserDevice = msgUserDeviceBuilder.build();
 
-        Request request = Request.cmd(Command.MSETEX);
-        request.arg(3);
-        request.arg(UserAuthUtil.buildTokenKey(accessToken.getSubject()));
-        request.arg(msgAccessToken.toByteArray());
-        request.arg(UserAuthUtil.buildDetailsKey(authDetails.getUserId()));
-        request.arg(msgUserDetails.toByteArray());
-        request.arg(UserAuthUtil.buildDeviceKey(authDetails.getDeviceId()));
-        request.arg(msgUserDevice.toByteArray());
-        request.arg("EX");
-        request.arg(expiration.toSeconds());
+            Request request = Request.cmd(Command.MSETEX);
+            request.arg(3);
+            request.arg(UserAuthUtil.buildTokenKey(accessToken.getSubject()));
+            request.arg(msgAccessToken.toByteArray());
+            request.arg(UserAuthUtil.buildDetailsKey(authDetails.getUserId()));
+            request.arg(msgUserDetails.toByteArray());
+            request.arg(UserAuthUtil.buildDeviceKey(authDetails.getDeviceId()));
+            request.arg(msgUserDevice.toByteArray());
+            request.arg("EX");
+            request.arg(expiration.toSeconds());
 
-        return redis.send(request).mapEmpty();
+            redis.send(request).onSuccess(_ -> sink.success()).onFailure(sink::error);
+        });
     }
 
-    public Future<Void> queryUserAuthDetails(UserAccessToken accessToken, UserAuthDetails authDetails) {
-        UserAuthUtil.parseSubject(accessToken.getSubject(), authDetails);
+    /**
+     * 查询用户认证信息
+     *
+     * @param accessToken 访问TOKEn
+     * @param authDetails 认证详情
+     */
+    public Mono<Void> queryUserAuthDetails(UserAccessToken accessToken, UserAuthDetails authDetails) {
+        return Mono.create(sink -> {
+            UserAuthUtil.parseSubject(accessToken.getSubject(), authDetails);
 
-        Request request = Request.cmd(Command.MGET);
-        request.arg(UserAuthUtil.buildTokenKey(accessToken.getSubject()));
-        request.arg(UserAuthUtil.buildDetailsKey(authDetails.getUserId()));
-        request.arg(UserAuthUtil.buildDeviceKey(authDetails.getDeviceId()));
+            Request request = Request.cmd(Command.MGET);
+            request.arg(UserAuthUtil.buildTokenKey(accessToken.getSubject()));
+            request.arg(UserAuthUtil.buildDetailsKey(authDetails.getUserId()));
+            request.arg(UserAuthUtil.buildDeviceKey(authDetails.getDeviceId()));
 
-        return redis.send(request).flatMap(response -> {
-            try {
-                if (response.get(0) != null) {
-                    MsgAccessToken msgAccessToken = MsgAccessToken.parseFrom(response.get(0).toBytes());
-                    if (accessToken.getToken().equals(msgAccessToken.getToken())) {
-                        if (response.get(1) != null && response.get(2) != null) {
-                            MsgUserDetails msgUserDetails = MsgUserDetails.parseFrom(response.get(1).toBytes());
-                            MsgUserDevice msgUserDevice = MsgUserDevice.parseFrom(response.get(2).toBytes());
+            redis.send(request).onFailure(sink::error).onSuccess(response -> {
+                try {
+                    if (response.get(0) != null) {
+                        MsgAccessToken msgAccessToken = MsgAccessToken.parseFrom(response.get(0).toBytes());
+                        if (accessToken.getToken().equals(msgAccessToken.getToken())) {
+                            if (response.get(1) != null && response.get(2) != null) {
+                                MsgUserDetails msgUserDetails = MsgUserDetails.parseFrom(response.get(1).toBytes());
+                                MsgUserDevice msgUserDevice = MsgUserDevice.parseFrom(response.get(2).toBytes());
 
-                            accessToken.setIssueTime(msgAccessToken.getIssueTime());
-                            accessToken.setExpiration(msgAccessToken.getExpiration());
+                                accessToken.setIssueTime(msgAccessToken.getIssueTime());
+                                accessToken.setExpiration(msgAccessToken.getExpiration());
 
-                            authDetails.setUsername(msgUserDetails.getUsername());
-                            authDetails.setEmail(msgUserDetails.getEmail());
-                            authDetails.setPhone(msgUserDetails.getPhone());
-                            authDetails.setPassword(msgUserDetails.getPassword());
-                            authDetails.setNickname(msgUserDetails.getNickname());
-                            authDetails.setAvatar(msgUserDetails.getAvatar());
-                            authDetails.setRegisterTime(msgUserDetails.getCreateTime());
-                            authDetails.setDeviceNo(msgUserDevice.getDeviceNo());
-                            authDetails.setPlatform(msgUserDevice.getPlatform());
-                            authDetails.setSerialNo(msgUserDevice.getSerialNo());
-                            authDetails.setDeviceTime(msgUserDevice.getCreateTime());
-                            return Future.succeededFuture();
+                                authDetails.setUsername(msgUserDetails.getUsername());
+                                authDetails.setEmail(msgUserDetails.getEmail());
+                                authDetails.setPhone(msgUserDetails.getPhone());
+                                authDetails.setPassword(msgUserDetails.getPassword());
+                                authDetails.setNickname(msgUserDetails.getNickname());
+                                authDetails.setAvatar(msgUserDetails.getAvatar());
+                                authDetails.setRegisterTime(msgUserDetails.getCreateTime());
+                                authDetails.setDeviceNo(msgUserDevice.getDeviceNo());
+                                authDetails.setPlatform(msgUserDevice.getPlatform());
+                                authDetails.setSerialNo(msgUserDevice.getSerialNo());
+                                authDetails.setDeviceTime(msgUserDevice.getCreateTime());
+
+                                sink.success();
+                                return;
+                            }
                         }
                     }
+                    sink.error(new StandardStatusException(ResponseStatus.token_expired));
+                } catch (InvalidProtocolBufferException e) {
+                    sink.error(new StandardStatusException(ResponseStatus.internal_error));
                 }
-                return Future.failedFuture(new StandardStatusException(ResponseStatus.token_expired));
-            } catch (InvalidProtocolBufferException e) {
-                return Future.failedFuture(new StandardStatusException(ResponseStatus.internal_error));
-            }
+            });
         });
     }
 }

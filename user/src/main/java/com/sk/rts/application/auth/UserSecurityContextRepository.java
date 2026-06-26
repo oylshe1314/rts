@@ -2,14 +2,8 @@ package com.sk.rts.application.auth;
 
 import com.sk.rts.application.component.TokenUtil;
 import com.sk.rts.application.config.TokenProperties;
-import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
-import com.sk.rts.application.proto.caching.MsgAccessToken;
-import com.sk.rts.application.proto.caching.MsgUserDetails;
-import com.sk.rts.application.proto.caching.MsgUserDevice;
 import com.sk.rts.application.service.CacheService;
-import io.vertx.redis.client.Command;
-import io.vertx.redis.client.Request;
 import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -41,7 +35,7 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
             UserAuthDetails authDetails = (UserAuthDetails) authToken.getPrincipal();
             UserAccessToken accessToken = (UserAccessToken) authToken.getCredentials();
 
-            return Mono.create(sink -> cacheService.saveUserAuthDetails(accessToken, authDetails, tokenProperties.getAccessToken().getExpiration()).onSuccess(sink::success).onFailure(sink::error));
+            return cacheService.saveUserAuthDetails(accessToken, authDetails, tokenProperties.getAccessToken().getExpiration());
         } else {
             return Mono.empty();
         }
@@ -55,23 +49,20 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
             return Mono.empty();
         }
 
+        String subject;
         try {
-            String subject = tokenUtil.extractSubject(token);
-
-            UserAuthDetails authDetails = new UserAuthDetails();
-            UserAccessToken accessToken = new UserAccessToken();
-            accessToken.setToken(subject);
-            accessToken.setToken(token);
-
-            return Mono.create(sink -> cacheService.queryUserAuthDetails(accessToken, authDetails)
-                    .onFailure(sink::error)
-                    .onSuccess(_ -> {
-                        authDetails.setLoginIp(new UserRemoteDetails(request).getAddress());
-                        sink.success(new SecurityContextImpl( new UserAuthToken(authDetails, accessToken)));
-                    })
-            );
+            subject = tokenUtil.extractSubject(token);
         } catch (StandardStatusException e) {
             return Mono.error(e);
         }
+
+        UserAuthDetails authDetails = new UserAuthDetails();
+        UserAccessToken accessToken = new UserAccessToken();
+        accessToken.setToken(subject);
+        accessToken.setToken(token);
+
+        UserRemoteDetails remoteDetails = new UserRemoteDetails(request);
+
+        return cacheService.queryUserAuthDetails(accessToken, authDetails).doOnSuccess(_ -> authDetails.setLoginIp(remoteDetails.getAddress())).thenReturn(new SecurityContextImpl(new UserAuthToken(authDetails, accessToken)));
     }
 }

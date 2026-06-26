@@ -14,14 +14,10 @@ import com.sk.rts.application.jooq.Tables;
 import com.sk.rts.application.jooq.tables.TableUserAccount;
 import com.sk.rts.application.jooq.tables.TableUserDetails;
 import com.sk.rts.application.jooq.tables.TableUserDevice;
-import com.sk.rts.application.proto.caching.MsgRefreshToken;
 import com.sk.rts.application.repository.UserDeviceRepository;
 import com.sk.rts.application.repository.UserTokenRepository;
 import com.sk.rts.application.util.RandomUtil;
 import io.vertx.core.Future;
-import io.vertx.redis.client.Command;
-import io.vertx.redis.client.Redis;
-import io.vertx.redis.client.Request;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
@@ -49,10 +45,9 @@ public class AuthService {
 
     private final Pool pool;
     private final DSLContext dslContext;
-    private final Redis redis;
 
-    private UserDeviceRepository userDeviceRepository;
-    private final UserTokenRepository userRefreshTokenRepository;
+    private final UserDeviceRepository userDeviceRepository;
+    private final UserTokenRepository userTokenRepository;
 
     private final PasswordEncoder passwordEncoder;
     private final TokenUtil tokenUtil;
@@ -88,9 +83,6 @@ public class AuthService {
                         d.ID, // 10
                         d.USER_ID, // 11
                         d.DEVICE_NO, // 12
-                        d.CALLER, // 13
-                        d.VERSION, // 14
-                        d.CHANNEL, // 15
                         d.PLATFORM, // 16
                         d.SERIAL_NO, // 17
                         d.CREATE_TIME) // 18
@@ -167,8 +159,8 @@ public class AuthService {
         userToken.setRefreshTime(userToken.getExpireTime().minus(tokenProperties.getRefreshToken().getRefreshAdvance()));
 
         return Mono.create(sink -> pool.getConnection().map(connection -> connection.begin()
-                .compose(_ -> userRefreshTokenRepository.deleteByUserIdAndDeviceId(connection, authDetails.getUserId(), authDetails.getDeviceId()))
-                .compose(_ -> userRefreshTokenRepository.insert(connection, userToken).onSuccess(userToken::setId))
+                .compose(_ -> userTokenRepository.deleteByUserIdAndDeviceId(connection, authDetails.getUserId(), authDetails.getDeviceId()))
+                .compose(_ -> userTokenRepository.insert(connection, userToken).onSuccess(userToken::setId))
                 .compose(_ -> connection.transaction().commit())
                 .map(_ -> new UserTokenDetails(userAccessToken, new UserRefreshToken(token, userToken.getIssueTime().toEpochSecond(), userToken.getExpireTime().toEpochSecond())))
                 .onSuccess(sink::success)
