@@ -8,8 +8,8 @@ option java_multiple_files = true;
 
 message MsgUserDevice {
     int64 id = 1;
-    string deviceNo = 2;
-    string platform = 3;
-    string serialNo = 4;
+    string platform = 2;
+    string serialNo = 3;
+    string deviceNo = 4;
     int64 createTime = 5;
 }

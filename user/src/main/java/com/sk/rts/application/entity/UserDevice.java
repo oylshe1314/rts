@@ -1,7 +1,6 @@
 package com.sk.rts.application.entity;
 
 import com.sk.rts.application.entity.base.BaseEntity;
-import com.sk.rts.application.proto.caching.MsgUserDevice;
 import io.vertx.sqlclient.Row;
 import lombok.Getter;
 import lombok.Setter;
@@ -18,11 +17,6 @@ public class UserDevice extends BaseEntity {
     private Long userId;
 
     /**
-     * 设备编号
-     */
-    private String deviceNo;
-
-    /**
      * 平台
      */
     private String platform;
@@ -31,6 +25,11 @@ public class UserDevice extends BaseEntity {
      * 序列号
      */
     private String serialNo;
+
+    /**
+     * 设备编号
+     */
+    private String deviceNo;
 
     /**
      * 创建时间
@@ -45,9 +44,9 @@ public class UserDevice extends BaseEntity {
         UserDevice device = new UserDevice();
         device.setId(row.getLong(indexOffset + 0));
         device.setUserId(row.getLong(indexOffset + 1));
-        device.setDeviceNo(row.getString(indexOffset + 2));
-        device.setPlatform(row.getString(indexOffset + 3));
-        device.setSerialNo(row.getString(indexOffset + 4));
+        device.setPlatform(row.getString(indexOffset + 2));
+        device.setSerialNo(row.getString(indexOffset + 3));
+        device.setDeviceNo(row.getString(indexOffset + 4));
         device.setCreateTime(row.getOffsetDateTime(indexOffset + 5));
         return device;
     }

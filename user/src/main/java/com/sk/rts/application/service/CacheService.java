@@ -57,9 +57,9 @@ public class CacheService {
 
             MsgUserDevice.Builder msgUserDeviceBuilder = MsgUserDevice.newBuilder();
             msgUserDeviceBuilder.setId(authDetails.getDeviceId());
-            msgUserDeviceBuilder.setDeviceNo(authDetails.getDeviceNo());
             msgUserDeviceBuilder.setPlatform(authDetails.getPlatform());
             msgUserDeviceBuilder.setSerialNo(authDetails.getDeviceNo());
+            msgUserDeviceBuilder.setDeviceNo(authDetails.getDeviceNo());
             msgUserDeviceBuilder.setCreateTime(authDetails.getDeviceTime());
 
             MsgUserDevice msgUserDevice = msgUserDeviceBuilder.build();
@@ -113,9 +113,9 @@ public class CacheService {
                                 authDetails.setNickname(msgUserDetails.getNickname());
                                 authDetails.setAvatar(msgUserDetails.getAvatar());
                                 authDetails.setRegisterTime(msgUserDetails.getCreateTime());
-                                authDetails.setDeviceNo(msgUserDevice.getDeviceNo());
                                 authDetails.setPlatform(msgUserDevice.getPlatform());
                                 authDetails.setSerialNo(msgUserDevice.getSerialNo());
+                                authDetails.setDeviceNo(msgUserDevice.getDeviceNo());
                                 authDetails.setDeviceTime(msgUserDevice.getCreateTime());
 
                                 sink.success();
@@ -131,6 +131,12 @@ public class CacheService {
         });
     }
 
+    /**
+     * 删除用户认证信息
+     *
+     * @param authDetails 用户认证信息
+     * @param accessToken 用户访问TOKEN
+     */
     public Mono<Void> removeUserAuthDetails(UserAuthDetails authDetails, UserAccessToken accessToken) {
         return Mono.create(sink -> {
             Request request = Request.cmd(Command.DEL);

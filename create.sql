@@ -269,11 +269,11 @@ create table user_device
 (
     id          bigint      not null primary key generated always as identity,
     user_id     bigint      not null,
-    device_no   text        not null,
     platform    text        not null,
     serial_no   text        not null,
+    device_no   text        not null,
     create_time timestamptz not null default current_timestamp,
-    constraint unique_user_device_device_no unique (device_no)
+    constraint unique_user_device_device_no unique (user_id, serial_no)
 );
 
 grant select, insert, update, delete on user_device to rts_server;
@@ -282,9 +282,9 @@ create index idx_user_device_user_id_and_serial_no on user_device (user_id, seri
 
 comment on table user_device is '用户设备表';
 comment on column user_device.user_id is '用户ID';
-comment on column user_device.device_no is '设备编号';
 comment on column user_device.platform is '平台';
 comment on column user_device.serial_no is '序列号';
+comment on column user_device.device_no is '设备编号';
 comment on column user_device.create_time is '创建时间';
 
 

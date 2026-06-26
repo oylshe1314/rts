@@ -30,9 +30,9 @@ public class UserAuthDetails implements org.springframework.security.core.userde
     private Long registerTime;
 
     private Long deviceId;
-    private String deviceNo;
     private String platform;
     private String serialNo;
+    private String deviceNo;
     private Long deviceTime;
     private String loginIp;
 
@@ -50,9 +50,9 @@ public class UserAuthDetails implements org.springframework.security.core.userde
         this.avatar = details.getAvatar();
         this.registerTime = details.getCreateTime().toEpochSecond();
         this.deviceId = device.getId();
-        this.deviceNo = device.getDeviceNo();
         this.platform = device.getPlatform();
         this.serialNo = device.getSerialNo();
+        this.deviceNo = device.getDeviceNo();
         this.deviceTime = device.getCreateTime().toEpochSecond();
         this.loginIp = remoteDetails.getAddress();
     }
@@ -67,9 +67,9 @@ public class UserAuthDetails implements org.springframework.security.core.userde
         this.avatar = details.getAvatar();
         this.registerTime = details.getCreateTime();
         this.deviceId = device.getId();
-        this.deviceNo = device.getDeviceNo();
         this.platform = device.getPlatform();
         this.serialNo = device.getSerialNo();
+        this.deviceNo = device.getDeviceNo();
         this.deviceTime = device.getCreateTime();
         this.loginIp = remoteDetails.getAddress();
     }

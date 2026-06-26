@@ -84,10 +84,10 @@ public class AuthService {
                         a.PASSWORD, // 9
                         d.ID, // 10
                         d.USER_ID, // 11
-                        d.DEVICE_NO, // 12
-                        d.PLATFORM, // 16
-                        d.SERIAL_NO, // 17
-                        d.CREATE_TIME) // 18
+                        d.PLATFORM, // 12
+                        d.SERIAL_NO, // 13
+                        d.DEVICE_NO, // 14
+                        d.CREATE_TIME) // 15
                 .from(u)
                 .innerJoin(a).on(a.ID.eq(u.ID));
 
@@ -122,9 +122,9 @@ public class AuthService {
                     if (details.getDevice() == null) {
                         UserDevice device = new UserDevice();
                         device.setUserId(details.getId());
-                        device.setDeviceNo(RandomUtil.randomNumber(8));
                         device.setPlatform(platform.name());
                         device.setSerialNo(remoteDetails.getDevice());
+                        device.setDeviceNo(RandomUtil.randomNumber(8));
                         device.setCreateTime(OffsetDateTime.now());
 
                         return userDeviceRepository.insert(connection, device).map(id -> {

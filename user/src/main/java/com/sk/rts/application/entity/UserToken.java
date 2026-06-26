@@ -1,7 +1,6 @@
 package com.sk.rts.application.entity;
 
 import com.sk.rts.application.entity.base.BaseEntity;
-import com.sk.rts.application.proto.caching.MsgRefreshToken;
 import io.vertx.sqlclient.Row;
 import lombok.Getter;
 import lombok.Setter;
