@@ -34,7 +34,7 @@ public class UserAuthDetails implements org.springframework.security.core.userde
     private String serialNo;
     private String deviceNo;
     private Long deviceTime;
-    private String loginIp;
+    private String ipAddress;
 
     public UserAuthDetails(UserDetails details, UserRemoteDetails remoteDetails) {
         this(details, details.getAccount(), details.getDevice(), remoteDetails);
@@ -54,7 +54,7 @@ public class UserAuthDetails implements org.springframework.security.core.userde
         this.serialNo = device.getSerialNo();
         this.deviceNo = device.getDeviceNo();
         this.deviceTime = device.getCreateTime().toEpochSecond();
-        this.loginIp = remoteDetails.getAddress();
+        this.ipAddress = remoteDetails.getIpAddress();
     }
 
     public UserAuthDetails(MsgUserDetails details, MsgUserDevice device, UserRemoteDetails remoteDetails) {
@@ -71,7 +71,7 @@ public class UserAuthDetails implements org.springframework.security.core.userde
         this.serialNo = device.getSerialNo();
         this.deviceNo = device.getDeviceNo();
         this.deviceTime = device.getCreateTime();
-        this.loginIp = remoteDetails.getAddress();
+        this.ipAddress = remoteDetails.getIpAddress();
     }
 
     @Override

@@ -11,11 +11,11 @@ public class UserRemoteDetails {
 
     private final String device;
 
-    private final String address;
+    private final String ipAddress;
 
     public UserRemoteDetails(ServerHttpRequest request) {
         platform = ObjectUtils.getIfNull(request.getHeaders().getFirst("X-Caller-Platform"), "");
         device = ObjectUtils.getIfNull(request.getHeaders().getFirst("X-Caller-Device"), "");
-        this.address = request.getRemoteAddress() == null ? "" : request.getRemoteAddress().getHostString();
+        this.ipAddress = request.getRemoteAddress() == null ? "" : request.getRemoteAddress().getHostString();
     }
 }

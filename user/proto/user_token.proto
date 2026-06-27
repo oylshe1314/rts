@@ -14,13 +14,10 @@ message MsgAccessToken {
 }
 
 message MsgRefreshToken {
-    string key = 1;
-    int64 id = 2;
-    int64 userId = 3;
-    int64 deviceId = 4;
-    string hash = 5;
-    int32 status = 6;
-    int64 issueTime = 7;
-    int64 expireTime = 8;
-    int64 refreshTime = 9;
+    int64 userId = 1;
+    int64 deviceId = 2;
+    string hash = 3;
+    int64 issueTime = 4;
+    int64 expireTime = 5;
+    int64 refreshTime = 6;
 }

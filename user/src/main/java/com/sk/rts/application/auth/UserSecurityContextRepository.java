@@ -63,6 +63,6 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
 
         UserRemoteDetails remoteDetails = new UserRemoteDetails(request);
 
-        return cacheService.queryUserAuthDetails(authDetails, accessToken).doOnSuccess(_ -> authDetails.setLoginIp(remoteDetails.getAddress())).thenReturn(new SecurityContextImpl(new UserAuthToken(authDetails, accessToken)));
+        return cacheService.queryUserAuthDetails(authDetails, accessToken).doOnSuccess(_ -> authDetails.setIpAddress(remoteDetails.getIpAddress())).thenReturn(new SecurityContextImpl(new UserAuthToken(authDetails, accessToken)));
     }
 }

@@ -46,16 +46,6 @@ public class MenuRepository {
         });
     }
 
-    public Future<Boolean> existsByParentIdAndName(SqlConnection connection, Long parentId, String name) {
-        Select<?> query = dslContext.select(Tables.MENU.ID).from(Tables.MENU).where(Tables.MENU.PARENT_ID.eq(parentId)).and(Tables.MENU.NAME.eq(name)).limit(1);
-        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
-    }
-
-    public Future<Boolean> existsByTypeAndPath(SqlConnection connection, Integer type, String path) {
-        Select<?> query = dslContext.select(Tables.MENU.ID).from(Tables.MENU).where(Tables.MENU.TYPE.eq(type)).and(Tables.MENU.PATH.eq(path)).limit(1);
-        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
-    }
-
     public Future<Boolean> existsByParentIdIn(SqlConnection connection, Collection<Long> parentIds) {
         Select<?> query = dslContext.select(Tables.MENU.ID).from(Tables.MENU).where(Tables.MENU.PARENT_ID.in(parentIds)).limit(1);
         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);

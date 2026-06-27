@@ -11,9 +11,13 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserRefreshToken {
 
-    private String token;
+    private String subject;
+
+    private String hash;
 
     private Long issueTime;
 
-    private Long expiration;
+    private Long expireTime;
+
+    private Long refreshTime;
 }

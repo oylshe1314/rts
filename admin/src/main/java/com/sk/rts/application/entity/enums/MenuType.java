@@ -45,4 +45,16 @@ public enum MenuType {
     public String desc() {
         return this.desc;
     }
+
+    public static boolean isDir(Integer type) {
+        return type != null && MenuType.dir.value() == type;
+    }
+
+    public  static boolean isMenu(Integer type) {
+        return type != null && MenuType.menu.value() == type;
+    }
+
+    public  static boolean isApi(Integer type) {
+        return type != null && MenuType.api.value() == type;
+    }
 }

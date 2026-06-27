@@ -1,6 +1,7 @@
 package com.sk.rts.application.auth;
 
 import com.sk.rts.application.component.TokenUtil;
+import com.sk.rts.application.config.TokenProperties;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.service.AuthService;
@@ -12,6 +13,8 @@ import org.springframework.security.authentication.ReactiveAuthenticationManager
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+
+import java.time.OffsetDateTime;
 
 @Component
 @NullMarked
@@ -30,7 +33,7 @@ public class AdminAuthManager implements ReactiveAuthenticationManager {
             return Mono.error(new BadCredentialsException("", new StandardStatusException(ResponseStatus.internal_error)));
         }
 
-        String username = (String) authToken.getPrincipal();
+        String account = (String) authToken.getPrincipal();
         String password = (String) authToken.getCredentials();
 
         AdminRemoteDetails remoteDetails = (AdminRemoteDetails) authToken.getDetails();
@@ -38,9 +41,8 @@ public class AdminAuthManager implements ReactiveAuthenticationManager {
             return Mono.error(new BadCredentialsException("", new StandardStatusException(ResponseStatus.internal_error)));
         }
 
-        return authService.login(username, password, remoteDetails).flatMap(authDetails -> {
-            String subject = AdminAuthUtil.buildSubject(authDetails.getAdminId());
-            AdminAccessToken tokenDetail = tokenUtil.generate(subject);
+        return authService.login(account, password, remoteDetails).flatMap(authDetails -> {
+            AdminAccessToken tokenDetail = tokenUtil.generate(AdminAuthUtil.buildSubject(authDetails.getAdminId()));
             AdminAuthToken authResult = new AdminAuthToken(authDetails, tokenDetail);
             authResult.setDetails(remoteDetails);
             return loginConflictStrategy.handleLoginConflict(authResult).thenReturn(authResult);

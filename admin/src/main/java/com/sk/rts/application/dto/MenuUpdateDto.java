@@ -6,6 +6,7 @@ import com.sk.rts.application.validation.NullOrNotBlank;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 
 @Getter
@@ -20,7 +21,7 @@ public class MenuUpdateDto {
     @Schema(description = "类型, 1.目录, 2.菜单, 3.接口")
     private final Integer type;
 
-    @NotNull
+    @PositiveOrZero
     @Schema(description = "上级菜单ID")
     private final Long parentId;
 

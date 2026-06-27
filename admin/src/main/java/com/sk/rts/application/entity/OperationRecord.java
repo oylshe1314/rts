@@ -39,7 +39,7 @@ public class OperationRecord extends BaseEntity {
     /**
      * 操作员登录IP
      */
-    private String loginIp;
+    private String ipAddress;
 
     /**
      * 操作时间
@@ -54,7 +54,7 @@ public class OperationRecord extends BaseEntity {
         record.setOperation(row.getString(3));
         record.setArguments(row.getString(4));
         record.setRemark(row.getString(5));
-        record.setLoginIp(row.getString(6));
+        record.setIpAddress(row.getString(6));
         record.setCreateTime(row.getOffsetDateTime(7));
         return record;
     }

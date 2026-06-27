@@ -48,16 +48,6 @@ public class AdminRepository {
         });
     }
 
-    public Future<Boolean> existsByUsername(SqlConnection connection, String username) {
-        Select<?> query = dslContext.select(Tables.ADMIN.ID).from(Tables.ADMIN).where(Tables.ADMIN.USERNAME.eq(username));
-        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
-    }
-
-    public Future<Boolean> existsByNickname(SqlConnection connection, String nickname) {
-        Select<?> query = dslContext.select(Tables.ADMIN.ID).from(Tables.ADMIN).where(Tables.ADMIN.NICKNAME.eq(nickname));
-        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
-    }
-
     public Future<Boolean> existsByRoleIdIn(SqlConnection connection, Collection<Long> roleIds) {
         Select<?> query = dslContext.select(Tables.ADMIN.ID).from(Tables.ADMIN).where(Tables.ADMIN.ROLE_ID.in(roleIds));
         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);

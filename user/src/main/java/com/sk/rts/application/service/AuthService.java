@@ -6,16 +6,13 @@ import com.sk.rts.application.config.TokenProperties;
 import com.sk.rts.application.entity.UserAccount;
 import com.sk.rts.application.entity.UserDetails;
 import com.sk.rts.application.entity.UserDevice;
-import com.sk.rts.application.entity.UserToken;
 import com.sk.rts.application.entity.enums.Platform;
-import com.sk.rts.application.entity.enums.Status;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
 import com.sk.rts.application.jooq.tables.TableUserAccount;
 import com.sk.rts.application.jooq.tables.TableUserDetails;
 import com.sk.rts.application.jooq.tables.TableUserDevice;
 import com.sk.rts.application.repository.UserDeviceRepository;
-import com.sk.rts.application.repository.UserTokenRepository;
 import com.sk.rts.application.util.RandomUtil;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.Pool;
@@ -47,7 +44,6 @@ public class AuthService {
     private final DSLContext dslContext;
 
     private final UserDeviceRepository userDeviceRepository;
-    private final UserTokenRepository userTokenRepository;
 
     private final CacheService cacheService;
 
@@ -149,25 +145,16 @@ public class AuthService {
     public Mono<UserTokenDetails> generateToken(UserAuthDetails authDetails) {
         UserAccessToken userAccessToken = tokenUtil.generate(UserAuthUtil.buildSubject(authDetails.getUserId(), authDetails.getDeviceId()));
 
-        String token = RandomUtil.randomRefreshToken(authDetails.getUserId(), authDetails.getDeviceId());
+        String hash = RandomUtil.randomRefreshToken(authDetails.getUserId(), authDetails.getDeviceId());
 
-        UserToken userToken = new UserToken();
-        userToken.setUserId(authDetails.getUserId());
-        userToken.setDeviceId(authDetails.getDeviceId());
-        userToken.setHash(passwordEncoder.encode(token));
-        userToken.setStatus(Status.enable.value());
-        userToken.setIssueTime(OffsetDateTime.now());
-        userToken.setExpireTime(userToken.getIssueTime().plus(tokenProperties.getRefreshToken().getExpiration()));
-        userToken.setRefreshTime(userToken.getExpireTime().minus(tokenProperties.getRefreshToken().getRefreshAdvance()));
+        UserRefreshToken userRefreshToken = new UserRefreshToken();
+        userRefreshToken.setSubject(userAccessToken.getSubject());
+        userRefreshToken.setHash(passwordEncoder.encode(hash));
+        userRefreshToken.setIssueTime(userAccessToken.getIssueTime());
+        userRefreshToken.setExpireTime(userRefreshToken.getIssueTime() + tokenProperties.getRefreshToken().getExpiration().toSeconds());
+        userRefreshToken.setRefreshTime(userRefreshToken.getExpireTime() - tokenProperties.getRefreshToken().getRefreshAdvance().toSeconds());
 
-        return Mono.create(sink -> pool.getConnection().map(connection -> connection.begin()
-                .compose(_ -> userTokenRepository.deleteByUserIdAndDeviceId(connection, authDetails.getUserId(), authDetails.getDeviceId()))
-                .compose(_ -> userTokenRepository.insert(connection, userToken).onSuccess(userToken::setId))
-                .compose(_ -> connection.transaction().commit())
-                .map(_ -> new UserTokenDetails(userAccessToken, new UserRefreshToken(token, userToken.getIssueTime().toEpochSecond(), userToken.getExpireTime().toEpochSecond())))
-                .onSuccess(sink::success)
-                .onFailure(sink::error)
-        ));
+        return cacheService.saveUserRefreshToken(authDetails, userRefreshToken, tokenProperties.getRefreshToken().getExpiration()).doOnSuccess(_ -> userRefreshToken.setHash(hash)).thenReturn(new UserTokenDetails(userAccessToken, userRefreshToken));
     }
 
     public Mono<UserTokenDetails> refreshToken(String token, UserRemoteDetails remoteDetails) {
@@ -175,10 +162,8 @@ public class AuthService {
     }
 
     public Mono<Void> logout(UserAuthDetails authDetails, UserAccessToken accessToken) {
-        return Mono.create(sink -> pool.getConnection()
-                .flatMap(connection -> userTokenRepository.deleteByUserIdAndDeviceId(connection, authDetails.getUserId(), authDetails.getDeviceId()))
-                .onSuccess(sink::success)
-                .onFailure(sink::error)
-        ).then(cacheService.removeUserAuthDetails(authDetails, accessToken));
+        UserRefreshToken refreshToken = new UserRefreshToken();
+        refreshToken.setSubject(accessToken.getSubject());
+        return cacheService.removeUserRefreshToken(refreshToken).then(cacheService.removeUserAuthDetails(authDetails, accessToken));
     }
 }

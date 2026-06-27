@@ -10,7 +10,6 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import lombok.AllArgsConstructor;
-import org.apache.commons.codec.digest.HmacUtils;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpCookie;
@@ -18,7 +17,6 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import javax.crypto.SecretKey;
 import java.time.OffsetDateTime;
 import java.util.function.Function;
 
@@ -56,18 +54,24 @@ public class TokenUtil {
     }
 
     public UserAccessToken generate(String subject) {
-        OffsetDateTime now = OffsetDateTime.now();
-        OffsetDateTime expiration = now.plus(tokenProperties.getAccessToken().getExpiration());
+        OffsetDateTime issueTime = OffsetDateTime.now();
+        OffsetDateTime expireTime = issueTime.plus(tokenProperties.getAccessToken().getExpiration());
 
         String token = Jwts.builder()
                 .issuer("rts")
                 .subject(subject)
-                .issuedAt(TimeUtil.toDate(now))
-                .expiration(TimeUtil.toDate(expiration))
+                .issuedAt(TimeUtil.toDate(issueTime))
+                .expiration(TimeUtil.toDate(expireTime))
                 .signWith(tokenProperties.getAccessToken().getSecretKey())
                 .compact();
 
-        return new UserAccessToken(subject, token, now.toEpochSecond(), expiration.toEpochSecond());
+
+        return new UserAccessToken(
+                subject,
+                token,
+                issueTime.toEpochSecond(),
+                expireTime.toEpochSecond()
+        );
     }
 
     private Claims parse(String token) throws JwtException {

@@ -29,15 +29,19 @@ public final class UserAuthUtil {
         return parseSubject(subject)[1];
     }
 
-    public static String buildTokenKey(String subject) {
-        return "message:user:token:" + subject;
-    }
-
     public static String buildDetailsKey(long userId) {
         return "message:user:details:" + userId;
     }
 
     public static String buildDeviceKey(long deviceId) {
         return "message:user:device:" + deviceId;
+    }
+
+    public static String buildAccessTokenKey(String subject) {
+        return "message:user:accessToken:" + subject;
+    }
+
+    public static String buildRefreshTokenKey(String subject) {
+        return "message:user:refreshToken:" + subject;
     }
 }

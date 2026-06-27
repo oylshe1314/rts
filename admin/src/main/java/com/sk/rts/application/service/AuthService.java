@@ -48,13 +48,28 @@ public class AuthService {
     /**
      * 管理员登录认证
      *
-     * @param username      账号
+     * @param account       账号: 用户名/手机号/邮箱
      * @param password      密码
      * @param remoteDetails 客户端信息
      * @return 管理员详情对象，包含权限信息
      */
-    public Mono<AdminAuthDetails> login(String username, String password, AdminRemoteDetails remoteDetails) {
-        SelectConditionStep<?> adminQuery = dslContext.select(Tables.ADMIN.ID, Tables.ADMIN.ROLE_ID, Tables.ADMIN.USERNAME, Tables.ADMIN.PASSWORD, Tables.ADMIN.PHONE, Tables.ADMIN.EMAIL, Tables.ADMIN.NICKNAME, Tables.ADMIN.AVATAR, Tables.ADMIN.STATUS, Tables.ROLE.ID, Tables.ROLE.NAME, Tables.ROLE.STATUS).from(Tables.ADMIN).innerJoin(Tables.ROLE).on(Tables.ROLE.ID.eq(Tables.ADMIN.ROLE_ID)).where(Tables.ADMIN.USERNAME.eq(username));
+    public Mono<AdminAuthDetails> login(String account, String password, AdminRemoteDetails remoteDetails) {
+        SelectConditionStep<?> adminQuery = dslContext.select(
+                        Tables.ADMIN.ID,
+                        Tables.ADMIN.ROLE_ID,
+                        Tables.ADMIN.USERNAME,
+                        Tables.ADMIN.PASSWORD,
+                        Tables.ADMIN.PHONE,
+                        Tables.ADMIN.EMAIL,
+                        Tables.ADMIN.NICKNAME,
+                        Tables.ADMIN.AVATAR,
+                        Tables.ADMIN.STATUS,
+                        Tables.ROLE.ID,
+                        Tables.ROLE.NAME,
+                        Tables.ROLE.STATUS)
+                .from(Tables.ADMIN)
+                .innerJoin(Tables.ROLE).on(Tables.ROLE.ID.eq(Tables.ADMIN.ROLE_ID))
+                .where(Tables.ADMIN.USERNAME.eq(account)).or(Tables.ADMIN.PHONE.eq(account)).or(Tables.ADMIN.EMAIL.eq(account));
 
         return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(adminQuery.getSQL())
                 .execute(Tuple.tuple(adminQuery.getBindValues()))

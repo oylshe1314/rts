@@ -6,6 +6,7 @@ import com.sk.rts.application.entity.Menu;
 import com.sk.rts.application.entity.Role;
 import com.sk.rts.application.entity.RoleMenuAuthority;
 import com.sk.rts.application.entity.enums.Status;
+import com.sk.rts.application.exception.ExceptionUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
@@ -16,6 +17,7 @@ import com.sk.rts.application.repository.OperationRecordRepository;
 import com.sk.rts.application.repository.RoleRepository;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.Pool;
+import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -61,7 +64,9 @@ public class RoleService {
                 .onComplete(_ -> connection.close())
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
-                    rows.forEach(row -> sink.next(new RoleSelectDto(row.getLong(0), row.getString(1))));
+                    for (Row row : rows) {
+                        sink.next(new RoleSelectDto(row.getLong(0), row.getString(1)));
+                    }
                     sink.complete();
                 })
         )).collectList();
@@ -77,7 +82,16 @@ public class RoleService {
         return pageRequestDtoMono.flatMap(pageRequestDto -> {
             RoleQueryDto queryDto = pageRequestDto.getQuery();
 
-            Select<?> pageQuery = dslContext.select(Tables.ROLE.ID, Tables.ROLE.NAME, Tables.ROLE.STATUS, Tables.ROLE.REMARK, Tables.ROLE.CREATE_BY, Tables.ROLE.CREATE_TIME, Tables.ROLE.UPDATE_BY, Tables.ROLE.UPDATE_TIME).from(Tables.ROLE);
+            Select<?> pageQuery = dslContext.select(
+                            Tables.ROLE.ID,
+                            Tables.ROLE.NAME,
+                            Tables.ROLE.STATUS,
+                            Tables.ROLE.REMARK,
+                            Tables.ROLE.CREATE_BY,
+                            Tables.ROLE.CREATE_TIME,
+                            Tables.ROLE.UPDATE_BY,
+                            Tables.ROLE.UPDATE_TIME)
+                    .from(Tables.ROLE);
             Select<?> countQuery = dslContext.selectCount().from(Tables.ROLE);
 
             List<Condition> conditions = new ArrayList<>();
@@ -130,6 +144,19 @@ public class RoleService {
         });
     }
 
+    private <T> Future<T> recoverUniqueIndexException(Throwable throwable) {
+        SQLException sqlException = ExceptionUtil.extractException(throwable, SQLException.class);
+        if (sqlException != null && "23505".equals(sqlException.getSQLState())) {
+            if (sqlException.getMessage().contains("idx_unique_role_name")) {
+                return Future.failedFuture(new StandardStatusException("role.name.exists", "角色名称已存在"));
+            }
+            if (sqlException.getMessage().contains("idx_unique_role_code")) {
+                return Future.failedFuture(new StandardStatusException("role.code.exists", "角色代码已存在"));
+            }
+        }
+        return Future.failedFuture(throwable);
+    }
+
     /**
      * 角色添加
      *
@@ -140,14 +167,15 @@ public class RoleService {
      */
     public Mono<RoleDto> add(Mono<RoleAddDto> addDtoMono, AdminAuthDetails operator) {
         return addDtoMono.flatMap(addDto -> Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
-                .compose(_ -> roleRepository.existsByName(connection, addDto.getName()).flatMap(exists -> exists ? Future.failedFuture(new StandardStatusException("角色已存在")) : Future.succeededFuture()))
                 .compose(_ -> {
                     Role role = new Role();
                     role.setName(addDto.getName());
+                    role.setCode(addDto.getCode());
                     role.setStatus(Status.enable.value());
                     role.initOperation(addDto.getRemark(), operator.getUsername());
 
                     return roleRepository.insert(connection, role)
+                            .recover(this::recoverUniqueIndexException)
                             .compose(id -> {
                                 role.setId(id);
                                 return operationRecordRepository.add(connection, "add", "role", role.getId().toString(), operator);
@@ -178,22 +206,16 @@ public class RoleService {
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> roleRepository.getForUpdate(connection, updateDto.getId()).flatMap(role -> role == null ? Future.failedFuture(new StandardStatusException("角色不存在")) : Future.succeededFuture(role)))
                     .compose(role -> {
-                        if (updateDto.getName() == null || updateDto.getName().equals(role.getName())) {
-                            return Future.succeededFuture(role);
-                        }
-
-                        return roleRepository.existsByName(connection, updateDto.getName()).flatMap(exists -> {
-                            if (exists) {
-                                return Future.failedFuture(new StandardStatusException("角色已存在"));
-                            }
-
+                        if (updateDto.getName() != null && !updateDto.getName().equals(role.getName())) {
                             role.setName(updateDto.getName());
                             values.put(Tables.ROLE.NAME, role.getName());
+                        }
 
-                            return Future.succeededFuture(role);
-                        });
-                    })
-                    .compose(role -> {
+                        if (updateDto.getCode() != null && !updateDto.getCode().equals(role.getCode())) {
+                            role.setCode(updateDto.getCode());
+                            values.put(Tables.ROLE.CODE, role.getCode());
+                        }
+
                         role.updateOperation(updateDto.getRemark(), operator.getUsername());
                         values.put(Tables.ROLE.REMARK, updateDto.getRemark());
                         values.put(Tables.ROLE.UPDATE_BY, role.getUpdateBy());
@@ -202,6 +224,7 @@ public class RoleService {
                         Update<?> query = dslContext.update(Tables.ROLE).set(values).where(Tables.ROLE.ID.eq(role.getId()));
 
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+                                .recover(this::recoverUniqueIndexException)
                                 .compose(_ -> operationRecordRepository.add(connection, "update", "role", role.getId().toString(), operator))
                                 .compose(_ -> connection.transaction().commit())
                                 .onComplete(_ -> connection.close())
@@ -355,16 +378,22 @@ public class RoleService {
      * @param idsDtoMono 角色ID列表
      * @return 菜单权限比较列表
      */
-    public Mono<List<RoleMenuAuthorityCompareDto>> compareAuthorities(Mono<MultipleIdDto> idsDtoMono) {
+    public Mono<List<RoleMenuAuthorityComparisonDto>> compareAuthorities(Mono<MultipleIdDto> idsDtoMono) {
         return idsDtoMono.flatMap(idsDto -> {
+
             Select<?> authoritiesQuery = dslContext.select(Tables.ROLE_MENU_AUTHORITY.ROLE_ID, Tables.ROLE_MENU_AUTHORITY.MENU_ID).where(Tables.ROLE_MENU_AUTHORITY.ROLE_ID.in(idsDto.getIds()));
             Select<?> menuQuery = dslContext.select(Tables.MENU.ID, Tables.MENU.PARENT_ID, Tables.MENU.NAME, Tables.MENU.SORT_BY).where(Tables.MENU.STATUS.eq(Status.enable.value()));
-
-            return Mono.<List<RoleMenuAuthorityCompareDto>>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(authoritiesQuery.getSQL())
+            return Mono.<List<RoleMenuAuthorityComparisonDto>>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(authoritiesQuery.getSQL())
                     .execute(Tuple.tuple(menuQuery.getBindValues()))
                     .map(rows -> {
                         Map<Long, Set<Long>> menusRoleIds = new HashMap<>();
-                        rows.forEach(row -> menusRoleIds.computeIfAbsent(row.getLong(1), _ -> new HashSet<>()).add(row.getLong(0)));
+                        for (Row row : rows) {
+                            RoleMenuAuthority authority = new RoleMenuAuthority();
+                            authority.setRoleId(row.getLong(0));
+                            authority.setMenuId(row.getLong(1));
+
+                            menusRoleIds.computeIfAbsent(authority.getMenuId(), _ -> new HashSet<>()).add(authority.getRoleId());
+                        }
                         return menusRoleIds;
                     })
                     .flatMap(menusRoleIds -> connection.preparedQuery(menuQuery.getSQL())
@@ -378,7 +407,7 @@ public class RoleService {
 
                                         Set<Long> roleIds = menusRoleIds.get(menu.getId());
 
-                                        return new RoleMenuAuthorityCompareDto(menu, roleIds != null && roleIds.size() != idsDto.getIds().size(), roleIds);
+                                        return new RoleMenuAuthorityComparisonDto(menu, roleIds != null && roleIds.size() != idsDto.getIds().size(), roleIds);
                                     }).toList()
                             ))
                     .onComplete(_ -> connection.close())
@@ -406,7 +435,7 @@ public class RoleService {
                 .execute(Tuple.tuple(query.getBindValues()))
                 .map(rows -> {
                     Map<Long, RoleMenuDto> menuMap = new HashMap<>(rows.size());
-                    rows.forEach(row -> {
+                    for (Row row : rows) {
                         RoleMenuAuthority authority = new RoleMenuAuthority();
                         authority.setId(row.getLong(0));
                         authority.setRoleId(row.getLong(1));
@@ -422,8 +451,12 @@ public class RoleService {
                         authority.getMenu().setSortBy(row.getInteger(9));
 
                         menuMap.put(authority.getMenu().getId(), new RoleMenuDto(authority.getMenu()));
-                    });
+                    }
 
+                    return menuMap;
+                })
+                .onComplete(_ -> connection.close())
+                .map(menuMap -> {
                     List<RoleMenuDto> menus = new ArrayList<>();
                     menuMap.forEach((_, menu) -> {
                         if (menu.getParentId() == 0L) {
@@ -439,7 +472,6 @@ public class RoleService {
                     MenuSortableDto.sort(menus);
                     return menus;
                 })
-                .onComplete(_ -> connection.close())
                 .onSuccess(sink::success)
                 .onFailure(sink::error)
         ));

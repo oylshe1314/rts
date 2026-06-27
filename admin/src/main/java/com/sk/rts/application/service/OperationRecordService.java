@@ -46,7 +46,16 @@ public class OperationRecordService {
         return pageRequestDtoMono.flatMap(pageRequestDto -> {
             OperationRecordQueryDto queryDto = pageRequestDto.getQuery();
 
-            Select<?> pageQuery = dslContext.select(Tables.OPERATION_RECORD.ID, Tables.OPERATION_RECORD.OPERATOR_ID, Tables.OPERATION_RECORD.OPERATOR, Tables.OPERATION_RECORD.OPERATION, Tables.OPERATION_RECORD.ARGUMENTS, Tables.OPERATION_RECORD.REMARK, Tables.OPERATION_RECORD.LOGIN_IP, Tables.OPERATION_RECORD.CREATE_TIME).from(Tables.OPERATION_RECORD);
+            Select<?> pageQuery = dslContext.select(
+                            Tables.OPERATION_RECORD.ID,
+                            Tables.OPERATION_RECORD.OPERATOR_ID,
+                            Tables.OPERATION_RECORD.OPERATOR,
+                            Tables.OPERATION_RECORD.OPERATION,
+                            Tables.OPERATION_RECORD.ARGUMENTS,
+                            Tables.OPERATION_RECORD.REMARK,
+                            Tables.OPERATION_RECORD.IP_ADDRESS,
+                            Tables.OPERATION_RECORD.CREATE_TIME)
+                    .from(Tables.OPERATION_RECORD);
             Select<?> countQuery = dslContext.selectCount().from(Tables.OPERATION_RECORD);
 
             List<Condition> conditions = new ArrayList<>();

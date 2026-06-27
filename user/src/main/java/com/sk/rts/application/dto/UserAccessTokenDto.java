@@ -15,7 +15,7 @@ public class UserAccessTokenDto {
     private final Long expiration;
 
     public UserAccessTokenDto(UserAccessToken accessToken) {
-        this(accessToken.getToken(), accessToken.getExpiration());
+        this(accessToken.getToken(), accessToken.getExpireTime());
     }
 
     public UserAccessTokenDto(String token, Long expiration) {

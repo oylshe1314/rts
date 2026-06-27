@@ -6,6 +6,7 @@ import com.sk.rts.application.dto.*;
 import com.sk.rts.application.entity.Admin;
 import com.sk.rts.application.entity.Role;
 import com.sk.rts.application.entity.enums.Status;
+import com.sk.rts.application.exception.ExceptionUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
@@ -19,6 +20,7 @@ import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.Request;
 import io.vertx.sqlclient.Pool;
+import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +33,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -79,7 +82,9 @@ public class AdminService {
                 .onComplete(_ -> connection.close())
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
-                    rows.forEach(row -> sink.next(new AdminSelectDto(row.getLong(0), row.getLong(1), row.getString(2), row.getString(3), row.getString(4))));
+                    for (Row row : rows) {
+                        sink.next(new AdminSelectDto(row.getLong(0), row.getLong(1), row.getString(2), row.getString(3), row.getString(4)));
+                    }
                     sink.complete();
                 })
         )).collectList();
@@ -98,7 +103,25 @@ public class AdminService {
             TableAdmin a = Tables.ADMIN.as("a");
             TableRole r = Tables.ROLE.as("r");
 
-            Select<?> pageQuery = dslContext.select(a.ID, a.ROLE_ID, a.USERNAME, a.PASSWORD, a.PHONE, a.EMAIL, a.NICKNAME, a.AVATAR, a.STATUS, a.REMARK, a.CREATE_BY, a.CREATE_TIME, a.UPDATE_BY, a.UPDATE_TIME, r.ID, r.NAME).from(a).innerJoin(r).on(r.ID.eq(a.ROLE_ID));
+            Select<?> pageQuery = dslContext.select(
+                            a.ID,
+                            a.ROLE_ID,
+                            a.USERNAME,
+                            a.PASSWORD,
+                            a.PHONE,
+                            a.EMAIL,
+                            a.NICKNAME,
+                            a.AVATAR,
+                            a.STATUS,
+                            a.REMARK,
+                            a.CREATE_BY,
+                            a.CREATE_TIME,
+                            a.UPDATE_BY,
+                            a.UPDATE_TIME,
+                            r.ID,
+                            r.NAME)
+                    .from(a).
+                    innerJoin(r).on(r.ID.eq(a.ROLE_ID));
             Select<?> countQuery = dslContext.selectCount().from(a).innerJoin(r).on(r.ID.eq(a.ROLE_ID));
 
             List<Condition> conditions = new ArrayList<>();
@@ -166,6 +189,22 @@ public class AdminService {
         });
     }
 
+    private <T> Future<T> recoverUniqueIndexException(Throwable throwable) {
+        SQLException sqlException = ExceptionUtil.extractException(throwable, SQLException.class);
+        if (sqlException != null && "23505".equals(sqlException.getSQLState())) {
+            if (sqlException.getMessage().contains("idx_unique_admin_username")) {
+                return Future.failedFuture(new StandardStatusException("user.username.exists", "用户名已存在"));
+            }
+            if (sqlException.getMessage().contains("idx_unique_admin_phone")) {
+                return Future.failedFuture(new StandardStatusException("user.phone.exists", "手机号已存在"));
+            }
+            if (sqlException.getMessage().contains("idx_unique_admin_email")) {
+                return Future.failedFuture(new StandardStatusException("user.email.exists", "邮箱已存在"));
+            }
+        }
+        return Future.failedFuture(throwable);
+    }
+
     /**
      * 管理员添加
      *
@@ -176,8 +215,6 @@ public class AdminService {
      */
     public Mono<AdminDto> add(Mono<AdminAddDto> addDtoMono, AdminAuthDetails operator) {
         return addDtoMono.flatMap(addDto -> Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
-                .compose(_ -> adminRepository.existsByUsername(connection, addDto.getUsername()).flatMap(exists -> exists ? Future.failedFuture(new StandardStatusException("用户名已存在")) : Future.succeededFuture()))
-                .compose(_ -> adminRepository.existsByNickname(connection, addDto.getNickname()).flatMap(exists -> exists ? Future.failedFuture(new StandardStatusException("昵称已存在")) : Future.succeededFuture()))
                 .compose(_ -> roleRepository.getForUpdate(connection, addDto.getRoleId()).flatMap(role -> role == null ? Future.failedFuture(new StandardStatusException("角色不存在")) : Future.succeededFuture(role)))
                 .compose(role -> {
                     Admin admin = new Admin();
@@ -192,6 +229,7 @@ public class AdminService {
                     admin.initOperation(addDto.getRemark(), operator.getUsername());
 
                     return adminRepository.insert(connection, admin)
+                            .recover(this::recoverUniqueIndexException)
                             .compose(id -> {
                                 admin.setId(id);
                                 admin.setRole(role);
@@ -243,21 +281,6 @@ public class AdminService {
                         }
                     })
                     .compose(admin -> {
-                        if (updateDto.getNickname() == null || updateDto.getNickname().equals(admin.getNickname())) {
-                            return Future.succeededFuture(admin);
-                        }
-
-                        return adminRepository.existsByNickname(connection, updateDto.getNickname()).flatMap(exists -> {
-                            if (exists) {
-                                return Future.failedFuture(new StandardStatusException("昵称已存在"));
-                            }
-
-                            admin.setNickname(updateDto.getNickname());
-                            values.put(Tables.ADMIN.NICKNAME, admin.getNickname());
-                            return Future.succeededFuture(admin);
-                        });
-                    })
-                    .compose(admin -> {
                         if (updateDto.getPassword() != null) {
                             admin.setPassword(passwordEncoder.encode(updateDto.getPassword()));
                             values.put(Tables.ADMIN.PASSWORD, admin.getPassword());
@@ -273,6 +296,11 @@ public class AdminService {
                             values.put(Tables.ADMIN.EMAIL, admin.getEmail());
                         }
 
+                        if (updateDto.getNickname() != null) {
+                            admin.setNickname(updateDto.getNickname());
+                            values.put(Tables.ADMIN.NICKNAME, admin.getNickname());
+                        }
+
                         if (updateDto.getAvatar() != null) {
                             admin.setAvatar(updateDto.getAvatar());
                             values.put(Tables.ADMIN.AVATAR, admin.getAvatar());
@@ -286,6 +314,7 @@ public class AdminService {
                         Update<?> query = dslContext.update(Tables.ADMIN).set(values).where(Tables.ADMIN.ID.eq(admin.getId()));
 
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+                                .recover(this::recoverUniqueIndexException)
                                 .compose(_ -> operationRecordRepository.add(connection, "update", "admin", admin.getId().toString(), operator))
                                 .compose(_ -> connection.transaction().commit())
                                 .onComplete(_ -> connection.close())

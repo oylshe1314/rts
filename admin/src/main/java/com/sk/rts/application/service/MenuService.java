@@ -5,6 +5,7 @@ import com.sk.rts.application.dto.*;
 import com.sk.rts.application.entity.Menu;
 import com.sk.rts.application.entity.enums.MenuType;
 import com.sk.rts.application.entity.enums.Status;
+import com.sk.rts.application.exception.ExceptionUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
@@ -13,6 +14,7 @@ import com.sk.rts.application.repository.MenuRepository;
 import com.sk.rts.application.repository.OperationRecordRepository;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.Pool;
+import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -60,7 +63,9 @@ public class MenuService {
                 .onComplete(_ -> connection.close())
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
-                    rows.forEach(row -> sink.next(new MenuSelectDto(row.getLong(0), row.getString(1))));
+                    for (Row row : rows) {
+                        sink.next(new MenuSelectDto(row.getLong(0), row.getString(1)));
+                    }
                     sink.complete();
                 })
         )).collectList();
@@ -79,7 +84,24 @@ public class MenuService {
             TableMenu m = Tables.MENU.as("m");
             TableMenu p = Tables.MENU.as("p");
 
-            Select<?> pageQuery = dslContext.select(m.ID, m.PARENT_ID, m.TYPE, m.NAME, m.ICON, m.PATH, m.SORT_BY, m.STATUS, m.REMARK, m.CREATE_BY, m.CREATE_TIME, m.UPDATE_BY, m.UPDATE_TIME, p.ID, p.NAME).from(m).leftJoin(p).on(p.ID.eq(m.PARENT_ID));
+            Select<?> pageQuery = dslContext.select(
+                            m.ID,
+                            m.PARENT_ID,
+                            m.TYPE,
+                            m.NAME,
+                            m.ICON,
+                            m.PATH,
+                            m.SORT_BY,
+                            m.STATUS,
+                            m.REMARK,
+                            m.CREATE_BY,
+                            m.CREATE_TIME,
+                            m.UPDATE_BY,
+                            m.UPDATE_TIME,
+                            p.ID,
+                            p.NAME)
+                    .from(m)
+                    .leftJoin(p).on(p.ID.eq(m.PARENT_ID));
             Select<?> countQuery = dslContext.selectCount().from(m).leftJoin(p).on(p.ID.eq(m.PARENT_ID));
 
             List<Condition> conditions = new ArrayList<>();
@@ -150,6 +172,19 @@ public class MenuService {
         });
     }
 
+    private <T> Future<T> recoverUniqueIndexException(Throwable throwable) {
+        SQLException sqlException = ExceptionUtil.extractException(throwable, SQLException.class);
+        if (sqlException != null && "23505".equals(sqlException.getSQLState())) {
+            if (sqlException.getMessage().contains("idx_unique_menu_parent_id_and_name")) {
+                return Future.failedFuture(new StandardStatusException("menu.name.exists", "菜单名称已存在"));
+            }
+            if (sqlException.getMessage().contains("idx_unique_menu_parent_id_and_path")) {
+                return Future.failedFuture(new StandardStatusException("menu.path.exists", "菜单路径已存在"));
+            }
+        }
+        return Future.failedFuture(throwable);
+    }
+
     /**
      * 菜单添加
      *
@@ -182,8 +217,6 @@ public class MenuService {
                             return menuRepository.getForUpdate(connection, addDto.getParentId());
                         }
                     })
-                    .compose(parent -> menuRepository.existsByParentIdAndName(connection, parent == null ? 0L : parent.getId(), addDto.getName()).flatMap(exists -> exists ? Future.failedFuture(new StandardStatusException("菜单名称已存在")) : Future.succeededFuture(parent)))
-                    .compose(parent -> menuRepository.existsByTypeAndPath(connection, menuType.value(), addDto.getPath()).flatMap(exists -> exists ? Future.failedFuture(new StandardStatusException("菜单路径已存在")) : Future.succeededFuture(parent)))
                     .compose(parent -> {
                         Menu menu = new Menu();
                         menu.setParentId(parent == null ? 0L : parent.getId());
@@ -198,6 +231,7 @@ public class MenuService {
                         menu.setParent(parent);
 
                         return menuRepository.insert(connection, menu)
+                                .recover(this::recoverUniqueIndexException)
                                 .compose(id -> {
                                     menu.setId(id);
                                     return operationRecordRepository.add(connection, "add", "menu", menu.getId().toString(), operator);
@@ -226,7 +260,7 @@ public class MenuService {
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> menuRepository.getForUpdate(connection, updateDto.getId()).flatMap(menu -> menu == null ? Future.failedFuture(new StandardStatusException("菜单不存在")) : Future.succeededFuture(menu)))
                     .compose(menu -> {
-                        if (updateDto.getType() != null) {
+                        if (updateDto.getType() != null && !updateDto.getType().equals(menu.getType())) {
                             MenuType menuType = MenuType.valueOf(updateDto.getType());
                             if (menuType == null) {
                                 return Future.failedFuture(new StandardStatusException("菜单类型错误"));
@@ -234,76 +268,45 @@ public class MenuService {
                             menu.setType(menuType.value());
                             values.put(Tables.MENU.TYPE, menu.getType());
                         }
+                        return Future.succeededFuture(menu);
+                    })
+                    .compose(menu -> {
+                        if (updateDto.getParentId() != null && !updateDto.getParentId().equals(menu.getParentId())) {
+                            menu.setParentId(updateDto.getParentId());
+                            values.put(Tables.MENU.PARENT_ID, menu.getParentId());
 
-                        if (updateDto.getParentId() == null || updateDto.getParentId() == 0L) {
-                            if (menu.getType() == MenuType.api.value()) {
-                                return Future.failedFuture(new StandardStatusException("上级菜单ID错误"));
-                            } else {
-                                menu.setParentId(0L);
-                                menu.setParent(null);
-                                values.put(Tables.MENU.PARENT_ID, menu.getParentId());
-                                return Future.succeededFuture(menu);
-                            }
-                        } else {
-                            return menuRepository.existsByParentIdAndName(connection, updateDto.getParentId(), updateDto.getName()).flatMap(exists -> {
-                                if (exists) {
-                                    return Future.failedFuture(new StandardStatusException("菜单名称已存在"));
-                                }
-
-                                return menuRepository.getForUpdate(connection, updateDto.getParentId()).flatMap(parent -> {
-                                    if (parent == null) {
+                            if (menu.getParentId() != 0L) {
+                                return menuRepository.getForUpdate(connection, menu.getParentId()).flatMap(parent -> {
+                                    if (parent == null || MenuType.isApi(parent.getType())) {
                                         return Future.failedFuture(new StandardStatusException("上级菜单不存在"));
                                     }
 
-                                    menu.setParentId(parent.getId());
                                     menu.setParent(parent);
-                                    values.put(Tables.MENU.PARENT_ID, menu.getParentId());
-
                                     return Future.succeededFuture(menu);
                                 });
-                            });
+                            }
                         }
+                        return Future.succeededFuture(menu);
                     })
                     .compose(menu -> {
-                        if (updateDto.getName() != null) {
-                            return Future.succeededFuture(menu);
+                        if (updateDto.getIcon() != null && !updateDto.getIcon().equals(menu.getIcon())) {
+                            menu.setIcon(MenuType.isApi(menu.getType()) ? "" : updateDto.getIcon());
+                            values.put(Tables.MENU.ICON, menu.getIcon());
                         }
 
-                        return menuRepository.existsByParentIdAndName(connection, menu.getParentId(), menu.getName()).flatMap(exists -> {
-                            if (exists) {
-                                return Future.failedFuture(new StandardStatusException("菜单名称已存在"));
-                            }
-
+                        if (updateDto.getName() != null && !updateDto.getName().equals(menu.getName())) {
                             menu.setName(updateDto.getName());
                             values.put(Tables.MENU.NAME, menu.getName());
-                            return Future.succeededFuture(menu);
-                        });
-                    })
-                    .compose(menu -> {
-                        if (updateDto.getPath() == null) {
-                            return Future.succeededFuture(menu);
                         }
 
-                        if (updateDto.getPath().isBlank()) {
-                            if (menu.getType() == MenuType.menu.value() || menu.getType() == MenuType.api.value()) {
-                                return Future.failedFuture(new StandardStatusException("菜单和接口路径不能为空"));
+                        if (updateDto.getPath() != null && !updateDto.getPath().equals(menu.getPath())) {
+                            if (updateDto.getPath().isBlank()) {
+                                if (MenuType.isMenu(menu.getType()) || MenuType.isApi(menu.getType())) {
+                                    return Future.failedFuture(new StandardStatusException("菜单和接口路径不能为空"));
+                                }
                             }
-                        }
-
-                        return menuRepository.existsByTypeAndPath(connection, menu.getType(), updateDto.getPath()).flatMap(exists -> {
-                            if (exists) {
-                                return Future.failedFuture(new StandardStatusException("路径菜单已存在"));
-                            }
-
                             menu.setPath(updateDto.getPath());
                             values.put(Tables.MENU.PATH, menu.getPath());
-                            return Future.succeededFuture(menu);
-                        });
-                    })
-                    .compose(menu -> {
-                        if (updateDto.getIcon() != null) {
-                            menu.setIcon(menu.getType() == MenuType.api.value() ? "" : updateDto.getIcon());
-                            values.put(Tables.MENU.ICON, menu.getIcon());
                         }
 
                         if (updateDto.getSort() != null) {
@@ -319,6 +322,7 @@ public class MenuService {
                         Update<?> query = dslContext.update(Tables.MENU).set(values).where(Tables.MENU.ID.eq(menu.getId()));
 
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+                                .recover(this::recoverUniqueIndexException)
                                 .compose(_ -> operationRecordRepository.add(connection, "add", "menu", menu.getId().toString(), operator))
                                 .compose(_ -> connection.transaction().commit())
                                 .onComplete(_ -> connection.close())

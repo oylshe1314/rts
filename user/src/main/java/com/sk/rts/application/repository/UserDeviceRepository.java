@@ -8,7 +8,6 @@ import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
-import org.jooq.InsertResultStep;
 import org.jooq.ResultQuery;
 import org.springframework.stereotype.Repository;
 

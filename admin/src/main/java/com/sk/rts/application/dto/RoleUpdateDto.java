@@ -14,14 +14,20 @@ public class RoleUpdateDto extends BaseDto {
     @Schema(description = "名称")
     private final String name;
 
+    @NullOrNotBlank
+    @Schema(description = "代码")
+    private final String code;
+
     @Schema(description = "备注")
     private final String remark;
 
     public RoleUpdateDto(@JsonProperty("id") Long id,
                          @JsonProperty("name") String name,
+                         @JsonProperty("code") String code,
                          @JsonProperty("remark") String remark) {
         super(id);
         this.name = name;
+        this.code = code;
         this.remark = remark;
     }
 }

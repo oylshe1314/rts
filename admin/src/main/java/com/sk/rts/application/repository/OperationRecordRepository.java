@@ -30,7 +30,7 @@ public class OperationRecordRepository {
         record.setOperation(operation);
         record.setArguments(arguments);
         record.setRemark(remark);
-        record.setLoginIp(operator.getLoginIp());
+        record.setIpAddress(operator.getIpAddress());
         record.setCreateTime(OffsetDateTime.now());
         return pool.getConnection().flatMap(connection -> insert(connection, record)).mapEmpty();
     }
@@ -42,7 +42,7 @@ public class OperationRecordRepository {
         record.setOperation(operation);
         record.setArguments(arguments);
         record.setRemark(remark);
-        record.setLoginIp(operator.getLoginIp());
+        record.setIpAddress(operator.getIpAddress());
         record.setCreateTime(OffsetDateTime.now());
         return insert(connection, record).mapEmpty();
     }
@@ -55,7 +55,7 @@ public class OperationRecordRepository {
                         Tables.OPERATION_RECORD.OPERATION,
                         Tables.OPERATION_RECORD.ARGUMENTS,
                         Tables.OPERATION_RECORD.REMARK,
-                        Tables.OPERATION_RECORD.LOGIN_IP,
+                        Tables.OPERATION_RECORD.IP_ADDRESS,
                         Tables.OPERATION_RECORD.CREATE_TIME
                 ).values(
                         record.getOperatorId(),
@@ -63,7 +63,7 @@ public class OperationRecordRepository {
                         record.getOperation(),
                         record.getArguments(),
                         record.getRemark(),
-                        record.getLoginIp(),
+                        record.getIpAddress(),
                         record.getCreateTime())
                 .returning(Tables.OPERATION_RECORD.ID);
         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.iterator().next().getLong(0));

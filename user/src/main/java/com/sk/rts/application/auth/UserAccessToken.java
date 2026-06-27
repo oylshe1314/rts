@@ -18,12 +18,12 @@ public class UserAccessToken {
 
     private Long issueTime;
 
-    private Long expiration;
+    private Long expireTime;
 
     public UserAccessToken(MsgAccessToken token) {
         this.subject = token.getSubject();
         this.token = token.getToken();
         this.issueTime = token.getIssueTime();
-        this.expiration = token.getExpiration();
+        this.expireTime = token.getExpiration();
     }
 }

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package user;
+
+option java_package = "com.sk.rts.application.proto.caching";
+
+option java_multiple_files = true;
+
+message UserTicket {
+    string ticket = 1;
+    int32 type = 2;
+    string platform = 3;
+    string serialNo = 4;
+    string ipAddress = 5;
+    int64 issueTime = 6;
+    int64 expiration = 7;
+}

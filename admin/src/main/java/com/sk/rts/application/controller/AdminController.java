@@ -4,7 +4,6 @@ import com.sk.rts.application.auth.AdminAuthToken;
 import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.dto.*;
 import com.sk.rts.application.service.AdminService;
-import com.sk.rts.application.service.AuthService;
 import com.sk.rts.application.service.RoleService;
 import com.sk.rts.application.validation.NullOrNotBlank;
 import io.swagger.v3.oas.annotations.Operation;
@@ -87,19 +86,19 @@ public class AdminController {
             @Parameter(name = "roleId", required = true, description = "角色ID")
     })
     @RequestMapping(value = "/role/authority/get", method = RequestMethod.GET)
-    public Mono<ResponseDto<Collection<RoleMenuAuthorityDto>>> roleMenuQuery(@NotNull @Positive Long roleId) {
+    public Mono<ResponseDto<Collection<RoleMenuAuthorityDto>>> roleAuthorityGet(@NotNull @Positive Long roleId) {
         return roleService.getAuthorities(roleId).map(ResponseDto::success);
     }
 
     @Operation(summary = "角色权限设置")
     @RequestMapping(value = "/role/authority/set", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> roleMenusChange(@RequestBody @Valid Mono<RoleMenuAuthoritySetDto> setDtoMono, AdminAuthToken authToken) {
+    public Mono<ResponseDto<?>> roleAuthoritySet(@RequestBody @Valid Mono<RoleMenuAuthoritySetDto> setDtoMono, AdminAuthToken authToken) {
         return roleService.setAuthorities(setDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 
     @Operation(summary = "角色权限对比")
     @RequestMapping(value = "/role/authority/compare", method = RequestMethod.POST)
-    public Mono<ResponseDto<Collection<RoleMenuAuthorityCompareDto>>> roleMenusCompare(@RequestBody Mono<MultipleIdDto> idsDtoMono) {
+    public Mono<ResponseDto<Collection<RoleMenuAuthorityComparisonDto>>> roleAuthorityCompare(@RequestBody Mono<MultipleIdDto> idsDtoMono) {
         return roleService.compareAuthorities(idsDtoMono).map(ResponseDto::success);
     }
 

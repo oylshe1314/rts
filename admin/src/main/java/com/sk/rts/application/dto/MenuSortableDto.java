@@ -29,6 +29,8 @@ public class MenuSortableDto<T extends MenuSortableDto<T>> extends BaseDto {
             return;
         }
         menus.sort(Comparator.comparingInt(MenuSortableDto::getSortBy));
-        menus.forEach(menu -> sort(menu.getSubMenus()));
+        for (T menu : menus) {
+            sort(menu.getSubMenus());
+        }
     }
 }

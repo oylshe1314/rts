@@ -26,9 +26,9 @@ public class ValidationUtil {
         }
 
         List<String> messages = new ArrayList<>();
-        set.forEach(violation -> {
+        for (ConstraintViolation<T> violation : set) {
             messages.add(String.format("参数: %s, %s", violation.getPropertyPath().toString(), violation.getMessage()));
-        });
+        }
         String message = String.join(", ", messages);
         log.warn("参数错误, {}", message);
         return false;

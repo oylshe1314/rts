@@ -39,11 +39,6 @@ public class RoleRepository {
         });
     }
 
-    public Future<Boolean> existsByName(SqlConnection connection, String name) {
-        Select<?> query = dslContext.select(Tables.ROLE.ID).from(Tables.ROLE).where(Tables.ROLE.NAME.eq(name)).forUpdate();
-        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
-    }
-
     public Future<Long> insert(SqlConnection connection, Role role) {
         ResultQuery<?> query = dslContext.insertInto(
                         Tables.ROLE,

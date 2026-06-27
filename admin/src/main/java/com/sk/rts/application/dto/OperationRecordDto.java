@@ -27,19 +27,19 @@ public class OperationRecordDto extends BaseDto {
     private final String remark;
 
     @Schema(description = "操作员登录IP")
-    private final String loginIp;
+    private final String ipAddress;
 
     @Schema(description = "操作时间")
     private final OffsetDateTime operateTime;
 
-    public OperationRecordDto(Long id, Long operatorId, String operator, String operation, String operateArgs, String remark, String loginIp, OffsetDateTime operateTime) {
+    public OperationRecordDto(Long id, Long operatorId, String operator, String operation, String operateArgs, String remark, String ipAddress, OffsetDateTime operateTime) {
         super(id);
         this.operatorId = operatorId;
         this.operator = operator;
         this.operation = operation;
         this.operateArgs = operateArgs;
         this.remark = remark;
-        this.loginIp = loginIp;
+        this.ipAddress = ipAddress;
         this.operateTime = operateTime;
     }
 
@@ -50,7 +50,7 @@ public class OperationRecordDto extends BaseDto {
         this.operation = record.getOperation();
         this.operateArgs = record.getOperateArgs();
         this.remark = record.getRemark();
-        this.loginIp = record.getLoginIp();
+        this.ipAddress = record.getIpAddress();
         this.operateTime = record.getOperateTime();
     }
 }

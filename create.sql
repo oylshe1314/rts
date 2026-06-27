@@ -33,6 +33,9 @@ create table menu
     update_time timestamptz not null default current_timestamp
 );
 
+create unique index idx_unique_menu_parent_id_and_name on menu (parent_id, name);
+create unique index idx_unique_menu_parent_id_and_path on menu (parent_id, path) where path <> '';
+
 comment on table menu is '菜单表';
 comment on column menu.parent_id is '父级菜单ID';
 comment on column menu.type is '菜单类型，1：目录，2：菜单，3：接口(所有增删改查都是接口, 用来控制读写权限)';
@@ -83,7 +86,7 @@ values (28, 0, 1, '操作记录', 'List', '', '', 2, 1, '操作记录', 'admin',
        (30, 29, 3, '操作记录查询', '', '', '/operation/record/query', 0, 1, '操作记录查询', 'admin', 'admin');
 
 -- 恢复menu表id序列
-SELECT setval('menu_id_seq', (select max(id) from menu), false);
+SELECT setval('menu_id_seq', (select max(id) from menu), true);
 
 create table role
 (
@@ -97,6 +100,9 @@ create table role
     update_by   text        not null,
     update_time timestamptz not null default current_timestamp
 );
+
+create unique index idx_unique_role_name on role (name);
+create unique index idx_unique_role_code on role (code);
 
 comment on table role is '角色表';
 comment on column role.name is '角色名称';
@@ -112,7 +118,7 @@ insert into role(id, name, code, status, remark, create_by, update_by)
 values (1, '管理员', 'ADMIN', 1, '默认角色', 'admin', 'admin');
 
 -- 恢复role表id序列
-SELECT setval('role_id_seq', (select max(id) from role), false);
+SELECT setval('role_id_seq', (select max(id) from role), true);
 
 create table role_menu_authority
 (
@@ -174,8 +180,13 @@ create table admin
     create_by   text        not null,
     create_time timestamptz not null default current_timestamp,
     update_by   text        not null,
-    update_time timestamptz not null default current_timestamp
+    update_time timestamptz not null default current_timestamp,
+    constraint unique_users_username unique (username)
 );
+
+create unique index idx_unique_admin_username on admin (username);
+create unique index idx_unique_admin_phone on admin (phone) where phone <> '';
+create unique index idx_unique_admin_email on admin (email) where email <> '';
 
 comment on table admin is '管理员表';
 comment on column admin.role_id is '角色ID';
@@ -197,7 +208,7 @@ insert into admin(id, role_id, username, password, phone, email, nickname, avata
 values (1, 1, 'admin', '$2b$10$sjE9ZEaCOgMOP2I6FWXCT.b8WjTXQXcJzROJPz6tYCzb1EA6tMfCG', '', '', '管理员', '', 1, '默认管理员', 'admin', 'admin');
 
 -- 恢复admin表id序列
-SELECT setval('admin_id_seq', (select max(id) from admin), false);
+SELECT setval('admin_id_seq', (select max(id) from admin), true);
 
 create table operation_record
 (
@@ -207,7 +218,7 @@ create table operation_record
     operation   text        not null,
     arguments   text        not null,
     remark      text        not null,
-    login_ip    text        not null,
+    ip_address  text        not null,
     create_time timestamptz not null
 );
 
@@ -219,7 +230,7 @@ comment on column operation_record.operator is '操作员(用户名)';
 comment on column operation_record.operation is '操作, login, logout, add, update, delete, changeState等';
 comment on column operation_record.arguments is '操作参数，表名，登录账号等';
 comment on column operation_record.remark is '备注';
-comment on column operation_record.login_ip is '操作员登录IP';
+comment on column operation_record.ip_address is '操作员登录IP';
 comment on column operation_record.create_time is '操作时间';
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -250,13 +261,14 @@ create table user_account
     username text   not null,
     phone    text   not null,
     email    text   not null,
-    password text not null,
-    constraint unique_user_account_username unique (username),
-    constraint unique_user_account_phone unique (phone),
-    constraint unique_user_account_email unique (email)
+    password text   not null
 );
 
 grant select, insert, update on user_account to rts_server;
+
+create unique index idx_unique_user_account_username on user_account (username);
+create unique index idx_unique_user_account_phone on user_account (phone) where phone <> '';
+create unique index idx_unique_user_account_email on user_account (email) where email <> '';
 
 comment on table user_account is '用户账号表';
 comment on column user_account.username is '用户名';
@@ -278,7 +290,8 @@ create table user_device
 
 grant select, insert, update, delete on user_device to rts_server;
 
-create index idx_user_device_user_id_and_serial_no on user_device (user_id, serial_no);
+create unique index idx_unique_user_device_user_id_and_serial_no on user_device(user_id, serial_no);
+create unique index idx_unique_user_device_user_id_and_device_no on user_device(user_id, device_no);
 
 comment on table user_device is '用户设备表';
 comment on column user_device.user_id is '用户ID';
@@ -286,28 +299,3 @@ comment on column user_device.platform is '平台';
 comment on column user_device.serial_no is '序列号';
 comment on column user_device.device_no is '设备编号';
 comment on column user_device.create_time is '创建时间';
-
-
-create table user_token
-(
-    id           bigint      not null primary key generated always as identity,
-    user_id      bigint      not null,
-    device_id    bigint      not null,
-    hash         text        not null,
-    status       int         not null,
-    issue_time   timestamptz not null,
-    expire_time  timestamptz not null,
-    refresh_time timestamptz not null,
-    constraint unique_user_token_user_and_device_id unique (user_id, device_id)
-);
-
-grant select, insert, update, delete on user_token to rts_server;
-
-comment on table user_token is '刷新TOKEN表';
-comment on column user_token.user_id is '用户表ID';
-comment on column user_token.device_id is '设备表ID';
-comment on column user_token.hash is 'HASH';
-comment on column user_token.status is '状态，1：有效，0：失效';
-comment on column user_token.issue_time is '发布时间';
-comment on column user_token.expire_time is '过期时间';
-comment on column user_token.refresh_time is '刷新时间';

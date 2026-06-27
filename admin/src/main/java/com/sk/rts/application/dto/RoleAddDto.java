@@ -13,12 +13,18 @@ public class RoleAddDto {
     @Schema(description = "名称")
     private final String name;
 
+    @NotBlank
+    @Schema(description = "代码")
+    private final String code;
+
     @Schema(description = "备注")
     private final String remark;
 
     public RoleAddDto(@JsonProperty("name") String name,
+                      @JsonProperty("code") String code,
                       @JsonProperty("remark") String remark) {
         this.name = name;
+        this.code = code;
         this.remark = remark;
     }
 }

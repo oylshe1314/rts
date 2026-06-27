@@ -4,9 +4,12 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.sk.rts.application.auth.UserAccessToken;
 import com.sk.rts.application.auth.UserAuthDetails;
 import com.sk.rts.application.auth.UserAuthUtil;
+import com.sk.rts.application.auth.UserRefreshToken;
+import com.sk.rts.application.config.TokenProperties;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.proto.caching.MsgAccessToken;
+import com.sk.rts.application.proto.caching.MsgRefreshToken;
 import com.sk.rts.application.proto.caching.MsgUserDetails;
 import com.sk.rts.application.proto.caching.MsgUserDevice;
 import io.vertx.redis.client.Command;
@@ -14,6 +17,7 @@ import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.Request;
 import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -31,15 +35,14 @@ public class CacheService {
      *
      * @param accessToken 访问TOKEN
      * @param authDetails 用户详情
-     * @param expiration  过期时间
      */
-    public Mono<Void> saveUserAuthDetails(UserAuthDetails authDetails, UserAccessToken accessToken, Duration expiration) {
+    public Mono<Void> saveUserAuthDetails(UserAuthDetails authDetails, UserAccessToken accessToken, Duration duration) {
         return Mono.create(sink -> {
             MsgAccessToken.Builder msgAccessTokenBuilder = MsgAccessToken.newBuilder();
             msgAccessTokenBuilder.setSubject(accessToken.getSubject());
             msgAccessTokenBuilder.setToken(accessToken.getToken());
             msgAccessTokenBuilder.setIssueTime(accessToken.getIssueTime());
-            msgAccessTokenBuilder.setExpiration(accessToken.getExpiration());
+            msgAccessTokenBuilder.setExpiration(accessToken.getExpireTime());
 
             MsgAccessToken msgAccessToken = msgAccessTokenBuilder.build();
 
@@ -66,14 +69,14 @@ public class CacheService {
 
             Request request = Request.cmd(Command.MSETEX);
             request.arg(3);
-            request.arg(UserAuthUtil.buildTokenKey(accessToken.getSubject()));
+            request.arg(UserAuthUtil.buildAccessTokenKey(accessToken.getSubject()));
             request.arg(msgAccessToken.toByteArray());
             request.arg(UserAuthUtil.buildDetailsKey(authDetails.getUserId()));
             request.arg(msgUserDetails.toByteArray());
             request.arg(UserAuthUtil.buildDeviceKey(authDetails.getDeviceId()));
             request.arg(msgUserDevice.toByteArray());
             request.arg("EX");
-            request.arg(expiration.toSeconds());
+            request.arg(duration.toSeconds());
 
             redis.send(request).onSuccess(_ -> sink.success()).onFailure(sink::error);
         });
@@ -90,7 +93,7 @@ public class CacheService {
             UserAuthUtil.parseSubject(accessToken.getSubject(), authDetails);
 
             Request request = Request.cmd(Command.MGET);
-            request.arg(UserAuthUtil.buildTokenKey(accessToken.getSubject()));
+            request.arg(UserAuthUtil.buildAccessTokenKey(accessToken.getSubject()));
             request.arg(UserAuthUtil.buildDetailsKey(authDetails.getUserId()));
             request.arg(UserAuthUtil.buildDeviceKey(authDetails.getDeviceId()));
 
@@ -104,7 +107,7 @@ public class CacheService {
                                 MsgUserDevice msgUserDevice = MsgUserDevice.parseFrom(response.get(2).toBytes());
 
                                 accessToken.setIssueTime(msgAccessToken.getIssueTime());
-                                accessToken.setExpiration(msgAccessToken.getExpiration());
+                                accessToken.setExpireTime(msgAccessToken.getExpiration());
 
                                 authDetails.setUsername(msgUserDetails.getUsername());
                                 authDetails.setEmail(msgUserDetails.getEmail());
@@ -140,8 +143,65 @@ public class CacheService {
     public Mono<Void> removeUserAuthDetails(UserAuthDetails authDetails, UserAccessToken accessToken) {
         return Mono.create(sink -> {
             Request request = Request.cmd(Command.DEL);
-            request.arg(UserAuthUtil.buildTokenKey(accessToken.getSubject()));
+            request.arg(UserAuthUtil.buildAccessTokenKey(accessToken.getSubject()));
             request.arg(UserAuthUtil.buildDeviceKey(authDetails.getDeviceId()));
+
+            redis.send(request).onSuccess(_ -> sink.success()).onFailure(sink::error);
+        });
+    }
+
+    public Mono<Void> saveUserRefreshToken(UserAuthDetails authDetails, UserRefreshToken refreshToken, Duration duration) {
+        return Mono.create(sink -> {
+            MsgRefreshToken.Builder msgRefreshTokenBuilder = MsgRefreshToken.newBuilder();
+            msgRefreshTokenBuilder.setUserId(authDetails.getUserId());
+            msgRefreshTokenBuilder.setDeviceId(authDetails.getDeviceId());
+            msgRefreshTokenBuilder.setHash(refreshToken.getHash());
+            msgRefreshTokenBuilder.setIssueTime(refreshToken.getIssueTime());
+            msgRefreshTokenBuilder.setExpireTime(refreshToken.getExpireTime());
+            msgRefreshTokenBuilder.setRefreshTime(refreshToken.getRefreshTime());
+
+            MsgRefreshToken msgRefreshToken = msgRefreshTokenBuilder.build();
+
+            Request request = Request.cmd(Command.SET);
+            request.arg(UserAuthUtil.buildRefreshTokenKey(refreshToken.getSubject()));
+            request.arg(msgRefreshToken.toByteArray());
+            request.arg("EX");
+            request.arg(duration.toSeconds());
+
+            redis.send(request).onSuccess(_ -> sink.success()).onFailure(sink::error);
+        });
+    }
+
+    public Mono<Void> queryUserRefreshToken(UserRefreshToken refreshToken) {
+        return Mono.create(sink -> {
+            Request request = Request.cmd(Command.GET);
+            request.arg(UserAuthUtil.buildRefreshTokenKey(refreshToken.getSubject()));
+
+            redis.send(request).onFailure(sink::error).onSuccess(response -> {
+
+                try {
+                    if (response.get(0) != null) {
+                        MsgRefreshToken msgRefreshToken = MsgRefreshToken.parseFrom(response.toBytes());
+
+                        refreshToken.setHash(msgRefreshToken.getHash());
+                        refreshToken.setIssueTime(msgRefreshToken.getIssueTime());
+                        refreshToken.setExpireTime(msgRefreshToken.getExpireTime());
+                        refreshToken.setRefreshTime(msgRefreshToken.getRefreshTime());
+
+                        sink.success();
+                    }
+                    sink.error(new StandardStatusException(ResponseStatus.token_expired));
+                } catch (InvalidProtocolBufferException e) {
+                    sink.error(new StandardStatusException(ResponseStatus.internal_error));
+                }
+            });
+        });
+    }
+
+    public Mono<Void> removeUserRefreshToken(UserRefreshToken refreshToken) {
+        return Mono.create(sink -> {
+            Request request = Request.cmd(Command.DEL);
+            request.arg(UserAuthUtil.buildAccessTokenKey(refreshToken.getSubject()));
 
             redis.send(request).onSuccess(_ -> sink.success()).onFailure(sink::error);
         });

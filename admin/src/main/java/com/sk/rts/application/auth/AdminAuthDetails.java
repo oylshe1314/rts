@@ -25,7 +25,7 @@ public class AdminAuthDetails implements UserDetails {
     private String email;
     private String nickname;
     private String avatar;
-    private String loginIp;
+    private String ipAddress;
     private Collection<ApiPatternAuthority> authorities;
 
     public AdminAuthDetails(Admin admin, AdminRemoteDetails remoteDetails) {
@@ -38,7 +38,7 @@ public class AdminAuthDetails implements UserDetails {
         this.email = admin.getEmail();
         this.nickname = admin.getNickname();
         this.avatar = admin.getAvatar();
-        this.loginIp = remoteDetails.getAddress();
+        this.ipAddress = remoteDetails.getIpAddress();
         this.authorities = new HashSet<>();
     }
 
@@ -52,7 +52,7 @@ public class AdminAuthDetails implements UserDetails {
         this.email = admin.getEmail();
         this.nickname = admin.getNickname();
         this.avatar = admin.getAvatar();
-        this.loginIp = remoteDetails.getAddress();
+        this.ipAddress = remoteDetails.getIpAddress();
         this.authorities = authorities;
     }
 
@@ -66,7 +66,7 @@ public class AdminAuthDetails implements UserDetails {
         this.email = message.getEmail();
         this.nickname = message.getNickname();
         this.avatar = message.getAvatar();
-        this.loginIp = message.getLoginIp();
+        this.ipAddress = message.getIpAddress();
         this.authorities = message.getAuthorityList().stream().map(ApiPatternAuthority::new).collect(Collectors.toSet());
     }
 }

@@ -19,7 +19,7 @@ public class ApiPatternAuthority implements GrantedAuthority {
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof ApiPatternAuthority patternAuthority && authority.equals(patternAuthority.getAuthority());
+        return obj instanceof ApiPatternAuthority patternAuthority && this.authority.equals(patternAuthority.getAuthority());
     }
 
     @Override
