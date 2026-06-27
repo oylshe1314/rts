@@ -48,9 +48,9 @@ public class OperationRecordDto extends BaseDto {
         this.operatorId = record.getOperatorId();
         this.operator = record.getOperator();
         this.operation = record.getOperation();
-        this.operateArgs = record.getOperateArgs();
+        this.operateArgs = record.getArguments();
         this.remark = record.getRemark();
         this.ipAddress = record.getIpAddress();
-        this.operateTime = record.getOperateTime();
+        this.operateTime = record.getCreateTime();
     }
 }

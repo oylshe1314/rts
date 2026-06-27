@@ -15,7 +15,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-json"
     implementation "org.springframework.boot:spring-boot-starter-validation"
     implementation "org.springframework.boot:spring-boot-actuator-autoconfigure"
-    implementation "org.springframework.data:spring-data-commons"
+    implementation "org.springframework.boot:spring-boot-data-commons"
 
     implementation "org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.3"
 

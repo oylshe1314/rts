@@ -38,7 +38,7 @@ public class AdminAuthConverter implements ServerAuthenticationConverter {
             try {
                 AdminLoginDto loginDto = jsonMapper.readValue(buffer.asInputStream(true), AdminLoginDto.class);
                 if (validationUtil.validate(loginDto)) {
-                    AdminAuthToken authRequest = new AdminAuthToken(loginDto.getUsername(), loginDto.getPassword());
+                    AdminAuthToken authRequest = new AdminAuthToken(loginDto.getAccount(), loginDto.getPassword());
                     authRequest.setDetails(new AdminRemoteDetails(request));
                     sink.next(authRequest);
                 } else {

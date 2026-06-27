@@ -120,8 +120,8 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
         Request redisRequest = Request.cmd(Command.EVAL);
         redisRequest.arg(QUERY_SCRIPT);
         redisRequest.arg(2);
-        redisRequest.arg(subject);
-        redisRequest.arg(adminId);
+        redisRequest.arg(AdminAuthUtil.buildTokenKey(subject));
+        redisRequest.arg(AdminAuthUtil.buildDetailsKey(adminId));
         redisRequest.arg(tokenProperties.getExpiration().toSeconds());
 
         return Mono.<SecurityContext>create(sink -> redis.send(redisRequest).onFailure(sink::error).onSuccess(response -> {
