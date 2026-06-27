@@ -128,7 +128,7 @@ jooq {
 sourceSets {
     main {
         proto {
-            srcDir 'proto'
+            srcDirs += 'proto'
         }
     }
 }
