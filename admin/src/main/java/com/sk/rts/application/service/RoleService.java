@@ -60,8 +60,7 @@ public class RoleService {
      */
     public Mono<List<RoleSelectDto>> roleSelectList() {
         Select<?> query = dslContext.select(Tables.ROLE.ID, Tables.ROLE.NAME).from(Tables.ROLE);
-        return Flux.<RoleSelectDto>create(sink -> pool.getConnection().flatMap(connection -> connection.query(query.getSQL()).execute()
-                .onComplete(_ -> connection.close())
+        return Flux.<RoleSelectDto>create(sink -> pool.query(query.getSQL()).execute()
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
                     for (Row row : rows) {
@@ -69,7 +68,7 @@ public class RoleService {
                     }
                     sink.complete();
                 })
-        )).collectList();
+        ).collectList();
     }
 
     /**
@@ -307,8 +306,7 @@ public class RoleService {
         TableRoleMenuAuthority a = Tables.ROLE_MENU_AUTHORITY.as("a");
 
         Select<?> query = dslContext.select(m.ID, m.PARENT_ID, m.NAME, m.SORT_BY, a.ROLE_ID).from(m).leftJoin(a).on(a.MENU_ID.eq(m.ID)).and(a.ROLE_ID.eq(id)).where(m.STATUS.eq(Status.enable.value()));
-
-        return Mono.<List<RoleMenuAuthorityDto>>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+        return Mono.<List<RoleMenuAuthorityDto>>create(sink -> pool.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                 .map(rows -> rows.stream().map(row -> {
                             Menu menu = new Menu();
                             menu.setId(row.getLong(0));
@@ -320,13 +318,9 @@ public class RoleService {
                             return new RoleMenuAuthorityDto(menu, checked);
                         }).toList()
                 )
-                .onComplete(_ -> connection.close())
                 .onSuccess(sink::success)
                 .onFailure(sink::error)
-        )).map(authorities -> {
-            MenuSortableDto.sort(authorities);
-            return authorities;
-        });
+        ).doOnSuccess(MenuSortableDto::sort);
     }
 
     /**
@@ -413,10 +407,7 @@ public class RoleService {
                     .onComplete(_ -> connection.close())
                     .onSuccess(sink::success)
                     .onFailure(sink::error)
-            )).map(authorities -> {
-                MenuSortableDto.sort(authorities);
-                return authorities;
-            });
+            )).doOnSuccess(MenuSortableDto::sort);
         });
     }
 

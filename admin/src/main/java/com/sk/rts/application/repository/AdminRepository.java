@@ -48,11 +48,6 @@ public class AdminRepository {
         });
     }
 
-    public Future<Boolean> existsByRoleIdIn(SqlConnection connection, Collection<Long> roleIds) {
-        Select<?> query = dslContext.select(Tables.ADMIN.ID).from(Tables.ADMIN).where(Tables.ADMIN.ROLE_ID.in(roleIds));
-        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
-    }
-
     public Future<Long> insert(SqlConnection connection, Admin admin) {
         ResultQuery<?> query = dslContext.insertInto(
                         Tables.ADMIN,
@@ -85,5 +80,10 @@ public class AdminRepository {
                         admin.getUpdateTime())
                 .returning(Tables.ADMIN.ID);
         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.iterator().next().getLong(0));
+    }
+
+    public Future<Boolean> existsByRoleIdIn(SqlConnection connection, Collection<Long> roleIds) {
+        Select<?> query = dslContext.select(Tables.ADMIN.ID).from(Tables.ADMIN).where(Tables.ADMIN.ROLE_ID.in(roleIds));
+        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
     }
 }

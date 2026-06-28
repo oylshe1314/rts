@@ -138,7 +138,6 @@ public class SettingService {
                 })
                 .flatMap(newPassword -> {
                     UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.PASSWORD, newPassword).where(Tables.ADMIN.ID.eq(authDetails.getAdminId()));
-
                     return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                             .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
                             .compose(_ -> operationRecordRepository.add(connection, "changePassword", String.valueOf(authDetails.getAdminId()), "", authDetails))

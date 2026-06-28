@@ -34,8 +34,6 @@ public class OperationRecordService {
     private final Pool pool;
     private final DSLContext dslContext;
 
-    private final OperationRecordRepository operationRecordRepository;
-
     /**
      * 操作记录分页查询
      *

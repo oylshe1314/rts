@@ -46,11 +46,6 @@ public class MenuRepository {
         });
     }
 
-    public Future<Boolean> existsByParentIdIn(SqlConnection connection, Collection<Long> parentIds) {
-        Select<?> query = dslContext.select(Tables.MENU.ID).from(Tables.MENU).where(Tables.MENU.PARENT_ID.in(parentIds)).limit(1);
-        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
-    }
-
     public Future<Long> insert(SqlConnection connection, Menu menu) {
         ResultQuery<?> query = dslContext.insertInto(
                         Tables.MENU,
@@ -81,5 +76,10 @@ public class MenuRepository {
                         menu.getUpdateTime())
                 .returning(Tables.MENU.ID);
         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.iterator().next().getLong(0));
+    }
+
+    public Future<Boolean> existsByParentIdIn(SqlConnection connection, Collection<Long> parentIds) {
+        Select<?> query = dslContext.select(Tables.MENU.ID).from(Tables.MENU).where(Tables.MENU.PARENT_ID.in(parentIds)).limit(1);
+        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.size() > 0);
     }
 }

@@ -58,9 +58,7 @@ public class MenuService {
      */
     public Mono<List<MenuSelectDto>> menuSelectList(Integer type) {
         Select<?> query = dslContext.select(Tables.MENU.ID, Tables.MENU.NAME).from(Tables.MENU).where(Tables.MENU.TYPE.eq(type));
-
-        return Flux.<MenuSelectDto>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
-                .onComplete(_ -> connection.close())
+        return Flux.<MenuSelectDto>create(sink -> pool.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
                     for (Row row : rows) {
@@ -68,7 +66,7 @@ public class MenuService {
                     }
                     sink.complete();
                 })
-        )).collectList();
+        ).collectList();
     }
 
     /**
@@ -320,7 +318,6 @@ public class MenuService {
                         values.put(Tables.MENU.UPDATE_TIME, menu.getUpdateTime());
 
                         Update<?> query = dslContext.update(Tables.MENU).set(values).where(Tables.MENU.ID.eq(menu.getId()));
-
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                                 .recover(this::recoverUniqueIndexException)
                                 .compose(_ -> operationRecordRepository.add(connection, "add", "menu", menu.getId().toString(), operator))
@@ -354,7 +351,6 @@ public class MenuService {
                         }
 
                         Delete<?> query = dslContext.deleteFrom(Tables.MENU).where(Tables.MENU.ID.in(ids));
-
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()));
                     })
                     .compose(_ -> operationRecordRepository.add(connection, "delete", "menu", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
@@ -382,7 +378,6 @@ public class MenuService {
             Status state = Status.valueOf(changeDto.getStatus());
 
             Update<?> query = dslContext.update(Tables.MENU).set(Tables.MENU.STATUS, state.value()).set(Tables.MENU.UPDATE_BY, operator.getUsername()).set(Tables.MENU.UPDATE_TIME, OffsetDateTime.now()).where(Tables.MENU.STATUS.in(ids));
-
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
                     .compose(_ -> operationRecordRepository.add(connection, "changeState", "menu", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))

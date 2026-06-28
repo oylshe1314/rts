@@ -78,8 +78,7 @@ public class AdminService {
 
         String sql = query.getSQL();
         List<Object> args = query.getBindValues();
-        return Flux.<AdminSelectDto>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(sql).execute(Tuple.tuple(args))
-                .onComplete(_ -> connection.close())
+        return Flux.<AdminSelectDto>create(sink -> pool.preparedQuery(sql).execute(Tuple.tuple(args))
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
                     for (Row row : rows) {
@@ -87,7 +86,7 @@ public class AdminService {
                     }
                     sink.complete();
                 })
-        )).collectList();
+        ).collectList();
     }
 
     /**
@@ -312,7 +311,6 @@ public class AdminService {
                         values.put(Tables.ADMIN.UPDATE_TIME, admin.getUpdateTime());
 
                         Update<?> query = dslContext.update(Tables.ADMIN).set(values).where(Tables.ADMIN.ID.eq(admin.getId()));
-
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                                 .recover(this::recoverUniqueIndexException)
                                 .compose(_ -> operationRecordRepository.add(connection, "update", "admin", admin.getId().toString(), operator))
@@ -382,7 +380,6 @@ public class AdminService {
             Status state = Status.valueOf(changeDto.getStatus());
 
             Update<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.STATUS, state.value()).set(Tables.ADMIN.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN.ID.in(ids));
-
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
                     .compose(_ -> operationRecordRepository.add(connection, "changeState", "admin", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
