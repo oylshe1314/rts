@@ -10,7 +10,7 @@ apply plugin: "java"
 apply plugin: "org.springframework.boot"
 apply plugin: "io.spring.dependency-management"
 
-group = 'org.sk.rts'
+group = 'com.sk.rts'
 version = ''
 
 dependencies {

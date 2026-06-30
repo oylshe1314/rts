@@ -48,7 +48,7 @@ public class TokenUtil {
             token = request.getQueryParams().getFirst("token");
         }
 
-        if (token == null || token.length() < 100) {
+        if (token == null || token.length() < 80) {
             return null;
         }
 

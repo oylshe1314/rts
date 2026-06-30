@@ -10,7 +10,7 @@ apply plugin: "java"
 apply plugin: "org.springframework.boot"
 apply plugin: "io.spring.dependency-management"
 
-group = "org.sk.rts"
+group = "com.sk.rts"
 version = "1.0.0"
 
 dependencies {
@@ -185,7 +185,7 @@ processResources {
 
 bootJar {
     archiveFileName = "rts-admin-server-${version}.jar"
-    mainClass = "org.sk.rts.application.AdminApplication"
+    mainClass = "com.sk.rts.application.AdminApplication"
     dependsOn processResources
 }
 

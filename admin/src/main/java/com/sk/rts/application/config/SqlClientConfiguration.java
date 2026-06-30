@@ -10,6 +10,8 @@ import org.jspecify.annotations.NullMarked;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Bean;
 
+import java.util.concurrent.TimeUnit;
+
 @NullMarked
 @SpringBootConfiguration
 public class SqlClientConfiguration {
@@ -24,7 +26,25 @@ public class SqlClientConfiguration {
         connectOptions.setDatabase(properties.getDatabase());
 
         PoolOptions poolOptions = new PoolOptions();
-        poolOptions.setMaxSize(10);
+        if (properties.getPool() != null) {
+            if (properties.getPool().getMaxSize() > 0) {
+                poolOptions.setMaxSize(properties.getPool().getMaxSize());
+            } else {
+                poolOptions.setMaxSize(8);
+            }
+            if (properties.getPool().getConnectionTimeout() > 0) {
+                poolOptions.setConnectionTimeout(properties.getPool().getConnectionTimeout());
+                poolOptions.setConnectionTimeoutUnit(TimeUnit.MILLISECONDS);
+            }
+            if (properties.getPool().getIdleTimeout() > 0) {
+                poolOptions.setIdleTimeout(properties.getPool().getIdleTimeout());
+                poolOptions.setIdleTimeoutUnit(TimeUnit.MILLISECONDS);
+            }
+            if (properties.getPool().getMaxLifetime() > 0) {
+                poolOptions.setMaxLifetime(properties.getPool().getMaxLifetime());
+                poolOptions.setMaxLifetimeUnit(TimeUnit.MILLISECONDS);
+            }
+        }
 
         ClientBuilder<Pool> builder = PgBuilder.pool();
         builder.using(vertx);

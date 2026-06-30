@@ -5,7 +5,7 @@ plugins {
 
 allprojects {
 
-    group 'org.sk.rts'
+    group 'com.sk.rts'
     compileJava {
         version 25
     }
