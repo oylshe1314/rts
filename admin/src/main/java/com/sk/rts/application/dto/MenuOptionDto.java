@@ -7,17 +7,17 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "菜单选择列表")
-public class MenuSelectDto extends BaseDto {
+public class MenuOptionDto extends BaseDto {
 
     @Schema(description = "名称")
     private final String name;
 
-    public MenuSelectDto(Long id, String name) {
+    public MenuOptionDto(Long id, String name) {
         super(id);
         this.name = name;
     }
 
-    public MenuSelectDto(Menu menu) {
+    public MenuOptionDto(Menu menu) {
         super(menu.getId());
         this.name = menu.getName();
     }

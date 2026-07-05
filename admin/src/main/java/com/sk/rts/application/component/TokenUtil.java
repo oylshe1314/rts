@@ -57,7 +57,7 @@ public class TokenUtil {
 
     public AdminAccessToken generate(String subject) {
         OffsetDateTime issueTime = OffsetDateTime.now();
-        OffsetDateTime expireTime = issueTime.plus(tokenProperties.getExpiration());
+        OffsetDateTime expireTime = issueTime.plusDays(7);
 
         String token = Jwts.builder()
                 .issuer("rts")
@@ -67,7 +67,7 @@ public class TokenUtil {
                 .signWith(tokenProperties.getSecretKey())
                 .compact();
 
-        return new AdminAccessToken(subject, token, issueTime.toEpochSecond(), expireTime.toEpochSecond());
+        return new AdminAccessToken(subject, token);
     }
 
     private Claims parse(String token) throws JwtException {

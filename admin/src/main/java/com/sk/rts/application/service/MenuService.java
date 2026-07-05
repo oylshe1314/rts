@@ -56,13 +56,13 @@ public class MenuService {
      * @param type 菜单类型，1：目录，2：菜单，3：接口
      * @return 菜单选择列表
      */
-    public Mono<List<MenuSelectDto>> menuSelectList(Integer type) {
+    public Mono<List<MenuOptionDto>> menuSelectList(Integer type) {
         Select<?> query = dslContext.select(Tables.MENU.ID, Tables.MENU.NAME).from(Tables.MENU).where(Tables.MENU.TYPE.eq(type));
-        return Flux.<MenuSelectDto>create(sink -> pool.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+        return Flux.<MenuOptionDto>create(sink -> pool.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
                     for (Row row : rows) {
-                        sink.next(new MenuSelectDto(row.getLong(0), row.getString(1)));
+                        sink.next(new MenuOptionDto(row.getLong(0), row.getString(1)));
                     }
                     sink.complete();
                 })

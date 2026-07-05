@@ -64,7 +64,7 @@ public class AdminService {
      * @param roleId 角色ID，null时获取全部
      * @return 管理员选择列表
      */
-    public Mono<List<AdminSelectDto>> adminSelectList(@Nullable Long roleId) {
+    public Mono<List<AdminOptionDto>> adminSelectList(@Nullable Long roleId) {
         Select<?> query = dslContext.select(
                         Tables.ADMIN.ID,
                         Tables.ADMIN.ROLE_ID,
@@ -78,11 +78,11 @@ public class AdminService {
 
         String sql = query.getSQL();
         List<Object> args = query.getBindValues();
-        return Flux.<AdminSelectDto>create(sink -> pool.preparedQuery(sql).execute(Tuple.tuple(args))
+        return Flux.<AdminOptionDto>create(sink -> pool.preparedQuery(sql).execute(Tuple.tuple(args))
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
                     for (Row row : rows) {
-                        sink.next(new AdminSelectDto(row.getLong(0), row.getLong(1), row.getString(2), row.getString(3), row.getString(4)));
+                        sink.next(new AdminOptionDto(row.getLong(0), row.getLong(1), row.getString(2), row.getString(3), row.getString(4)));
                     }
                     sink.complete();
                 })

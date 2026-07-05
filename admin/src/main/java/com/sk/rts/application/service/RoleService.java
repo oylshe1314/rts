@@ -58,13 +58,13 @@ public class RoleService {
      *
      * @return 角色选择列表
      */
-    public Mono<List<RoleSelectDto>> roleSelectList() {
+    public Mono<List<RoleOptionDto>> roleSelectList() {
         Select<?> query = dslContext.select(Tables.ROLE.ID, Tables.ROLE.NAME).from(Tables.ROLE);
-        return Flux.<RoleSelectDto>create(sink -> pool.query(query.getSQL()).execute()
+        return Flux.<RoleOptionDto>create(sink -> pool.query(query.getSQL()).execute()
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
                     for (Row row : rows) {
-                        sink.next(new RoleSelectDto(row.getLong(0), row.getString(1)));
+                        sink.next(new RoleOptionDto(row.getLong(0), row.getString(1)));
                     }
                     sink.complete();
                 })

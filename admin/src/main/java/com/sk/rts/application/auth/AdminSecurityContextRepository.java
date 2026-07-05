@@ -71,8 +71,6 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
                 MsgAdminToken.Builder msgAdminTokenBuilder = MsgAdminToken.newBuilder();
                 msgAdminTokenBuilder.setSubject(accessToken.getSubject());
                 msgAdminTokenBuilder.setToken(accessToken.getToken());
-                msgAdminTokenBuilder.setIssueTime(accessToken.getIssueTime());
-                msgAdminTokenBuilder.setExpiration(accessToken.getExpiration());
 
                 MsgAdminToken msgAdminToken = msgAdminTokenBuilder.build();
 

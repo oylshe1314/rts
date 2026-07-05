@@ -55,13 +55,13 @@ public class CommonController {
             @Parameter(name = "type", required = true, description = "菜单类型")
     })
     @RequestMapping(value = "/options/menus", method = RequestMethod.GET)
-    public Mono<ResponseDto<Collection<MenuSelectDto>>> selectMenus(@NotNull @Integers({1, 2}) Integer type) {
+    public Mono<ResponseDto<Collection<MenuOptionDto>>> selectMenus(@NotNull @Integers({1, 2}) Integer type) {
         return menuService.menuSelectList(type).map(ResponseDto::success);
     }
 
     @Operation(summary = "角色选择列表")
     @RequestMapping(value = "/options/roles", method = RequestMethod.GET)
-    public Mono<ResponseDto<Collection<RoleSelectDto>>> selectRoles() {
+    public Mono<ResponseDto<Collection<RoleOptionDto>>> selectRoles() {
         return roleService.roleSelectList().map(ResponseDto::success);
     }
 
@@ -69,7 +69,7 @@ public class CommonController {
             @Parameter(name = "roleId", description = "角色ID")
     })
     @RequestMapping(value = "/options/admins", method = RequestMethod.GET)
-    public Mono<ResponseDto<Collection<AdminSelectDto>>> selectRoles(@RequestParam(required = false) @Nullable @Positive Long roleId) {
+    public Mono<ResponseDto<Collection<AdminOptionDto>>> selectRoles(@RequestParam(required = false) @Nullable @Positive Long roleId) {
         return adminService.adminSelectList(roleId).map(ResponseDto::success);
     }
 }
