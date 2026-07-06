@@ -9,9 +9,9 @@ import service from "@/api/request.ts";
 const pathAuthLogin = "/auth/login"
 const pathAuthLogout = "/auth/logout"
 
-class AdminLoginDto {
-    account: string = "";
-    password: string = "";
+interface AdminLoginDto {
+    account: string;
+    password: string;
 }
 
 export default {

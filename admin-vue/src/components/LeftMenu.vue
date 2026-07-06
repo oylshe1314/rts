@@ -1,14 +1,14 @@
 <template>
     <div class="left-bar">
         <el-menu class="left-menu" :default-active="$route.path" :unique-opened='true' router>
-            <template v-for="menu in menus" :key="menu.id">
+            <template v-for="menu in roleMenus" :key="menu.id">
                 <el-sub-menu v-if="menu.type === 1" :index="String(menu.id)">
                     <template #title>
                         <el-icon v-if="menu.icon !== ''">
                             <component :is="menu.icon"/>
                         </el-icon>
                         <el-icon v-else>
-                            <folder/>
+                            <Folder/>
                         </el-icon>
                         <span>{{ menu.name }}</span>
                     </template>
@@ -19,7 +19,7 @@
                                     <component :is="subMenu.icon"></component>
                                 </el-icon>
                                 <el-icon v-else>
-                                    <document/>
+                                    <Document/>
                                 </el-icon>
                                 <span>{{ subMenu.name }}</span>
                             </template>
@@ -31,7 +31,7 @@
                         <component :is="menu.icon"></component>
                     </el-icon>
                     <el-icon v-else>
-                        <document/>
+                        <Document/>
                     </el-icon>
                     <span>{{ menu.name }}</span>
                 </el-menu-item>
@@ -42,15 +42,9 @@
 
 <script setup lang="ts">
 
-import {ref} from "vue";
+import type {RoleMenuDto} from "@/api/common.ts";
 
-import commonApi from "@/api/common";
-
-const menus = ref()
-
-commonApi.roleMenus().then(res => {
-    menus.value = res
-})
+defineProps<{ roleMenus: RoleMenuDto[] }>();
 
 </script>
 

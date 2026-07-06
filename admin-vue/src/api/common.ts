@@ -11,39 +11,39 @@ const pathOptionsMenus = "/common/options/menus"
 const pathOptionsRoles = "/common/options/roles"
 const pathOptionsAdmins = "/common/options/admins"
 
-class UserDetailsDto {
-    roleName: string = "";
-    username: string = "";
-    phone: string = "";
-    email: string = "";
-    nickname: string = "";
-    avatar: string = "";
+export interface UserDetailsDto {
+    roleName: string;
+    username: string;
+    phone: string;
+    email: string;
+    nickname: string;
+    avatar: string;
 }
 
-class RoleMenuDto {
-    parentId: number = 0;
-    type: number = 0;
-    name: string = "";
-    icon: string = "";
-    path: string = "";
+export interface RoleMenuDto {
+    parentId: number;
+    type: number;
+    name: string;
+    icon: string;
+    path: string;
 }
 
-class MenuOptionDto {
-    id: number = 0;
-    name: string = "";
+export interface MenuOptionDto {
+    id: number;
+    name: string;
 }
 
-class RoleOptionDto {
-    id: number = 0;
-    name: string = "";
+export interface RoleOptionDto {
+    id: number;
+    name: string;
 }
 
-class AdminOptionDto {
-    id: number = 0;
-    roleId: string = "";
-    username: string = "";
-    nickname: string = "";
-    avatar: string = "";
+export interface AdminOptionDto {
+    id: number;
+    roleId: string;
+    username: string;
+    nickname: string;
+    avatar: string;
 }
 
 export default {

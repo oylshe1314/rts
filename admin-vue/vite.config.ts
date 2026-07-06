@@ -13,5 +13,14 @@ export default defineConfig({
     build: {
         outDir: 'dist',
         assetsDir: 'assets',
+    },
+    server: {
+        proxy: {
+            "/rts/admin/api": {
+                target:"http://localhost:9000",
+                changeOrigin:true,
+                // rewrite:
+            }
+        }
     }
 })

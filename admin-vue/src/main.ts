@@ -11,20 +11,19 @@ import elementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import * as elementPlusIcons from '@element-plus/icons-vue'
 
-import router from './router'
 import store from "./store";
+import router from './router'
 
 const app = createApp(App);
 
-app.use(elementPlus);
+app.use(store);
+app.use(router);
 
+app.use(elementPlus);
 app.config.globalProperties.$icons = []
 for (const [name, component] of Object.entries(elementPlusIcons)) {
     app.component(name, component);
     app.config.globalProperties.$icons.push(component);
 }
 
-app.use(router);
-app.use(store);
-
-createApp(App).mount('#app');
+app.mount('#app');
