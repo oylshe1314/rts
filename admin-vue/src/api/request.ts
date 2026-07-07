@@ -26,7 +26,7 @@ service.interceptors.request.use(async (config: AxiosRequestConfig): Promise<any
         config.headers.Authorization = "Bearer " + token;
     }
     if (config.url) {
-        config.url = "/rts/admin/api" + config.url;
+        config.url = import.meta.env.BASE_URL + "/api" + config.url;
     }
     return Promise.resolve(config);
 });

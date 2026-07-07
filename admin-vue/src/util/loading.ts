@@ -1,3 +1,9 @@
+/**
+ * loading.ts
+ * create by Snake as 2026-07-06
+ * @description:
+ */
+
 import {ElLoading} from "element-plus";
 import {ref} from "vue";
 

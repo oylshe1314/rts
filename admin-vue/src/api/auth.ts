@@ -15,14 +15,14 @@ interface AdminLoginDto {
 }
 
 export default {
-    login: (data: AdminLoginDto): Promise<string> => {
+    login: async (data: AdminLoginDto): Promise<string> => {
         return service({
             url: pathAuthLogin,
             method: "POST",
             data: data,
         });
     },
-    logout: (): Promise<any> => {
+    logout: async (): Promise<any> => {
         return service({
             url: pathAuthLogout,
             method: "POST",

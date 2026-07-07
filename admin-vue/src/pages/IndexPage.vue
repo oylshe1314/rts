@@ -8,7 +8,7 @@
                 <left-menu :role-menus="roleMenusRef"/>
             </el-aside>
             <el-main>
-                <main-view :tab-names="tabNamesRef" :tab-cards="tabCardsRef" @on-tab-change="handleTabChange" @on-tab-remove="handleTabRemove"/>
+                <main-view :tab-names="tabNamesRef" :tab-cards="tabCardsRef" @tab-change="handleTabChange" @tab-remove="handleTabRemove"/>
             </el-main>
         </el-container>
     </el-container>
@@ -16,11 +16,11 @@
 
 <script setup lang="ts">
 
-import {ref} from "vue";
+import {onMounted, ref} from "vue";
 
 import authApi from "@/api/auth.ts"
 
-import type {RoleMenuDto, UserDetailsDto} from "@/api/common.ts"
+import type {RoleMenuDto} from "@/api/common.ts"
 import commonApi from "@/api/common.ts"
 
 import {ElMessage} from "element-plus";
@@ -31,30 +31,45 @@ import MainView from '@/components/MainView.vue'
 
 import {closeLoading, openLoading} from "@/util/loading.ts";
 
+import type {UserDetails} from "@/store/user.ts";
+import {useUserStore} from "@/store/user.ts";
+
 import type {TabCard} from "@/store/tabs.ts";
 import {useTabsStore} from "@/store/tabs.ts";
 
 import router from "@/router";
 
+const userStore = useUserStore();
 const tabsStore = useTabsStore();
 
-const userDetailsRef = ref<UserDetailsDto>({});
+const userDetailsRef = ref<UserDetails>({avatar: "", email: "", nickname: "", phone: "", roleName: "", username: ""});
 const roleMenusRef = ref<RoleMenuDto[]>([]);
-const tabNamesRef = ref<TabCard[]>(tabsStore.getNames());
+const tabNamesRef = ref<string[]>(tabsStore.getNames());
 const tabCardsRef = ref<TabCard[]>(tabsStore.getCards());
 
-openLoading('#app', '正在加载...');
-Promise.all([commonApi.adminDetails(), commonApi.roleMenus()])
-    .then(([userDetails, roleMenus]) => {
-        userDetailsRef.value = userDetails;
-        roleMenusRef.value = roleMenus;
-    })
-    .catch((e) => {
-        ElMessage({type: 'error', showClose: true, message: e.message})
-    })
-    .finally(() => {
-        closeLoading();
-    });
+onMounted(() => {
+    openLoading('#app', '正在加载...');
+    Promise.all([commonApi.adminDetails(), commonApi.roleMenus()])
+        .then(([userDetails, roleMenus]) => {
+            userStore.setDetails({
+                roleName: userDetails.roleName,
+                username: userDetails.username,
+                phone: userDetails.phone,
+                email: userDetails.email,
+                nickname: userDetails.nickname,
+                avatar: userDetails.avatar,
+            });
+
+            userDetailsRef.value = userStore.getDetails();
+            roleMenusRef.value = roleMenus;
+        })
+        .catch((e) => {
+            ElMessage({type: 'error', showClose: true, message: e.message})
+        })
+        .finally(() => {
+            closeLoading();
+        });
+});
 
 function handleLogout() {
     openLoading('#form', '正在退出...');

@@ -2,7 +2,7 @@ package com.sk.rts.application.controller;
 
 import com.sk.rts.application.auth.AdminAuthToken;
 import com.sk.rts.application.auth.AdminAuthDetails;
-import com.sk.rts.application.dto.ChangeDetailDto;
+import com.sk.rts.application.dto.ChangeDetailsDto;
 import com.sk.rts.application.dto.ChangePasswordDto;
 import com.sk.rts.application.dto.ResponseDto;
 import com.sk.rts.application.service.SettingService;
@@ -31,9 +31,9 @@ public class SettingController {
     private final SettingService settingService;
 
     @Operation(summary = "修改详细信息")
-    @RequestMapping(value = "/change/detail", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> changeDetail(@RequestBody @Valid Mono<ChangeDetailDto> changeDtoMono, AdminAuthToken authToken) throws Exception {
-        return settingService.changeDetail(changeDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    @RequestMapping(value = "/change/details", method = RequestMethod.POST)
+    public Mono<ResponseDto<?>> changeDetails(@RequestBody @Valid Mono<ChangeDetailsDto> changeDtoMono, AdminAuthToken authToken) throws Exception {
+        return settingService.changeDetails(changeDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 
     @Operation(summary = "修改密码")

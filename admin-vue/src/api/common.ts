@@ -3,6 +3,7 @@
  * create by Snake as 2026-07-03
  * @description:
  */
+
 import service from "@/api/request.ts";
 
 const pathAdminDetails = "/common/admin/details"
@@ -21,11 +22,14 @@ export interface UserDetailsDto {
 }
 
 export interface RoleMenuDto {
+    id: number;
     parentId: number;
     type: number;
     name: string;
     icon: string;
     path: string;
+    sortBy: number;
+    subMenus: RoleMenuDto[] | null;
 }
 
 export interface MenuOptionDto {
@@ -47,31 +51,31 @@ export interface AdminOptionDto {
 }
 
 export default {
-    adminDetails: (): Promise<UserDetailsDto> => {
+    adminDetails: async (): Promise<UserDetailsDto> => {
         return service({
             url: pathAdminDetails,
             method: "GET",
         });
     },
-    roleMenus: (): Promise<RoleMenuDto[]> => {
+    roleMenus: async (): Promise<RoleMenuDto[]> => {
         return service({
             url: pathRoleMenus,
             method: "GET",
         });
     },
-    optionsMenus: (): Promise<MenuOptionDto[]> => {
+    optionsMenus: async (): Promise<MenuOptionDto[]> => {
         return service({
             url: pathOptionsMenus,
             method: "GET",
         });
     },
-    optionsRoles: (): Promise<RoleOptionDto[]> => {
+    optionsRoles: async (): Promise<RoleOptionDto[]> => {
         return service({
             url: pathOptionsRoles,
             method: "GET",
         });
     },
-    optionsAdmins: (): Promise<AdminOptionDto[]> => {
+    optionsAdmins: async (): Promise<AdminOptionDto[]> => {
         return service({
             url: pathOptionsAdmins,
             method: "GET",

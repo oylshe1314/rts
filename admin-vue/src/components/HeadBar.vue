@@ -1,7 +1,7 @@
 <template>
     <div class="header">
         <div class="user">
-            <el-avatar class="tt ta" :size="60" :src="'@/assets/images/avatars/' + ((userDetails.avatar === '') ? 'avatar1.png' : userDetails.avatar)"/>
+            <el-avatar class="tt ta" :size="60" :src="getAvatar(userDetails.avatar)"/>
             <router-link to="/setting/detail" style="text-decoration: none"><span class="tt ts">{{ userDetails.nickname }}</span></router-link>
             <el-link type="primary" :underline=false @click="emits('onLogout')"><span class="tt ts">退出</span></el-link>
         </div>
@@ -12,9 +12,11 @@
 
 import type {UserDetailsDto} from "@/api/common.ts";
 
+import {getAvatar} from "@/util/avatars.ts";
+
 defineProps<{ userDetails: UserDetailsDto }>();
 
-const emits = defineEmits<{ (e: 'onLogout'): void }>();
+const emits = defineEmits<{ (name: 'onLogout'): void }>();
 
 </script>
 
