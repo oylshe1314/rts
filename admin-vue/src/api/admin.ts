@@ -11,6 +11,7 @@ import type {RoleOptionDto} from '@/api/common.ts';
 
 export interface RoleQueryDto {
     name: string | null;
+    code: string | null;
 }
 
 export interface RoleDto {

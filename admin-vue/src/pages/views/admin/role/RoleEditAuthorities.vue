@@ -92,7 +92,7 @@ function menusToTreeNodes(parent: RoleAuthorityDto | null, authorities: RoleAuth
             const node: TreeNode = {
                 id: authority.id,
                 label: authority.name,
-                disabled: (props.editData.roleId === 1 && authority.id < 28),
+                disabled: (props.editData.roleId === 1 && authority.id < 29),
                 children: [],
             }
             if (authority.subMenus !== null) {

@@ -43,6 +43,7 @@ public class RoleRepository {
         ResultQuery<?> query = dslContext.insertInto(
                         Tables.ROLE,
                         Tables.ROLE.NAME,
+                        Tables.ROLE.CODE,
                         Tables.ROLE.STATUS,
                         Tables.ROLE.REMARK,
                         Tables.ROLE.CREATE_BY,
@@ -51,6 +52,7 @@ public class RoleRepository {
                         Tables.ROLE.UPDATE_TIME)
                 .values(
                         role.getName(),
+                        role.getCode(),
                         role.getStatus(),
                         role.getRemark(),
                         role.getCreateBy(),

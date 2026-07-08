@@ -53,37 +53,38 @@ comment on column menu.update_time is '修改时间';
 -- 插入基础菜单，基础菜单应不能禁用和删除
 insert into menu(id, parent_id, type, name, icon, component, path, sort_by, status, remark, create_by, update_by)
 values (1, 0, 1, '菜单管理', 'Menu', '', '', 1, 1, '菜单管理目录', 'admin', 'admin'),
-       (2, 1, 2, '菜单列表', 'List', '', '/menu/list', 1, 1, '菜单列表菜单', 'admin', 'admin'),
+       (2, 1, 2, '菜单列表', 'List', '', '/menu/index', 1, 1, '菜单列表菜单', 'admin', 'admin'),
        (3, 2, 3, '菜单查询', '', '', '/menu/query', 0, 1, '菜单查询接口', 'admin', 'admin'),
        (4, 2, 3, '菜单添加', '', '', '/menu/add', 0, 1, '菜单添加接口', 'admin', 'admin'),
        (5, 2, 3, '菜单修改', '', '', '/menu/update', 0, 1, '菜单修改接口', 'admin', 'admin'),
        (6, 2, 3, '菜单删除', '', '', '/menu/delete', 0, 1, '菜单删除接口', 'admin', 'admin'),
        (7, 2, 3, '菜单状态修改', '', '', '/menu/status/change', 0, 1, '菜单状态修改接口', 'admin', 'admin'),
-       (8, 0, 1, '管理员', 'Role', '', '', 1, 1, '管理员目录', 'admin', 'admin'),
-       (9, 8, 2, '角色列表', 'List', '', '/admin/role/list', 2, 1, '角色列表菜单', 'admin', 'admin'),
+       (8, 0, 1, '管理员', 'User', '', '', 1, 1, '管理员目录', 'admin', 'admin'),
+       (9, 8, 2, '角色列表', 'List', '', '/admin/role/index', 2, 1, '角色列表菜单', 'admin', 'admin'),
        (10, 9, 3, '角色查询', '', '', '/admin/role/query', 0, 1, '角色查询接口', 'admin', 'admin'),
        (11, 9, 3, '角色添加', '', '', '/admin/role/add', 0, 1, '角色添加接口', 'admin', 'admin'),
        (12, 9, 3, '角色修改', '', '', '/admin/role/update', 0, 1, '角色修改接口', 'admin', 'admin'),
        (13, 9, 3, '角色删除', '', '', '/admin/role/delete', 0, 1, '角色删除接口', 'admin', 'admin'),
        (14, 9, 3, '角色状态修改', '', '', '/admin/role/status/change', 0, 1, '角色状态修改接口', 'admin', 'admin'),
-       (15, 9, 3, '角色权限查询', '', '', '/admin/role/authority/query', 0, 1, '角色权限查询接口', 'admin', 'admin'),
-       (16, 9, 3, '角色权限修改', '', '', '/admin/role/authority/change', 0, 1, '角色权限修改接口', 'admin', 'admin'),
-       (17, 8, 2, '管理员', 'List', '', '/admin/list', 3, 1, '管理员列表菜单', 'admin', 'admin'),
-       (18, 17, 3, '管理员查询', '', '', '/admin/query', 0, 1, '管理员查询接口', 'admin', 'admin'),
-       (19, 17, 3, '管理员添加', '', '', '/admin/add', 0, 1, '管理员添加接口', 'admin', 'admin'),
-       (20, 17, 3, '管理员修改', '', '', '/admin/update', 0, 1, '管理员修改接口', 'admin', 'admin'),
-       (21, 17, 3, '管理员删除', '', '', '/admin/delete', 0, 1, '管理员删除接口', 'admin', 'admin'),
-       (22, 17, 3, '管理员状态修改', '', '', '/admin/status/change', 0, 1, '管理员状态修改接口', 'admin', 'admin'),
-       (23, 0, 1, '设置', 'Setting', '', '', 999, 1, '设置目录', 'admin', 'admin'),
-       (24, 23, 2, '详细信息', '', '', '/setting/detail', 999, 1, '详细信息菜单', 'admin', 'admin'),
-       (25, 24, 3, '详细信息修改', '', '', '/setting/detail/change', 0, 1, '详细信息修改接口', 'admin', 'admin'),
-       (26, 23, 2, '修改密码', '', '', '/setting/password', 999, 1, '修改密码菜单', 'admin', 'admin'),
-       (27, 26, 3, '密码修改', '', '', '/setting/password/change', 0, 1, '密码修改接口', 'admin', 'admin');
+       (15, 9, 3, '角色权限查询', '', '', '/admin/role/authority/get', 0, 1, '角色权限查询接口', 'admin', 'admin'),
+       (16, 9, 3, '角色权限修改', '', '', '/admin/role/authority/set', 0, 1, '角色权限修改接口', 'admin', 'admin'),
+       (17, 9, 3, '角色权限对比', '', '', '/admin/role/authority/compare', 0, 1, '角色权限修改接口', 'admin', 'admin'),
+       (18, 8, 2, '管理员', 'List', '', '/admin/index', 3, 1, '管理员列表菜单', 'admin', 'admin'),
+       (19, 18, 3, '管理员查询', '', '', '/admin/query', 0, 1, '管理员查询接口', 'admin', 'admin'),
+       (20, 18, 3, '管理员添加', '', '', '/admin/add', 0, 1, '管理员添加接口', 'admin', 'admin'),
+       (21, 18, 3, '管理员修改', '', '', '/admin/update', 0, 1, '管理员修改接口', 'admin', 'admin'),
+       (22, 18, 3, '管理员删除', '', '', '/admin/delete', 0, 1, '管理员删除接口', 'admin', 'admin'),
+       (23, 18, 3, '管理员状态修改', '', '', '/admin/status/change', 0, 1, '管理员状态修改接口', 'admin', 'admin'),
+       (24, 0, 1, '设置', 'Setting', '', '', 999, 1, '设置目录', 'admin', 'admin'),
+       (25, 24, 2, '详细信息', '', '', '/setting/details', 999, 1, '详细信息菜单', 'admin', 'admin'),
+       (26, 25, 3, '详细信息修改', '', '', '/setting/details/change', 0, 1, '详细信息修改接口', 'admin', 'admin'),
+       (27, 24, 2, '修改密码', '', '', '/setting/password', 999, 1, '修改密码菜单', 'admin', 'admin'),
+       (28, 27, 3, '密码修改', '', '', '/setting/password/change', 0, 1, '密码修改接口', 'admin', 'admin');
 
 insert into menu(id, parent_id, type, name, icon, component, path, sort_by, status, remark, create_by, update_by)
-values (28, 0, 1, '操作记录', 'List', '', '', 2, 1, '操作记录', 'admin', 'admin'),
-       (29, 28, 2, '操作记录', '', '', '/operation/record/list', 0, 1, '操作记录', 'admin', 'admin'),
-       (30, 29, 3, '操作记录查询', '', '', '/operation/record/query', 0, 1, '操作记录查询', 'admin', 'admin');
+values (29, 0, 1, '操作记录', 'List', '', '', 2, 1, '操作记录', 'admin', 'admin'),
+       (30, 28, 2, '操作记录', '', '', '/operation/record/index', 0, 1, '操作记录', 'admin', 'admin'),
+       (31, 29, 3, '操作记录查询', '', '', '/operation/record/query', 0, 1, '操作记录查询', 'admin', 'admin');
 
 -- 恢复menu表id序列
 SELECT setval('menu_id_seq', (select max(id) from menu), true);

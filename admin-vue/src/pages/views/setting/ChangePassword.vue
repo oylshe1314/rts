@@ -62,7 +62,7 @@ const formRules = reactive({
 function handleSubmit() {
     formRef.value.validate().then((ok: boolean) => {
         if (ok) {
-            ElMessageBox.confirm('确认修改密码', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'});
+            ElMessageBox.confirm('确认修改密码', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'})
                 .then(() => {
                     openLoading('#changePassword', '已提交，请稍候...');
                     settingApi.changePassword(formData).then(() => {

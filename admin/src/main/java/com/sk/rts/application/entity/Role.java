@@ -23,12 +23,13 @@ public class Role extends StatusEntity {
         Role role = new Role();
         role.setId(row.getLong(0));
         role.setName(row.getString(1));
-        role.setStatus(row.getInteger(2));
-        role.setRemark(row.getString(3));
-        role.setCreateBy(row.getString(4));
-        role.setCreateTime(row.getOffsetDateTime(5));
-        role.setUpdateBy(row.getString(6));
-        role.setUpdateTime(row.getOffsetDateTime(7));
+        role.setCode(row.getString(2));
+        role.setStatus(row.getInteger(3));
+        role.setRemark(row.getString(4));
+        role.setCreateBy(row.getString(5));
+        role.setCreateTime(row.getOffsetDateTime(6));
+        role.setUpdateBy(row.getString(7));
+        role.setUpdateTime(row.getOffsetDateTime(8));
         return role;
     }
 }

@@ -85,6 +85,7 @@ public class RoleService {
             Select<?> pageQuery = dslContext.select(
                             Tables.ROLE.ID,
                             Tables.ROLE.NAME,
+                            Tables.ROLE.CODE,
                             Tables.ROLE.STATUS,
                             Tables.ROLE.REMARK,
                             Tables.ROLE.CREATE_BY,
@@ -100,6 +101,9 @@ public class RoleService {
                 if (queryDto.getName() != null) {
                     conditions.add(Tables.ROLE.NAME.like("%" + queryDto.getName() + "%"));
                 }
+                if (queryDto.getCode() != null) {
+                    conditions.add(Tables.ROLE.CODE.like("%" + queryDto.getCode() + "%"));
+                }
             }
 
             if (!conditions.isEmpty()) {
@@ -108,9 +112,9 @@ public class RoleService {
             }
 
             if (pageRequestDto.getSort() == null) {
-                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(Tables.OPERATION_RECORD.ID.asc());
+                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(Tables.ROLE.ID.desc());
             } else {
-                OrderField<?> sortField = Tables.OPERATION_RECORD.field(pageRequestDto.getSort());
+                OrderField<?> sortField = Tables.ROLE.field(pageRequestDto.getSort());
                 if (sortField == null) {
                     return Mono.error(new StandardStatusException(ResponseStatus.parameter_error));
                 }
@@ -306,22 +310,47 @@ public class RoleService {
         TableMenu m = Tables.MENU.as("m");
         TableRoleAuthority a = Tables.ROLE_AUTHORITY.as("a");
 
-        Select<?> query = dslContext.select(m.ID, m.PARENT_ID, m.NAME, m.SORT_BY, a.ROLE_ID).from(m).leftJoin(a).on(a.MENU_ID.eq(m.ID)).and(a.ROLE_ID.eq(id)).where(m.STATUS.eq(Status.enable.value()));
+        Select<?> query = dslContext.select(
+                        m.ID,
+                        m.PARENT_ID,
+                        m.NAME,
+                        m.SORT_BY,
+                        a.ROLE_ID)
+                .from(m)
+                .leftJoin(a).on(a.MENU_ID.eq(m.ID)).and(a.ROLE_ID.eq(id))
+                .where(m.STATUS.eq(Status.enable.value()))
+                .orderBy(m.ID.asc());
         return Mono.<List<RoleAuthorityDto>>create(sink -> pool.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
-                .map(rows -> rows.stream().map(row -> {
-                            Menu menu = new Menu();
-                            menu.setId(row.getLong(0));
-                            menu.setParentId(row.getLong(1));
-                            menu.setName(row.getString(2));
-                            menu.setSortBy(row.getInteger(3));
-                            boolean checked = row.getLong(4) != null;
+                .map(rows -> {
+                    Map<Long, RoleAuthorityDto> authorityMap = new HashMap<>();
+                    for (Row row : rows) {
+                        Menu menu = new Menu();
+                        menu.setId(row.getLong(0));
+                        menu.setParentId(row.getLong(1));
+                        menu.setName(row.getString(2));
+                        menu.setSortBy(row.getInteger(3));
 
-                    return new RoleAuthorityDto(menu, checked);
-                        }).toList()
-                )
+                        authorityMap.put(menu.getId(), new RoleAuthorityDto(menu, row.getLong(4) != null));
+                    }
+
+                    List<RoleAuthorityDto> authorityList = new ArrayList<>();
+                    authorityMap.forEach((_, authority) -> {
+                        if (authority.getParentId() == 0L) {
+                            authorityList.add(authority);
+                        } else {
+                            RoleAuthorityDto parent = authorityMap.get(authority.getParentId());
+                            if (parent != null) {
+                                parent.getSubMenus().add(authority);
+                            }
+                        }
+                    });
+
+                    MenuSortableDto.sort(authorityList);
+                    return authorityList;
+                })
                 .onSuccess(sink::success)
                 .onFailure(sink::error)
-        ).doOnSuccess(MenuSortableDto::sort);
+        );
     }
 
     /**
@@ -376,8 +405,8 @@ public class RoleService {
     public Mono<RoleAuthorityComparisonListDto> compareAuthorities(Mono<MultipleIdDto> idsDtoMono) {
         return idsDtoMono.flatMap(idsDto -> Mono.create(sink -> {
             Select<?> roleQuery = dslContext.select(Tables.ROLE.ID, Tables.ROLE.NAME).from(Tables.ROLE).where(Tables.ROLE.ID.in(idsDto.getIds()));
-            Select<?> authorityQuery = dslContext.select(Tables.ROLE_AUTHORITY.ID, Tables.ROLE_AUTHORITY.ROLE_ID, Tables.ROLE_AUTHORITY.MENU_ID).where(Tables.ROLE_AUTHORITY.ROLE_ID.in(idsDto.getIds()));
-            Select<?> menuQuery = dslContext.select(Tables.MENU.ID, Tables.MENU.PARENT_ID, Tables.MENU.TYPE, Tables.MENU.NAME, Tables.MENU.ICON, Tables.MENU.SORT_BY).where(Tables.MENU.STATUS.eq(Status.enable.value()));
+            Select<?> authorityQuery = dslContext.select(Tables.ROLE_AUTHORITY.ID, Tables.ROLE_AUTHORITY.ROLE_ID, Tables.ROLE_AUTHORITY.MENU_ID).from(Tables.ROLE_AUTHORITY).where(Tables.ROLE_AUTHORITY.ROLE_ID.in(idsDto.getIds()));
+            Select<?> menuQuery = dslContext.select(Tables.MENU.ID, Tables.MENU.PARENT_ID, Tables.MENU.TYPE, Tables.MENU.NAME, Tables.MENU.ICON, Tables.MENU.SORT_BY).from(Tables.MENU).where(Tables.MENU.STATUS.eq(Status.enable.value())).orderBy(Tables.MENU.ID.asc());
 
             Future<RowSet<Row>> roleQueryFuture = pool.preparedQuery(roleQuery.getSQL()).execute(Tuple.tuple(roleQuery.getBindValues()));
             Future<RowSet<Row>> authorityQueryFuture = pool.preparedQuery(authorityQuery.getSQL()).execute(Tuple.tuple(authorityQuery.getBindValues()));
@@ -405,7 +434,7 @@ public class RoleService {
                     menuRolesMap.computeIfAbsent(authority.getMenuId(), _ -> new HashSet<>()).add(authority.getRoleId());
                 }
 
-                List<RoleAuthorityComparisonDto> comparisonList = new ArrayList<>();
+                Map<Long, RoleAuthorityComparisonDto> comparisonMap = new HashMap<>();
                 RowSet<Row> menuRows = ar.resultAt(2);
                 for (Row row : menuRows) {
                     Menu menu = new Menu();
@@ -418,8 +447,20 @@ public class RoleService {
 
                     Set<Long> roleIds = menuRolesMap.get(menu.getId());
 
-                    comparisonList.add(new RoleAuthorityComparisonDto(menu, roleIds != null && roleIds.size() != idsDto.getIds().size(), roleIds));
+                    comparisonMap.put(menu.getId(), new RoleAuthorityComparisonDto(menu, roleIds != null && roleIds.size() != idsDto.getIds().size(), roleIds));
                 }
+
+                List<RoleAuthorityComparisonDto> comparisonList = new ArrayList<>();
+                comparisonMap.forEach((_, comparison) -> {
+                    if (comparison.getParentId() == 0L) {
+                        comparisonList.add(comparison);
+                    } else {
+                        RoleAuthorityComparisonDto parent = comparisonMap.get(comparison.getParentId());
+                        if (parent != null) {
+                            parent.getSubMenus().add(comparison);
+                        }
+                    }
+                });
 
                 MenuSortableDto.sort(comparisonList);
 

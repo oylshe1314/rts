@@ -2,7 +2,7 @@
     <div class="header">
         <div class="user">
             <el-avatar class="tt ta" :size="60" :src="getAvatar(userDetails.avatar)"/>
-            <router-link to="/setting/detail" style="text-decoration: none"><span class="tt ts">{{ userDetails.nickname }}</span></router-link>
+            <router-link to="/setting/details" style="text-decoration: none"><span class="tt ts">{{ userDetails.nickname }}</span></router-link>
             <el-link type="primary" :underline="'never'" @click="emits('onLogout')"><span class="tt ts">退出</span></el-link>
         </div>
     </div>

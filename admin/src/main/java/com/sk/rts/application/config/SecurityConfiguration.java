@@ -99,11 +99,11 @@ public class SecurityConfiguration {
                 }
                 return false;
             })) {
-                log.debug("用户通过鉴权, name={}", authentication.getName());
+                log.debug("用户通过鉴权, name={}, path={}", authentication.getName(), reqPath);
                 return new AuthorizationDecision(true);
             }
 
-            log.debug("用户权限不足,  name={}", authentication.getName());
+            log.debug("用户权限不足,  name={}, path={}", authentication.getName(), reqPath);
             return new AuthorizationDecision(false);
         });
     }

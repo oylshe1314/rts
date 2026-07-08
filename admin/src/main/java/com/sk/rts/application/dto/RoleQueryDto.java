@@ -14,8 +14,13 @@ public class RoleQueryDto {
     @Schema(description = "名称")
     private final String name;
 
+    @NullOrNotBlank
+    @Schema(description = "名称")
+    private final String code;
+
     @JsonCreator
-    public RoleQueryDto(@JsonProperty("name") String name) {
+    public RoleQueryDto(@JsonProperty("name") String name, @JsonProperty("code") String code) {
         this.name = name;
+        this.code = code;
     }
 }

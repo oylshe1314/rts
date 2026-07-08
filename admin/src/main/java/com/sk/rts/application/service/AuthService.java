@@ -21,7 +21,7 @@ import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
-import org.jooq.SelectConditionStep;
+import org.jooq.Select;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -54,7 +54,7 @@ public class AuthService {
      * @return 管理员详情对象，包含权限信息
      */
     public Mono<AdminAuthDetails> login(String account, String password, AdminRemoteDetails remoteDetails) {
-        SelectConditionStep<?> adminQuery = dslContext.select(
+        Select<?> adminQuery = dslContext.select(
                         Tables.ADMIN.ID,
                         Tables.ADMIN.ROLE_ID,
                         Tables.ADMIN.USERNAME,
@@ -117,11 +117,12 @@ public class AuthService {
 
                     AdminAuthDetails authDetails = new AdminAuthDetails(admin, remoteDetails);
 
-                    SelectConditionStep<?> authoritiesQuery = dslContext.select(
+                    Select<?> authoritiesQuery = dslContext.select(
                                     Tables.MENU.PATH)
-                            .from(Tables.ROLE_MENU_AUTHORITY)
-                            .innerJoin(Tables.MENU).on(Tables.MENU.ID.eq(Tables.ROLE_MENU_AUTHORITY.MENU_ID))
-                            .where(Tables.ROLE_MENU_AUTHORITY.ROLE_ID.eq(admin.getRoleId())).and(Tables.MENU.TYPE.eq(MenuType.api.value()));
+                            .from(Tables.ROLE_AUTHORITY)
+                            .innerJoin(Tables.MENU).on(Tables.MENU.ID.eq(Tables.ROLE_AUTHORITY.MENU_ID))
+                            .where(Tables.ROLE_AUTHORITY.ROLE_ID.eq(admin.getRoleId())).and(Tables.MENU.TYPE.eq(MenuType.api.value()))
+                            .orderBy(Tables.MENU.ID.asc());
                     return connection.preparedQuery(authoritiesQuery.getSQL()).execute(Tuple.tuple(authoritiesQuery.getBindValues()))
                             .map(rows -> rows.stream().map(row -> new ApiPatternAuthority(row.getString(0))).collect(authDetails::getAuthorities, Collection::add, Collection::addAll))
                             .flatMap(_ -> operationRecordRepository.add(connection, "login", String.valueOf(authDetails.getAdminId()), "", authDetails))
