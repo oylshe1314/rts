@@ -4,20 +4,21 @@ import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.dto.*;
 import com.sk.rts.application.entity.Menu;
 import com.sk.rts.application.entity.Role;
-import com.sk.rts.application.entity.RoleMenuAuthority;
+import com.sk.rts.application.entity.RoleAuthority;
 import com.sk.rts.application.entity.enums.Status;
 import com.sk.rts.application.exception.ExceptionUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
 import com.sk.rts.application.jooq.tables.TableMenu;
-import com.sk.rts.application.jooq.tables.TableRoleMenuAuthority;
+import com.sk.rts.application.jooq.tables.TableRoleAuthority;
 import com.sk.rts.application.repository.AdminRepository;
 import com.sk.rts.application.repository.OperationRecordRepository;
 import com.sk.rts.application.repository.RoleRepository;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.Row;
+import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -301,12 +302,12 @@ public class RoleService {
      * @param id 角色ID
      * @return 角色菜单权限树
      */
-    public Mono<List<RoleMenuAuthorityDto>> getAuthorities(Long id) {
+    public Mono<List<RoleAuthorityDto>> getAuthorities(Long id) {
         TableMenu m = Tables.MENU.as("m");
-        TableRoleMenuAuthority a = Tables.ROLE_MENU_AUTHORITY.as("a");
+        TableRoleAuthority a = Tables.ROLE_AUTHORITY.as("a");
 
         Select<?> query = dslContext.select(m.ID, m.PARENT_ID, m.NAME, m.SORT_BY, a.ROLE_ID).from(m).leftJoin(a).on(a.MENU_ID.eq(m.ID)).and(a.ROLE_ID.eq(id)).where(m.STATUS.eq(Status.enable.value()));
-        return Mono.<List<RoleMenuAuthorityDto>>create(sink -> pool.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+        return Mono.<List<RoleAuthorityDto>>create(sink -> pool.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                 .map(rows -> rows.stream().map(row -> {
                             Menu menu = new Menu();
                             menu.setId(row.getLong(0));
@@ -315,7 +316,7 @@ public class RoleService {
                             menu.setSortBy(row.getInteger(3));
                             boolean checked = row.getLong(4) != null;
 
-                            return new RoleMenuAuthorityDto(menu, checked);
+                    return new RoleAuthorityDto(menu, checked);
                         }).toList()
                 )
                 .onSuccess(sink::success)
@@ -328,7 +329,7 @@ public class RoleService {
      *
      * @param setDtoMono 角色菜单权限参数
      */
-    public Mono<Void> setAuthorities(Mono<RoleMenuAuthoritySetDto> setDtoMono, AdminAuthDetails operator) {
+    public Mono<Void> setAuthorities(Mono<RoleAuthoritySetDto> setDtoMono, AdminAuthDetails operator) {
         return setDtoMono.flatMap(setDto -> Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                 .compose(_ -> roleRepository.getForUpdate(connection, setDto.getRoleId()))
                 .compose(role -> {
@@ -344,8 +345,8 @@ public class RoleService {
                         }
                     }
 
-                    Delete<?> deleteQuery = dslContext.deleteFrom(Tables.ROLE_MENU_AUTHORITY).where(Tables.ROLE_MENU_AUTHORITY.ROLE_ID.eq(setDto.getRoleId()));
-                    Insert<?> insertQuery = dslContext.insertInto(Tables.ROLE_MENU_AUTHORITY, Tables.ROLE_MENU_AUTHORITY.ROLE_ID, Tables.ROLE_MENU_AUTHORITY.MENU_ID);
+                    Delete<?> deleteQuery = dslContext.deleteFrom(Tables.ROLE_AUTHORITY).where(Tables.ROLE_AUTHORITY.ROLE_ID.eq(setDto.getRoleId()));
+                    Insert<?> insertQuery = dslContext.insertInto(Tables.ROLE_AUTHORITY, Tables.ROLE_AUTHORITY.ROLE_ID, Tables.ROLE_AUTHORITY.MENU_ID);
 
                     for (Long menuId : menuIds) {
                         insertQuery = ((InsertValuesStep2<?, Long, Long>) insertQuery).values(role.getId(), menuId);
@@ -372,43 +373,59 @@ public class RoleService {
      * @param idsDtoMono 角色ID列表
      * @return 菜单权限比较列表
      */
-    public Mono<List<RoleMenuAuthorityComparisonDto>> compareAuthorities(Mono<MultipleIdDto> idsDtoMono) {
-        return idsDtoMono.flatMap(idsDto -> {
+    public Mono<RoleAuthorityComparisonListDto> compareAuthorities(Mono<MultipleIdDto> idsDtoMono) {
+        return idsDtoMono.flatMap(idsDto -> Mono.create(sink -> {
+            Select<?> roleQuery = dslContext.select(Tables.ROLE.ID, Tables.ROLE.NAME).from(Tables.ROLE).where(Tables.ROLE.ID.in(idsDto.getIds()));
+            Select<?> authorityQuery = dslContext.select(Tables.ROLE_AUTHORITY.ID, Tables.ROLE_AUTHORITY.ROLE_ID, Tables.ROLE_AUTHORITY.MENU_ID).where(Tables.ROLE_AUTHORITY.ROLE_ID.in(idsDto.getIds()));
+            Select<?> menuQuery = dslContext.select(Tables.MENU.ID, Tables.MENU.PARENT_ID, Tables.MENU.TYPE, Tables.MENU.NAME, Tables.MENU.ICON, Tables.MENU.SORT_BY).where(Tables.MENU.STATUS.eq(Status.enable.value()));
 
-            Select<?> authoritiesQuery = dslContext.select(Tables.ROLE_MENU_AUTHORITY.ROLE_ID, Tables.ROLE_MENU_AUTHORITY.MENU_ID).where(Tables.ROLE_MENU_AUTHORITY.ROLE_ID.in(idsDto.getIds()));
-            Select<?> menuQuery = dslContext.select(Tables.MENU.ID, Tables.MENU.PARENT_ID, Tables.MENU.NAME, Tables.MENU.SORT_BY).where(Tables.MENU.STATUS.eq(Status.enable.value()));
-            return Mono.<List<RoleMenuAuthorityComparisonDto>>create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(authoritiesQuery.getSQL())
-                    .execute(Tuple.tuple(menuQuery.getBindValues()))
-                    .map(rows -> {
-                        Map<Long, Set<Long>> menusRoleIds = new HashMap<>();
-                        for (Row row : rows) {
-                            RoleMenuAuthority authority = new RoleMenuAuthority();
-                            authority.setRoleId(row.getLong(0));
-                            authority.setMenuId(row.getLong(1));
+            Future<RowSet<Row>> roleQueryFuture = pool.preparedQuery(roleQuery.getSQL()).execute(Tuple.tuple(roleQuery.getBindValues()));
+            Future<RowSet<Row>> authorityQueryFuture = pool.preparedQuery(authorityQuery.getSQL()).execute(Tuple.tuple(authorityQuery.getBindValues()));
+            Future<RowSet<Row>> menuQueryFuture = pool.preparedQuery(menuQuery.getSQL()).execute(Tuple.tuple(menuQuery.getBindValues()));
 
-                            menusRoleIds.computeIfAbsent(authority.getMenuId(), _ -> new HashSet<>()).add(authority.getRoleId());
-                        }
-                        return menusRoleIds;
-                    })
-                    .flatMap(menusRoleIds -> connection.preparedQuery(menuQuery.getSQL())
-                            .execute(Tuple.tuple(menuQuery.getBindValues()))
-                            .map(rows -> rows.stream().map(row -> {
-                                        Menu menu = new Menu();
-                                        menu.setId(row.getLong(0));
-                                        menu.setParentId(row.getLong(1));
-                                        menu.setName(row.getString(2));
-                                        menu.setSortBy(row.getInteger(3));
+            Future.all(roleQueryFuture, authorityQueryFuture, menuQueryFuture).onFailure(sink::error).onSuccess(ar -> {
+                RowSet<Row> roleRows = ar.resultAt(0);
+                List<RoleOptionDto> roleList = new ArrayList<>();
+                for (Row row : roleRows) {
+                    Role role = new Role();
+                    role.setId(row.getLong(0));
+                    role.setName(row.getString(1));
 
-                                        Set<Long> roleIds = menusRoleIds.get(menu.getId());
+                    roleList.add(new RoleOptionDto(role));
+                }
 
-                                        return new RoleMenuAuthorityComparisonDto(menu, roleIds != null && roleIds.size() != idsDto.getIds().size(), roleIds);
-                                    }).toList()
-                            ))
-                    .onComplete(_ -> connection.close())
-                    .onSuccess(sink::success)
-                    .onFailure(sink::error)
-            )).doOnSuccess(MenuSortableDto::sort);
-        });
+                RowSet<Row> authorityRows = ar.resultAt(1);
+                Map<Long, Set<Long>> menuRolesMap = new HashMap<>();
+                for (Row row : authorityRows) {
+                    RoleAuthority authority = new RoleAuthority();
+                    authority.setId(row.getLong(0));
+                    authority.setRoleId(row.getLong(1));
+                    authority.setMenuId(row.getLong(2));
+
+                    menuRolesMap.computeIfAbsent(authority.getMenuId(), _ -> new HashSet<>()).add(authority.getRoleId());
+                }
+
+                List<RoleAuthorityComparisonDto> comparisonList = new ArrayList<>();
+                RowSet<Row> menuRows = ar.resultAt(2);
+                for (Row row : menuRows) {
+                    Menu menu = new Menu();
+                    menu.setId(row.getLong(0));
+                    menu.setParentId(row.getLong(1));
+                    menu.setType(row.getInteger(2));
+                    menu.setName(row.getString(3));
+                    menu.setIcon(row.getString(4));
+                    menu.setSortBy(row.getInteger(5));
+
+                    Set<Long> roleIds = menuRolesMap.get(menu.getId());
+
+                    comparisonList.add(new RoleAuthorityComparisonDto(menu, roleIds != null && roleIds.size() != idsDto.getIds().size(), roleIds));
+                }
+
+                MenuSortableDto.sort(comparisonList);
+
+                sink.success(new RoleAuthorityComparisonListDto(roleList, comparisonList));
+            });
+        }));
     }
 
     /**
@@ -418,7 +435,7 @@ public class RoleService {
      * @return 角色菜单列表
      */
     public Mono<List<RoleMenuDto>> roleMenus(AdminAuthDetails authDetails) {
-        TableRoleMenuAuthority a = Tables.ROLE_MENU_AUTHORITY.as("a");
+        TableRoleAuthority a = Tables.ROLE_AUTHORITY.as("a");
         TableMenu m = Tables.MENU.as("m");
 
         Select<?> query = dslContext.select(a.ID, a.ROLE_ID, a.MENU_ID, m.ID, m.PARENT_ID, m.TYPE, m.NAME, m.ICON, m.PATH, m.SORT_BY).from(a).innerJoin(m).on(m.ID.eq(a.MENU_ID)).where(a.ROLE_ID.eq(authDetails.getRoleId())).and(m.STATUS.eq(Status.enable.value()));
@@ -427,7 +444,7 @@ public class RoleService {
                 .map(rows -> {
                     Map<Long, RoleMenuDto> menuMap = new HashMap<>(rows.size());
                     for (Row row : rows) {
-                        RoleMenuAuthority authority = new RoleMenuAuthority();
+                        RoleAuthority authority = new RoleAuthority();
                         authority.setId(row.getLong(0));
                         authority.setRoleId(row.getLong(1));
                         authority.setMenuId(row.getLong(2));

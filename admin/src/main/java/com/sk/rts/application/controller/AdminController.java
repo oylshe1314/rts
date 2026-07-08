@@ -86,19 +86,19 @@ public class AdminController {
             @Parameter(name = "roleId", required = true, description = "角色ID")
     })
     @RequestMapping(value = "/role/authority/get", method = RequestMethod.GET)
-    public Mono<ResponseDto<Collection<RoleMenuAuthorityDto>>> roleAuthorityGet(@NotNull @Positive Long roleId) {
+    public Mono<ResponseDto<Collection<RoleAuthorityDto>>> roleAuthorityGet(@NotNull @Positive Long roleId) {
         return roleService.getAuthorities(roleId).map(ResponseDto::success);
     }
 
     @Operation(summary = "角色权限设置")
     @RequestMapping(value = "/role/authority/set", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> roleAuthoritySet(@RequestBody @Valid Mono<RoleMenuAuthoritySetDto> setDtoMono, AdminAuthToken authToken) {
+    public Mono<ResponseDto<?>> roleAuthoritySet(@RequestBody @Valid Mono<RoleAuthoritySetDto> setDtoMono, AdminAuthToken authToken) {
         return roleService.setAuthorities(setDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 
     @Operation(summary = "角色权限对比")
     @RequestMapping(value = "/role/authority/compare", method = RequestMethod.POST)
-    public Mono<ResponseDto<Collection<RoleMenuAuthorityComparisonDto>>> roleAuthorityCompare(@RequestBody Mono<MultipleIdDto> idsDtoMono) {
+    public Mono<ResponseDto<RoleAuthorityComparisonListDto>> roleAuthorityCompare(@RequestBody Mono<MultipleIdDto> idsDtoMono) {
         return roleService.compareAuthorities(idsDtoMono).map(ResponseDto::success);
     }
 

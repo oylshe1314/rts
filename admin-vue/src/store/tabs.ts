@@ -9,16 +9,16 @@ import {defineStore} from "pinia";
 export interface TabCard {
     id: number;
     name: string;
-    title: string;
     path: string;
+    title: string;
     closable: boolean;
 }
 
 const homeTabCard: TabCard = {
     id: 0,
     name: 'HomeView',
-    title: '首页',
     path: '/home',
+    title: '首页',
     closable: false,
 }
 

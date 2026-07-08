@@ -4,14 +4,14 @@
  * @description:
  */
 
-import type {RouteLocationNormalized, Router, RouteRecordRaw} from "vue-router"
+import type {RouteLocationNormalized, Router, RouteRecordRaw} from "vue-router";
 import {createRouter, createWebHistory} from "vue-router";
 
 declare module 'vue-router' {
     interface RouteMeta {
-        title?: string;
-        tabView?: boolean;
-        closable?: boolean
+        title: string;
+        tabView: boolean;
+        closable: boolean
     }
 }
 
@@ -21,34 +21,87 @@ const routes: RouteRecordRaw[] = [
         redirect: '/index'
     },
     {
-        path: '/login',
         name: 'LoginPage',
+        path: '/login',
         component: () => import('@/pages/LoginPage.vue'),
         meta: {
             title: '登录',
+            tabView: true,
+            closable: true,
         }
     },
     {
-        path: "/index",
         name: 'IndexPage',
+        path: "/index",
         component: () => import('@/pages/IndexPage.vue'),
         children: [
             {
-                path: '/home',
                 name: 'HomeView',
+                path: '/home',
                 component: () => import('@/pages/views/HomeView.vue'),
                 meta: {
+                    title: "首页",
                     tabView: true,
-                    title: "首页"
+                    closable: false,
                 }
             },
             {
-                path: '/404',
                 name: 'NotFound',
+                path: '/404',
                 component: () => import('@/pages/views/NotFound.vue'),
                 meta: {
-                    tabView: true,
                     title: "404",
+                    tabView: true,
+                    closable: true,
+                }
+            },
+            {
+                path: '/menu/index',
+                name: 'MenuIndex',
+                component: () => import('@/pages/views/menu/MenuIndex.vue'),
+                meta: {
+                    tabView: true,
+                    title: "菜单列表",
+                    closable: true,
+                }
+            },
+            {
+                path: '/admin/role/index',
+                name: 'RoleIndex',
+                component: () => import('@/pages/views/admin/role/RoleIndex.vue'),
+                meta: {
+                    tabView: true,
+                    title: "角色列表",
+                    closable: true,
+                }
+            },
+            {
+                path: '/admin/index',
+                name: 'AdminIndex',
+                component: () => import('@/pages/views/admin/AdminIndex.vue'),
+                meta: {
+                    tabView: true,
+                    title: "管理员列表",
+                    closable: true,
+                }
+            },
+            {
+                name: 'DetailsView',
+                path: '/setting/details',
+                component: () => import('@/pages/views/setting/DetailsView.vue'),
+                meta: {
+                    title: "用户详情",
+                    tabView: true,
+                    closable: true,
+                }
+            },
+            {
+                name: 'ChangePassword',
+                path: '/setting/password',
+                component: () => import('@/pages/views/setting/ChangePassword.vue'),
+                meta: {
+                    title: "修改密码",
+                    tabView: true,
                     closable: true,
                 }
             },
@@ -69,10 +122,27 @@ router.beforeEach(async (to: RouteLocationNormalized) => {
         document.title = to.meta.title;
     }
 
-    if (to.name === 'LoginPage' || userStore.getToken()) {
+    if (to.name === 'LoginPage') {
         return;
     } else {
-        return {name: 'LoginPage'};
+        if (!userStore.getToken()) {
+            return {name: 'LoginPage'};
+        }
+    }
+
+    const {useTabsStore} = await import("@/store/tabs.ts");
+    const tabsStore = useTabsStore();
+
+    if (to.meta.tabView && to.name !== 'HomeView') {
+        if (to.name && tabsStore.getIndex(String(to.name)) < 0) {
+            tabsStore.addCard({
+                id: tabsStore.getSize() + 1,
+                name: String(to.name),
+                path: String(to.path),
+                title: to.meta.title,
+                closable: to.meta.closable,
+            });
+        }
     }
 });
 

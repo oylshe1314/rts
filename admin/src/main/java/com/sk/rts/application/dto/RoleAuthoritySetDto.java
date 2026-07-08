@@ -9,7 +9,7 @@ import java.util.List;
 
 @Getter
 @Schema(description = "角色权限设置")
-public class RoleMenuAuthoritySetDto {
+public class RoleAuthoritySetDto {
 
     @NotBlank
     @Schema(description = "角色ID")
@@ -18,8 +18,8 @@ public class RoleMenuAuthoritySetDto {
     @Schema(description = "菜单ID列表")
     private final List<Long> menuIds;
 
-    public RoleMenuAuthoritySetDto(@JsonProperty("roleId") Long roleId,
-                                   @JsonProperty("menuIds") List<Long> menuIds) {
+    public RoleAuthoritySetDto(@JsonProperty("roleId") Long roleId,
+                               @JsonProperty("menuIds") List<Long> menuIds) {
         this.roleId = roleId;
         this.menuIds = menuIds;
     }

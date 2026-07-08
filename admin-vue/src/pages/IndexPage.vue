@@ -20,14 +20,14 @@ import {onMounted, ref} from "vue";
 
 import authApi from "@/api/auth.ts"
 
-import type {RoleMenuDto} from "@/api/common.ts"
-import commonApi from "@/api/common.ts"
+import type {RoleMenuDto} from "@/api/common.ts";
+import commonApi from "@/api/common.ts";
 
 import {ElMessage} from "element-plus";
 
-import HeadBar from '@/components/HeadBar.vue'
-import LeftMenu from '@/components/LeftMenu.vue'
-import MainView from '@/components/MainView.vue'
+import HeadBar from '@/components/HeadBar.vue';
+import LeftMenu from '@/components/LeftMenu.vue';
+import MainView from '@/components/MainView.vue';
 
 import {closeLoading, openLoading} from "@/util/loading.ts";
 
@@ -85,22 +85,22 @@ function handleLogout() {
             userStore.clear();
             tabsStore.clear();
             router.push({name: 'LoginPage'});
-        })
+        });
 }
 
 function handleTabChange(name: string) {
-    router.push({name: name})
+    router.push({name: name});
 }
 
 function handleTabRemove(name: string) {
-    const index = tabsStore.getIndex(name)
+    const index = tabsStore.getIndex(name);
     if (index > 0) {
-        tabsStore.removeCard(index)
+        tabsStore.removeCard(index);
         if (name === router.currentRoute.value.name) {
             if (index < tabsStore.getSize()) {
-                router.push({name: tabsStore.getCards()[index].name})
+                router.push({name: tabsStore.getCards()[index].name});
             } else {
-                router.push({name: tabsStore.getCards()[index - 1].name})
+                router.push({name: tabsStore.getCards()[index - 1].name});
             }
         }
     }

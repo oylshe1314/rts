@@ -2,8 +2,8 @@
     <div class="main">
         <el-tabs v-model="$route.name" type="border-card"
                  :value="$route.path"
-                 @tab-change="(name)=>emits('onTabChange', name)"
-                 @tab-remove="(name)=>emits('onTabRemove', name)"
+                 @tab-change="(name:string)=>emits('tabChange', name)"
+                 @tab-remove="(name:string)=>emits('tabRemove', name)"
                  class="tabs">
             <el-tab-pane v-for="card in tabCards" :key="card.id" :name="card.name" :label="card.title" :closable="card.closable"/>
             <router-view v-slot="{Component, route}">
@@ -21,15 +21,9 @@
 
 import type {TabCard} from "@/store/tabs.ts";
 
-defineProps<{
-    tabNames: string[]
-    tabCards: TabCard[]
-}>();
+defineProps<{ tabNames: string[]; tabCards: TabCard[]; }>();
 
-const emits = defineEmits<{
-    (emit: 'tabChange', name: string): void
-    (emit: 'tabRemove', name: string): void
-}>();
+const emits = defineEmits<{ (emit: 'tabChange', name: string): void; (emit: 'tabRemove', name: string): void; }>();
 
 </script>
 

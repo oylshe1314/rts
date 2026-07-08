@@ -8,7 +8,7 @@ import java.util.Set;
 
 @Getter
 @Schema(description = "角色权限对比")
-public class RoleMenuAuthorityComparisonDto extends MenuSortableDto<RoleMenuAuthorityComparisonDto> {
+public class RoleAuthorityComparisonDto extends MenuSortableDto<RoleAuthorityComparisonDto> {
 
     @Schema(description = "上级菜单ID")
     private final Long parentId;
@@ -28,7 +28,7 @@ public class RoleMenuAuthorityComparisonDto extends MenuSortableDto<RoleMenuAuth
     @Schema(description = "选中的角色ID")
     private final Set<Long> roles;
 
-    public RoleMenuAuthorityComparisonDto(Menu menu, Boolean highlight, Set<Long> roles) {
+    public RoleAuthorityComparisonDto(Menu menu, Boolean highlight, Set<Long> roles) {
         super(menu.getId(), menu.getSortBy());
         this.parentId = menu.getParentId();
         this.type = menu.getType();

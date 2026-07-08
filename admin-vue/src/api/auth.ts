@@ -22,7 +22,7 @@ export default {
             data: data,
         });
     },
-    logout: async (): Promise<any> => {
+    logout: async (): Promise<void> => {
         return service({
             url: pathAuthLogout,
             method: "POST",

@@ -44,7 +44,7 @@
 
 import type {RoleMenuDto} from "@/api/common.ts";
 
-defineProps<{ roleMenus: RoleMenuDto[] }>();
+defineProps<{ roleMenus: RoleMenuDto[]; }>();
 
 </script>
 

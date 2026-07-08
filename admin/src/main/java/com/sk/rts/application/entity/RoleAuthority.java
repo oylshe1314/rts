@@ -6,7 +6,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class RoleMenuAuthority extends BaseEntity {
+public class RoleAuthority extends BaseEntity {
 
     /**
      * 角色ID

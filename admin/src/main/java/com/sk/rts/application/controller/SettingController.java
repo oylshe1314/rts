@@ -30,14 +30,14 @@ public class SettingController {
 
     private final SettingService settingService;
 
-    @Operation(summary = "修改详细信息")
-    @RequestMapping(value = "/change/details", method = RequestMethod.POST)
+    @Operation(summary = "详细信息修改")
+    @RequestMapping(value = "/details/change", method = RequestMethod.POST)
     public Mono<ResponseDto<?>> changeDetails(@RequestBody @Valid Mono<ChangeDetailsDto> changeDtoMono, AdminAuthToken authToken) throws Exception {
         return settingService.changeDetails(changeDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 
-    @Operation(summary = "修改密码")
-    @RequestMapping(value = "/change/password", method = RequestMethod.POST)
+    @Operation(summary = "密码修改")
+    @RequestMapping(value = "/password/change", method = RequestMethod.POST)
     public Mono<ResponseDto<?>> changePassword(@RequestBody @Valid Mono<ChangePasswordDto> changeDtoMono, AdminAuthToken authToken) throws Exception {
         return settingService.changePassword(changeDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }

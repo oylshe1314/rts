@@ -15,6 +15,14 @@ export interface ResponseDto<T> {
     data: T | null;
 }
 
+export interface PageResultDto<T> {
+    pageNo:number;
+    pageSize:number;
+    total:number;
+    pages:number;
+    results: T[];
+}
+
 const service = axios.create({
     withCredentials: true,
 })

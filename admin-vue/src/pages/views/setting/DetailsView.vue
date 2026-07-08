@@ -37,7 +37,7 @@ import {ElMessage, ElMessageBox} from "element-plus";
 import {closeLoading, openLoading} from "@/util/loading";
 
 import {useUserStore} from "@/store/user.ts";
-import settingApi from '@/api/setting.ts'
+import settingApi from '@/api/setting.ts';
 
 import AvatarSelector from "@/components/AvatarSelector.vue";
 
@@ -54,7 +54,7 @@ const editState = reactive({
     showSubmit: false,
 })
 
-const formRef = ref()
+const formRef = ref();
 
 const formData = reactive({
     roleName: userDetails.roleName,
@@ -63,15 +63,15 @@ const formData = reactive({
     email: userDetails.email,
     nickname: userDetails.nickname,
     avatar: userDetails.avatar,
-})
+});
 
 function handleEditState() {
-    editState.phone = !editState.phone
-    editState.email = !editState.email
-    editState.nickname = !editState.nickname
-    editState.avatar = !editState.avatar
-    editState.showSubmit = !editState.showSubmit
-    editState.btnText = editState.showSubmit ? '取消' : '修改'
+    editState.phone = !editState.phone;
+    editState.email = !editState.email;
+    editState.nickname = !editState.nickname;
+    editState.avatar = !editState.avatar;
+    editState.showSubmit = !editState.showSubmit;
+    editState.btnText = editState.showSubmit ? '取消' : '修改';
     if (!editState.showSubmit) {
         formData.roleName = userDetails.roleName;
         formData.username = userDetails.username;
@@ -87,35 +87,35 @@ const formRules = reactive({
     avatar: [{required: true, trigger: 'blur'}],
     email: [{required: false, trigger: 'blur'}],
     mobile: [{required: false, trigger: 'blur'}],
-})
+});
 
 function handleSubmit() {
     formRef.value.validate().then((ok: boolean) => {
         if (ok) {
             ElMessageBox.confirm('确认提交修改', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'})
                 .then(() => {
-                    openLoading('#detail', '已提交，请稍候...')
+                    openLoading('#detail', '已提交，请稍候...');
                     settingApi.changeDetail(formData).then(() => {
 
-                        userDetails.phone = formData.phone
-                        userDetails.email = formData.email
-                        userDetails.nickname = formData.nickname
-                        userDetails.avatar = formData.avatar
+                        userDetails.phone = formData.phone;
+                        userDetails.email = formData.email;
+                        userDetails.nickname = formData.nickname;
+                        userDetails.avatar = formData.avatar;
 
-                        handleEditState()
-                        ElMessage({type: 'success', showClose: true, message: '修改成功'})
+                        handleEditState();
+                        ElMessage({type: 'success', showClose: true, message: '修改成功'});
                     }).catch((e) => {
-                        ElMessage({type: 'error', showClose: true, message: e.message})
+                        ElMessage({type: 'error', showClose: true, message: e.message});
                     }).finally(() => {
-                        closeLoading()
+                        closeLoading();
                     })
                 })
                 .catch(() => {
-                })
+                });
         }
     }).catch((err: any) => {
         if (err.nickname) {
-            ElMessage({type: 'error', showClose: true, message: err.oldPassword[0].message})
+            ElMessage({type: 'error', showClose: true, message: err.oldPassword[0].message});
         }
     })
 }

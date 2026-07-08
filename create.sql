@@ -106,6 +106,7 @@ create unique index idx_unique_role_code on role (code);
 
 comment on table role is '角色表';
 comment on column role.name is '角色名称';
+comment on column role.code is '角色代码';
 comment on column role.status is '状态，0:禁用，1：启用，其他未定义';
 comment on column role.remark is '备注';
 comment on column role.create_by is '创建者(管理员)';
@@ -120,19 +121,19 @@ values (1, '管理员', 'ADMIN', 1, '默认角色', 'admin', 'admin');
 -- 恢复role表id序列
 SELECT setval('role_id_seq', (select max(id) from role), true);
 
-create table role_menu_authority
+create table role_authority
 (
     id      bigint primary key generated always as identity,
     role_id bigint not null,
     menu_id bigint not null
 );
 
-comment on table role_menu_authority is '角色菜单权限表';
-comment on column role_menu_authority.role_id is '角色ID';
-comment on column role_menu_authority.menu_id is '菜单ID, 没有配置就访问不了菜单或者接口，来实现权限管理';
+comment on table role_authority is '角色菜单权限表';
+comment on column role_authority.role_id is '角色ID';
+comment on column role_authority.menu_id is '菜单ID, 没有配置就访问不了菜单或者接口，来实现权限管理';
 
 -- 设置默认角色基本权限，修改权限时，默认角色的基础权限应不能移除
-insert into role_menu_authority(role_id, menu_id)
+insert into role_authority(role_id, menu_id)
 values (1, 1),
        (1, 2),
        (1, 3),

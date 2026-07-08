@@ -2,9 +2,9 @@
     <el-popover ref="popoverRef" placement="right-start" width="530" trigger="click" :disabled="disabledRef">
         <div class="avatar-select">
             <ul>
-                <li v-for="([name, url]) in avatars" :key="name">
+                <li v-for="(value, key) in avatars" :key="key">
                     <div style="width: 120px; height: 120px;">
-                        <img alt="" class="avatar-item" :src="url" @click="handleAvatarSelect(name)">
+                        <img alt="" class="avatar-item" :src="value" @click="handleAvatarSelect(key)">
                     </div>
                 </li>
             </ul>
@@ -23,16 +23,8 @@ import {ref, watch} from 'vue'
 
 import avatars from "@/util/avatars.ts";
 
-const props = defineProps({
-    modelValue: {
-        type: String,
-        required: true,
-    },
-    disabled: {
-        type: Boolean,
-        default: () => false
-    }
-})
+
+const props = withDefaults(defineProps<{ modelValue: string; disabled?: boolean }>(), {disabled: false,});
 
 const popoverRef = ref()
 
@@ -40,9 +32,9 @@ const modelValueRef = ref((!props.modelValue || props.modelValue === '') ? avata
 
 watch(() => props.modelValue, (value) => {
     if (!value || value === '') {
-        modelValueRef.value = avatars[0]
+        modelValueRef.value = avatars['avatar1'];
     } else {
-        modelValueRef.value = value
+        modelValueRef.value = avatars[value];
     }
 })
 
@@ -55,6 +47,7 @@ watch(() => props.disabled, (disabled) => {
 const emits = defineEmits(['update:modelValue'])
 
 function handleAvatarSelect(avatar: string) {
+    console.log(avatar)
     emits('update:modelValue', avatar)
     popoverRef.value.hide()
 }
