@@ -49,7 +49,7 @@ export interface RoleAuthorityDto {
 export interface RoleAuthorityComparisonDto {
     id: number;
     parentId: number;
-    type: string;
+    type: number;
     name: string;
     icon: string;
     highlight: boolean;

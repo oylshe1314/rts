@@ -85,30 +85,30 @@ const treeRef = ref()
 const treeDataRef = ref<TreeNode[]>([])
 const treeCheckedKeysRef = ref<number[]>([])
 
-function menusToTreeNodes(parent: RoleAuthorityDto | null, authorities: RoleAuthorityDto[], checkedKeys: number[]) {
-    const nodes: TreeNode[] = [];
-    if (authorities && Array.isArray(authorities) && authorities.length > 0) {
-        authorities.forEach((authority) => {
-            const node: TreeNode = {
-                id: authority.id,
-                label: authority.name,
-                disabled: (props.editData.roleId === 1 && authority.id < 29),
-                children: [],
-            }
-            if (authority.subMenus !== null) {
-                node.children = menusToTreeNodes(authority, authority.subMenus, checkedKeys)
-                nodes.push(node)
-                if (authority.checked) {
-                    checkedKeys.push(authority.id)
-                } else {
-                    if (parent !== null) {
-                        parent.checked = false
-                    }
+function authoritiesToTreeNodes(parent: RoleAuthorityDto | null, authorities: RoleAuthorityDto[], checkedKeys: number[]): TreeNode[] {
+    if (authorities.length === 0) {
+        return [];
+    }
+
+    return authorities.map((authority) => {
+        const node: TreeNode = {
+            id: authority.id,
+            label: authority.name,
+            disabled: (props.editData.roleId === 1 && authority.id < 29),
+            children: [],
+        }
+        if (authority.subMenus !== null) {
+            node.children = authoritiesToTreeNodes(authority, authority.subMenus, checkedKeys)
+            if (authority.checked) {
+                checkedKeys.push(authority.id)
+            } else {
+                if (parent !== null) {
+                    parent.checked = false
                 }
             }
-        })
-    }
-    return nodes
+        }
+        return node;
+    })
 }
 
 function getRoleAuthority(roleId: number) {
@@ -116,7 +116,7 @@ function getRoleAuthority(roleId: number) {
     adminApi.roleAuthorityGet(roleId)
         .then((res) => {
             const checkedKeys: number[] = []
-            treeDataRef.value = menusToTreeNodes(null, res, checkedKeys)
+            treeDataRef.value = authoritiesToTreeNodes(null, res, checkedKeys)
             treeCheckedKeysRef.value = checkedKeys
         })
         .catch((e) => {

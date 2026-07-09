@@ -383,7 +383,7 @@ public class RoleService {
 
                     String deleteSql = deleteQuery.getSQL();
                     String insertSql = insertQuery.getSQL();
-                    List<Object> deleteArgs = insertQuery.getBindValues();
+                    List<Object> deleteArgs = deleteQuery.getBindValues();
                     List<Object> insertArgs = insertQuery.getBindValues();
                     return connection.preparedQuery(deleteSql).execute(Tuple.tuple(deleteArgs))
                             .compose(_ -> connection.preparedQuery(insertSql).execute(Tuple.tuple(insertArgs)))

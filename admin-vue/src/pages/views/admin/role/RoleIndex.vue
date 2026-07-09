@@ -17,7 +17,7 @@
             </el-form>
         </div>
         <div>
-            <el-table v-loading="tableLoadingRef" :data="tableData" empty-text="无数据" height="640" @selection-change="handleSelect">
+            <el-table v-loading="tableLoadingRef" :data="tableDataRef" empty-text="无数据" height="640" @selection-change="handleSelect">
                 <el-table-column type="selection" width="80" align="center"/>
                 <el-table-column type="index" label="序号" width="80" align="center"/>
                 <el-table-column prop="name" label="名称" width="200" align="left"/>
@@ -92,7 +92,7 @@ const btnDeleteDisabledRef = ref<boolean>(true);
 const btnCompareAuthorityDisabledRef = ref<boolean>(true);
 
 const tableLoadingRef = ref<boolean>(false);
-const tableData = ref<RoleDto[]>([]);
+const tableDataRef = ref<RoleDto[]>([]);
 
 function query() {
     const params: RoleQueryDto = {name: null, code: null};
@@ -107,7 +107,7 @@ function query() {
 
     tableLoadingRef.value = true;
     adminApi.roleQuery(pagination.value.currentPage, pagination.value.pageSize, params).then(res => {
-        tableData.value = res.results;
+        tableDataRef.value = res.results;
         pagination.value.total = res.total;
         pagination.value.pageCount = res.pages < 1 ? 1 : res.pages;
     }).catch(e => {

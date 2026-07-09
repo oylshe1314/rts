@@ -23,7 +23,6 @@ import {ref, watch} from 'vue'
 
 import avatars from "@/util/avatars.ts";
 
-
 const props = withDefaults(defineProps<{ modelValue: string; disabled?: boolean }>(), {disabled: false,});
 
 const popoverRef = ref()
