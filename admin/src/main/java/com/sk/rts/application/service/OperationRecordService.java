@@ -10,6 +10,7 @@ import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
 import com.sk.rts.application.repository.OperationRecordRepository;
+import com.sk.rts.application.util.TimeUtil;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.Tuple;
@@ -21,7 +22,8 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.time.OffsetDateTime;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,11 +63,14 @@ public class OperationRecordService {
                 if (queryDto.getOperatorId() != null) {
                     conditions.add(Tables.OPERATION_RECORD.OPERATOR_ID.eq(queryDto.getOperatorId()));
                 }
-                if (queryDto.getOperator() != null) {
-                    conditions.add(Tables.OPERATION_RECORD.OPERATOR.like("%" + queryDto.getOperator() + "%"));
-                }
                 if (queryDto.getOperation() != null) {
                     conditions.add(Tables.OPERATION_RECORD.OPERATION.eq(queryDto.getOperation()));
+                }
+                if (queryDto.getBeginTime() != null) {
+                    conditions.add(Tables.OPERATION_RECORD.CREATE_TIME.ge(TimeUtil.toOffsetDateTime(LocalDate.parse(queryDto.getBeginTime(), DateTimeFormatter.ISO_DATE))));
+                }
+                if (queryDto.getEndTime() != null) {
+                    conditions.add(Tables.OPERATION_RECORD.CREATE_TIME.le(TimeUtil.toOffsetDateTime(LocalDate.parse(queryDto.getEndTime(), DateTimeFormatter.ISO_DATE))));
                 }
             }
 

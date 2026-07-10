@@ -225,6 +225,7 @@ create table operation_record
 );
 
 create index idx_operation_record_operator_id on operation_record (operator_id);
+create index idx_operation_record_create_time on operation_record (create_time);
 
 comment on table operation_record is '操作记录表';
 comment on column operation_record.operator_id is '操作员ID';

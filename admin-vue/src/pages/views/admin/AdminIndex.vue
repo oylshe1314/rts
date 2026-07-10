@@ -42,9 +42,9 @@
                         <span :style="{color: scope.row.state === 0 ? '#FF0000' : '#409EFF'}">{{ scope.row.state === 0 ? '禁用' : '启用' }}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="remark" label="备注" align="left" :show-overflow-tooltip="true"/>
+                <el-table-column prop="remark" label="备注" align="left" show-overflow-tooltip/>
                 <el-table-column prop="updateBy" label="操作人" width="120" align="center"/>
-                <el-table-column :formatter="(row: RoleDto) => formatTime(row.updateTime)" prop="updateTime" label="操作时间" width="220" align="center"/>
+                <el-table-column :formatter="(row: AdminDto) => formatTime(row.updateTime)" prop="updateTime" label="操作时间" width="220" align="center"/>
                 <el-table-column fixed="right" label="操作" align="center" width="120">
                     <template #default="scope">
                         <el-dropdown trigger="click" @command="(command: string) => {handleCommand(command, scope.row)}">
@@ -81,7 +81,7 @@ import {ref, reactive, onMounted} from "vue";
 
 import {ElMessage, ElMessageBox} from "element-plus";
 
-import type {AdminDto, AdminQueryDto, RoleDto} from '@/api/admin.ts';
+import type {AdminDto, AdminQueryDto} from '@/api/admin.ts';
 import adminApi from '@/api/admin.ts';
 
 import type {RoleOptionDto} from "@/api/common.ts";
@@ -89,11 +89,12 @@ import commonApi from "@/api/common.ts";
 
 import {getAvatar} from "@/util/avatars.ts";
 
+import {formatTime} from "@/util/time.ts";
+
 import AdminAdd from "@/pages/views/admin/AdminAdd.vue";
 
 import type {AdminExtendedDto} from "@/pages/views/admin/AdminUpdate.vue";
 import AdminUpdate from "@/pages/views/admin/AdminUpdate.vue";
-import {formatTime} from "@/util/time.ts";
 
 const formData = reactive({
     roleId: 0,
@@ -172,7 +173,7 @@ const pagination = ref({
             }
         }
     }
-)
+);
 
 function handleQuery() {
     pagination.value.currentPage = 1;
@@ -183,7 +184,7 @@ onMounted(() => query());
 
 const selectionIds: number[] = [];
 
-function handleSelect(rows: RoleDto[]) {
+function handleSelect(rows: AdminDto[]) {
     if (rows.length === 0) {
         selectionIds.splice(0);
         btnDeleteDisabledRef.value = true;

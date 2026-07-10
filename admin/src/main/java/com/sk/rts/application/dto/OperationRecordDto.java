@@ -17,7 +17,7 @@ public class OperationRecordDto extends BaseDto {
     @Schema(description = "操作员用户名")
     private final String operator;
 
-    @Schema(description = "操作, login, logout, add, update, delete, changeState等")
+    @Schema(description = "操作")
     private final String operation;
 
     @Schema(description = "操作参数，表名，登录账号等")

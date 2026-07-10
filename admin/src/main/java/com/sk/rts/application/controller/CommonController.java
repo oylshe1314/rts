@@ -7,6 +7,7 @@ import com.sk.rts.application.service.AdminService;
 import com.sk.rts.application.service.MenuService;
 import com.sk.rts.application.service.RoleService;
 import com.sk.rts.application.validation.Integers;
+import com.sk.rts.application.validation.NullOrNotBlank;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -66,10 +67,10 @@ public class CommonController {
     }
 
     @Operation(summary = "管理员选择列表", parameters = {
-            @Parameter(name = "roleId", description = "角色ID")
+            @Parameter(name = "username", description = "角色ID")
     })
     @RequestMapping(value = "/options/admins", method = RequestMethod.GET)
-    public Mono<ResponseDto<Collection<AdminOptionDto>>> selectRoles(@RequestParam(required = false) @Nullable @Positive Long roleId) {
-        return adminService.adminSelectList(roleId).map(ResponseDto::success);
+    public Mono<ResponseDto<Collection<AdminOptionDto>>> selectRoles(@RequestParam(required = false) @NullOrNotBlank String username) {
+        return adminService.adminSelectList(username).map(ResponseDto::success);
     }
 }

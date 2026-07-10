@@ -1,8 +1,6 @@
 package com.sk.rts.application.util;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.util.Date;
 
 public final class TimeUtil {
@@ -21,8 +19,52 @@ public final class TimeUtil {
         return System.currentTimeMillis();
     }
 
+    public static OffsetDateTime toOffsetDateTime(LocalDateTime source) {
+        return toOffsetDateTime(source, ZoneId.systemDefault());
+    }
+
+    public static OffsetDateTime toOffsetDateTime(LocalDateTime source, ZoneId zoneId) {
+        return source.atZone(zoneId).toOffsetDateTime();
+    }
+
+    public static OffsetDateTime toOffsetDateTime(LocalDate source) {
+        return toOffsetDateTime(source, ZoneId.systemDefault());
+    }
+
+    public static OffsetDateTime toOffsetDateTime(LocalDate source, ZoneId zoneId) {
+        return source.atStartOfDay(zoneId).toOffsetDateTime();
+    }
+
+    public static OffsetDateTime toOffsetDateTime(long timestamp) {
+        return toOffsetDateTime(timestamp, ZoneId.systemDefault());
+    }
+
+    public static OffsetDateTime toOffsetDateTime(long timestamp, ZoneId zoneId) {
+        return OffsetDateTime.ofInstant(Instant.ofEpochSecond(timestamp), zoneId);
+    }
+
     public static OffsetDateTime toOffsetDateTime(Date source) {
-        return OffsetDateTime.ofInstant(source.toInstant(), ZoneId.systemDefault());
+        return toOffsetDateTime(source, ZoneId.systemDefault());
+    }
+
+    public static OffsetDateTime toOffsetDateTime(Date source, ZoneId zoneId) {
+        return OffsetDateTime.ofInstant(source.toInstant(), zoneId);
+    }
+
+    public static Date toDate(LocalDateTime source) {
+        return toDate(source, ZoneId.systemDefault());
+    }
+
+    public static Date toDate(LocalDateTime source, ZoneId zoneId) {
+        return Date.from(source.atZone(zoneId).toInstant());
+    }
+
+    public static Date toDate(LocalDate source) {
+        return toDate(source, ZoneId.systemDefault());
+    }
+
+    public static Date toDate(LocalDate source, ZoneId zoneId) {
+        return Date.from(source.atStartOfDay(zoneId).toInstant());
     }
 
     public static Date toDate(OffsetDateTime source) {

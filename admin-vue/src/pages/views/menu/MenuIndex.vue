@@ -44,9 +44,9 @@
                         <span :style="{color: scope.row.state === 0 ? '#FF0000' : '#409EFF'}">{{ scope.row.state === 0 ? '禁用' : '启用' }}</span>
                     </template>
                 </el-table-column>
-                <el-table-column :show-overflow-tooltip="true" label="备注" prop="remark" align="left"/>
+                <el-table-column label="备注" prop="remark" align="left" show-overflow-tooltip/>
                 <el-table-column label="操作人" prop="updateBy" width="120" align="center"/>
-                <el-table-column :formatter="(row: RoleDto) => formatTime(row.updateTime)" label="操作时间" prop="updateTime" width="220" align="center"/>
+                <el-table-column :formatter="(row: MenuDto) => formatTime(row.updateTime)" label="操作时间" prop="updateTime" width="220" align="center"/>
                 <el-table-column fixed="right" label="操作" width="120" align="center">
                     <template #default="scope">
                         <el-dropdown trigger="click" @command="(command: string) => {handleCommand(command, scope.row)}">
@@ -87,10 +87,10 @@ import {ElMessage, ElMessageBox} from "element-plus";
 import type {MenuDto, MenuQueryDto, MenuUpdateDto} from '@/api/menu.ts';
 import menuApi from '@/api/menu.ts';
 
+import {formatTime} from "@/util/time.ts";
+
 import MenuAdd from "@/pages/views/menu/MenuAdd.vue";
 import MenuUpdate from "@/pages/views/menu/MenuUpdate.vue";
-import adminApi, {type RoleDto} from "@/api/admin.ts";
-import {formatTime} from "@/util/time.ts";
 
 const formData = reactive<MenuQueryDto>({
     type: 0,
@@ -100,30 +100,30 @@ const formData = reactive<MenuQueryDto>({
 
 const btnDeleteDisabledRef = ref<boolean>(true);
 
-const tableLoadingRef = ref<boolean>(false)
-const tableData = ref<MenuDto[]>([])
+const tableLoadingRef = ref<boolean>(false);
+const tableData = ref<MenuDto[]>([]);
 
 function query() {
-    const queryDto: MenuQueryDto = {type: null, name: null, path: null}
+    const queryDto: MenuQueryDto = {type: null, name: null, path: null};
     if (formData.type && formData.type !== 0) {
-        queryDto.type = formData.type
+        queryDto.type = formData.type;
     }
     if (formData.name && formData.name !== '') {
-        queryDto.name = formData.name
+        queryDto.name = formData.name;
     }
     if (formData.path && formData.path !== '') {
-        queryDto.path = formData.path
+        queryDto.path = formData.path;
     }
 
     tableLoadingRef.value = true
     menuApi.query(pagination.value.currentPage, pagination.value.pageSize, queryDto).then(res => {
-        tableData.value = res.results
-        pagination.value.total = res.total
-        pagination.value.pageCount = res.pages < 1 ? 1 : res.pages
+        tableData.value = res.results;
+        pagination.value.total = res.total;
+        pagination.value.pageCount = res.pages < 1 ? 1 : res.pages;
     }).catch(e => {
-        ElMessage({type: 'error', showClose: true, message: e.message})
+        ElMessage({type: 'error', showClose: true, message: e.message});
     }).finally(() => {
-        tableLoadingRef.value = false
+        tableLoadingRef.value = false;
     })
 }
 
@@ -138,33 +138,33 @@ const pagination = ref({
         nextIcon: 'CaretRight',
         onCurrentChange: (pageNo: number) => {
             pagination.value.currentPage = pageNo;
-            query()
+            query();
         },
         onPrevClick: (pageNo: number) => {
             if (pageNo > 1) {
-                pagination.value.currentPage = pageNo - 1
-                query()
+                pagination.value.currentPage = pageNo - 1;
+                query();
             }
         },
         onNextClick: (pageNo: number) => {
             if (pageNo < pagination.value.pageCount) {
-                pagination.value.currentPage = pageNo + 1
-                query()
+                pagination.value.currentPage = pageNo + 1;
+                query();
             }
         }
     }
-)
+);
 
 function handleQuery() {
-    pagination.value.currentPage = 1
-    query()
+    pagination.value.currentPage = 1;
+    query();
 }
 
 onMounted(() => query());
 
 const selectionIds: number[] = [];
 
-function handleSelect(rows: RoleDto[]) {
+function handleSelect(rows: MenuDto[]) {
     if (rows.length === 0) {
         selectionIds.splice(0);
         btnDeleteDisabledRef.value = true;
@@ -178,7 +178,7 @@ const showAddRef = ref<boolean>(false);
 const parentDataRef = ref<MenuDto | null>(null);
 
 const showUpdateRef = ref<boolean>(false);
-const editDataRef = ref<MenuUpdateDto>({id: 0, parentId: null, type: null, icon: null, name: null, path: null, sortBy: null, remark: null})
+const editDataRef = ref<MenuUpdateDto>({id: 0, parentId: null, type: null, icon: null, name: null, path: null, sortBy: null, remark: null});
 
 function handleEditSuccess() {
     query()
@@ -188,11 +188,11 @@ function changeState(row: MenuDto, state: number) {
     menuApi.stateChange([row.id], state)
         .then(() => {
             row.state = state
-            ElMessage({type: 'success', showClose: true, message: '修改成功'})
+            ElMessage({type: 'success', showClose: true, message: '修改成功'});
         })
         .catch((e) => {
-            ElMessage({type: 'error', showClose: true, message: e.message})
-        })
+            ElMessage({type: 'error', showClose: true, message: e.message});
+        });
 }
 
 function handleCommand(command: string, row: MenuDto | null) {
@@ -234,10 +234,10 @@ function handleCommand(command: string, row: MenuDto | null) {
                 .then(() => {
                     menuApi.delete([row!.id])
                         .then(() => {
-                            query()
+                            query();
                         })
                         .catch((e) => {
-                            ElMessage({type: 'error', showClose: true, message: e.message})
+                            ElMessage({type: 'error', showClose: true, message: e.message});
                         });
                 })
                 .catch(() => {
@@ -246,7 +246,7 @@ function handleCommand(command: string, row: MenuDto | null) {
         case 'deleteSelection':
             ElMessageBox.confirm('确认删除', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
                 .then(() => {
-                    adminApi.roleDelete(selectionIds)
+                    menuApi.delete(selectionIds)
                         .then(() => {
                             query();
                         })

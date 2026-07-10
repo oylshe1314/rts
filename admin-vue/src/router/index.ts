@@ -86,6 +86,16 @@ const routes: RouteRecordRaw[] = [
                 }
             },
             {
+                path: '/operation/record/index',
+                name: 'OperationRecordIndex',
+                component: () => import('@/pages/views/operation/record/RecordIndex.vue'),
+                meta: {
+                    tabView: true,
+                    title: "操作记录列表",
+                    closable: true,
+                }
+            },
+            {
                 name: 'DetailsView',
                 path: '/setting/details',
                 component: () => import('@/pages/views/setting/DetailsView.vue'),

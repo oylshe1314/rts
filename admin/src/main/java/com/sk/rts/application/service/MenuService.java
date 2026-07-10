@@ -4,6 +4,7 @@ import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.dto.*;
 import com.sk.rts.application.entity.Menu;
 import com.sk.rts.application.entity.enums.MenuType;
+import com.sk.rts.application.entity.enums.Operation;
 import com.sk.rts.application.entity.enums.State;
 import com.sk.rts.application.exception.ExceptionUtil;
 import com.sk.rts.application.exception.ResponseStatus;
@@ -229,7 +230,7 @@ public class MenuService {
                                 .recover(this::recoverUniqueIndexException)
                                 .compose(id -> {
                                     menu.setId(id);
-                                    return operationRecordRepository.add(connection, "add", "menu", menu.getId().toString(), operator);
+                                    return operationRecordRepository.add(connection, Operation.add, "menu", menu.getId().toString(), operator);
                                 })
                                 .compose(_ -> connection.transaction().commit())
                                 .onComplete(_ -> connection.close())
@@ -317,7 +318,7 @@ public class MenuService {
                         Update<?> query = dslContext.update(Tables.MENU).set(values).where(Tables.MENU.ID.eq(menu.getId()));
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                                 .recover(this::recoverUniqueIndexException)
-                                .compose(_ -> operationRecordRepository.add(connection, "add", "menu", menu.getId().toString(), operator))
+                                .compose(_ -> operationRecordRepository.add(connection, Operation.update, "menu", menu.getId().toString(), operator))
                                 .compose(_ -> connection.transaction().commit())
                                 .onComplete(_ -> connection.close())
                                 .map(_ -> new MenuDto(menu));
@@ -350,7 +351,7 @@ public class MenuService {
                         Delete<?> query = dslContext.deleteFrom(Tables.MENU).where(Tables.MENU.ID.in(ids));
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()));
                     })
-                    .compose(_ -> operationRecordRepository.add(connection, "delete", "menu", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
+                    .compose(_ -> operationRecordRepository.add(connection, Operation.delete, "menu", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
                     .compose(_ -> connection.transaction().commit())
                     .onComplete(_ -> connection.close())
                     .onSuccess(sink::success)
@@ -377,7 +378,7 @@ public class MenuService {
             Update<?> query = dslContext.update(Tables.MENU).set(Tables.MENU.STATE, state.value()).set(Tables.MENU.UPDATE_BY, operator.getUsername()).set(Tables.MENU.UPDATE_TIME, OffsetDateTime.now()).where(Tables.MENU.STATE.in(ids));
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                    .compose(_ -> operationRecordRepository.add(connection, "changeState", "menu", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
+                    .compose(_ -> operationRecordRepository.add(connection, Operation.changeState, "menu", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
                     .compose(_ -> connection.transaction().commit())
                     .onComplete(_ -> connection.close())
                     .onSuccess(sink::success)

@@ -2,6 +2,7 @@ package com.sk.rts.application.repository;
 
 import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.entity.OperationRecord;
+import com.sk.rts.application.entity.enums.Operation;
 import com.sk.rts.application.jooq.Tables;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.Pool;
@@ -23,11 +24,11 @@ public class OperationRecordRepository {
     private final Pool pool;
     private final DSLContext dslContext;
 
-    public Future<Void> add(String operation, String arguments, String remark, AdminAuthDetails operator) {
+    public Future<Void> add(Operation operation, String arguments, String remark, AdminAuthDetails operator) {
         OperationRecord record = new OperationRecord();
         record.setOperatorId(operator.getAdminId());
         record.setOperator(operator.getUsername());
-        record.setOperation(operation);
+        record.setOperation(operation.name());
         record.setArguments(arguments);
         record.setRemark(remark);
         record.setIpAddress(operator.getIpAddress());
@@ -35,11 +36,11 @@ public class OperationRecordRepository {
         return pool.getConnection().flatMap(connection -> insert(connection, record)).mapEmpty();
     }
 
-    public Future<Void> add(SqlConnection connection, String operation, String arguments, String remark, AdminAuthDetails operator) {
+    public Future<Void> add(SqlConnection connection, Operation operation, String arguments, String remark, AdminAuthDetails operator) {
         OperationRecord record = new OperationRecord();
         record.setOperatorId(operator.getAdminId());
         record.setOperator(operator.getUsername());
-        record.setOperation(operation);
+        record.setOperation(operation.name());
         record.setArguments(arguments);
         record.setRemark(remark);
         record.setIpAddress(operator.getIpAddress());

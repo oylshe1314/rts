@@ -5,6 +5,7 @@ import com.sk.rts.application.dto.SingleIdDto;
 import com.sk.rts.application.entity.Admin;
 import com.sk.rts.application.entity.Role;
 import com.sk.rts.application.entity.enums.MenuType;
+import com.sk.rts.application.entity.enums.Operation;
 import com.sk.rts.application.entity.enums.State;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
@@ -125,7 +126,7 @@ public class AuthService {
                             .orderBy(Tables.MENU.ID.asc());
                     return connection.preparedQuery(authoritiesQuery.getSQL()).execute(Tuple.tuple(authoritiesQuery.getBindValues()))
                             .map(rows -> rows.stream().map(row -> new ApiPatternAuthority(row.getString(0))).collect(authDetails::getAuthorities, Collection::add, Collection::addAll))
-                            .flatMap(_ -> operationRecordRepository.add(connection, "login", String.valueOf(authDetails.getAdminId()), "", authDetails))
+                            .flatMap(_ -> operationRecordRepository.add(connection, Operation.login, String.valueOf(authDetails.getAdminId()), "", authDetails))
                             .map(authDetails);
                 })
                 .onComplete(_ -> connection.close())
@@ -148,7 +149,7 @@ public class AuthService {
         request.arg(AdminAuthUtil.buildDetailsKey(adminId));
         request.arg(AdminAuthUtil.buildTokenKey(subject));
 
-        return Mono.create(sink -> redis.send(request).flatMap(_ -> operationRecordRepository.add("logout", String.valueOf(adminId), "", authDetails)).onSuccess(sink::success).onFailure(sink::error));
+        return Mono.create(sink -> redis.send(request).flatMap(_ -> operationRecordRepository.add(Operation.logout, String.valueOf(adminId), "", authDetails)).onSuccess(sink::success).onFailure(sink::error));
     }
 
     /**
@@ -166,7 +167,7 @@ public class AuthService {
             request.arg(AdminAuthUtil.buildDetailsKey(adminId));
             request.arg(AdminAuthUtil.buildTokenKey(subject));
 
-            return Mono.create(sink -> redis.send(request).flatMap(_ -> operationRecordRepository.add("kickout", String.valueOf(adminId), "", operator)).onSuccess(sink::success).onFailure(sink::error));
+            return Mono.create(sink -> redis.send(request).flatMap(_ -> operationRecordRepository.add(Operation.kickout, String.valueOf(adminId), "", operator)).onSuccess(sink::success).onFailure(sink::error));
         });
 
     }

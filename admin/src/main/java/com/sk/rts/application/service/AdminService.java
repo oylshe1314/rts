@@ -5,6 +5,7 @@ import com.sk.rts.application.auth.AdminAuthUtil;
 import com.sk.rts.application.dto.*;
 import com.sk.rts.application.entity.Admin;
 import com.sk.rts.application.entity.Role;
+import com.sk.rts.application.entity.enums.Operation;
 import com.sk.rts.application.entity.enums.State;
 import com.sk.rts.application.exception.ExceptionUtil;
 import com.sk.rts.application.exception.ResponseStatus;
@@ -30,6 +31,7 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -61,20 +63,25 @@ public class AdminService {
     /**
      * 获取管理员选择列表
      *
-     * @param roleId 角色ID，null时获取全部
+     * @param username 用户名
      * @return 管理员选择列表
      */
-    public Mono<List<AdminOptionDto>> adminSelectList(@Nullable Long roleId) {
+    public Mono<List<AdminOptionDto>> adminSelectList(@Nullable String username) {
         Select<?> query = dslContext.select(
                         Tables.ADMIN.ID,
                         Tables.ADMIN.ROLE_ID,
                         Tables.ADMIN.USERNAME,
                         Tables.ADMIN.NICKNAME,
-                        Tables.ADMIN.AVATAR)
-                .from(Tables.ADMIN);
-        if (roleId != null) {
-            query = ((SelectWhereStep<?>) query).where(Tables.ADMIN.ROLE_ID.eq(roleId));
+                        Tables.ADMIN.AVATAR,
+                        Tables.ROLE.ID,
+                        Tables.ROLE.NAME)
+                .from(Tables.ADMIN)
+                .innerJoin(Tables.ROLE).on(Tables.ROLE.ID.eq(Tables.ADMIN.ROLE_ID));
+        if (StringUtils.hasText(username)) {
+            query = ((SelectWhereStep<?>) query).where(Tables.ADMIN.USERNAME.like("%" + username + "%"));
         }
+
+        query = ((SelectLimitStep<?>) query).limit(20);
 
         String sql = query.getSQL();
         List<Object> args = query.getBindValues();
@@ -82,7 +89,19 @@ public class AdminService {
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
                     for (Row row : rows) {
-                        sink.next(new AdminOptionDto(row.getLong(0), row.getLong(1), row.getString(2), row.getString(3), row.getString(4)));
+                        Admin admin = new Admin();
+                        admin.setId(row.getLong(0));
+                        admin.setRoleId(row.getLong(1));
+                        admin.setUsername(row.getString(2));
+                        admin.setNickname(row.getString(3));
+                        admin.setAvatar(row.getString(4));
+
+                        admin.setRole(new Role());
+                        ;
+                        admin.getRole().setId(row.getLong(5));
+                        admin.getRole().setName(row.getString(6));
+
+                        sink.next(new AdminOptionDto(admin));
                     }
                     sink.complete();
                 })
@@ -232,7 +251,7 @@ public class AdminService {
                             .compose(id -> {
                                 admin.setId(id);
                                 admin.setRole(role);
-                                return operationRecordRepository.add(connection, "add", "admin", admin.getId().toString(), operator);
+                                return operationRecordRepository.add(connection, Operation.add, "admin", admin.getId().toString(), operator);
                             })
                             .compose(_ -> connection.transaction().commit())
                             .onComplete(_ -> connection.close())
@@ -313,7 +332,7 @@ public class AdminService {
                         Update<?> query = dslContext.update(Tables.ADMIN).set(values).where(Tables.ADMIN.ID.eq(admin.getId()));
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                                 .recover(this::recoverUniqueIndexException)
-                                .compose(_ -> operationRecordRepository.add(connection, "update", "admin", admin.getId().toString(), operator))
+                                .compose(_ -> operationRecordRepository.add(connection, Operation.update, "admin", admin.getId().toString(), operator))
                                 .compose(_ -> connection.transaction().commit())
                                 .onComplete(_ -> connection.close())
                                 .map(_ -> new AdminDto(admin));
@@ -353,7 +372,7 @@ public class AdminService {
                             Delete<?> query = dslContext.deleteFrom(Tables.ADMIN).where(Tables.ADMIN.ID.in(ids));
                             return pool.getConnection().flatMap(connection -> connection.begin()
                                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                                    .compose(_ -> operationRecordRepository.add(connection, "delete", "admin", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
+                                    .compose(_ -> operationRecordRepository.add(connection, Operation.delete, "admin", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
                                     .compose(_ -> connection.transaction().commit())
                                     .onComplete(_ -> connection.close())
                             );
@@ -382,7 +401,7 @@ public class AdminService {
             Update<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.STATE, state.value()).set(Tables.ADMIN.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN.ID.in(ids));
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                    .compose(_ -> operationRecordRepository.add(connection, "changeState", "admin", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
+                    .compose(_ -> operationRecordRepository.add(connection, Operation.changeState, "admin", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
                     .compose(_ -> connection.transaction().commit())
                     .onComplete(_ -> connection.close())
                     .onSuccess(sink::success)

@@ -5,6 +5,7 @@ import com.sk.rts.application.auth.AdminAuthUtil;
 import com.sk.rts.application.auth.ApiPatternAuthority;
 import com.sk.rts.application.dto.ChangeDetailsDto;
 import com.sk.rts.application.dto.ChangePasswordDto;
+import com.sk.rts.application.entity.enums.Operation;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
@@ -103,7 +104,7 @@ public class SettingService {
             UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN).set(values).where(Tables.ADMIN.ID.eq(authDetails.getAdminId()));
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                    .compose(_ -> operationRecordRepository.add(connection, "changeDetail", String.valueOf(authDetails.getAdminId()), "", authDetails))
+                    .compose(_ -> operationRecordRepository.add(connection, Operation.changeDetails, String.valueOf(authDetails.getAdminId()), "", authDetails))
                     .compose(_ -> {
                         runs.forEach(Runnable::run);
                         return updateCache(authDetails);
@@ -140,7 +141,7 @@ public class SettingService {
                     UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.PASSWORD, newPassword).where(Tables.ADMIN.ID.eq(authDetails.getAdminId()));
                     return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                             .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                            .compose(_ -> operationRecordRepository.add(connection, "changePassword", String.valueOf(authDetails.getAdminId()), "", authDetails))
+                            .compose(_ -> operationRecordRepository.add(connection, Operation.changePassword, String.valueOf(authDetails.getAdminId()), "", authDetails))
                             .compose(_ -> {
                                 authDetails.setPassword(newPassword);
                                 return updateCache(authDetails);

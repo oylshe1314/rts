@@ -38,7 +38,8 @@ export interface RoleOptionDto {
 
 export interface AdminOptionDto {
     id: number;
-    roleId: string;
+    roleId: number;
+    roleName: string;
     username: string;
     nickname: string;
     avatar: string;
@@ -70,10 +71,11 @@ export default {
             method: "GET",
         });
     },
-    adminOptions: async (): Promise<AdminOptionDto[]> => {
+    adminOptions: async (username: string | null): Promise<AdminOptionDto[]> => {
         return service({
             url: "/common/options/admins",
             method: "GET",
+            params: {username: username},
         });
     }
 }

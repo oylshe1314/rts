@@ -106,7 +106,7 @@ const pathDisabledRef = ref(true);
 function init() {
     typeSelectorDisableRef.value = false;
 
-    formData.type = 1
+    formData.type = 1;
     formData.parentId = 0;
     formData.icon = '';
     formData.name = '';

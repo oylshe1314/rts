@@ -27,7 +27,7 @@
                         <span :style="{color: scope.row.state === 0 ? '#FF0000' : '#409EFF'}">{{ scope.row.state === 0 ? '禁用' : '启用' }}</span>
                     </template>
                 </el-table-column>
-                <el-table-column prop="remark" label="备注" align="left" :show-overflow-tooltip="true"/>
+                <el-table-column prop="remark" label="备注" align="left" show-overflow-tooltip/>
                 <el-table-column prop="updateBy" label="操作人" align="center" width="80"/>
                 <el-table-column :formatter="(row: RoleDto) => formatTime(row.updateTime)" prop="updateTime" label="操作时间" width="220" align="center"/>
                 <el-table-column fixed="right" label="操作" align="center" width="120">

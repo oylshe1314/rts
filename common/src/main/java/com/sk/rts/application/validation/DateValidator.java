@@ -24,6 +24,10 @@ public class DateValidator implements ConstraintValidator<Date, String> {
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
+        if (value == null) {
+            return true;
+        }
+
         try {
             LocalDate.parse(value, this.formatter);
             return true;
