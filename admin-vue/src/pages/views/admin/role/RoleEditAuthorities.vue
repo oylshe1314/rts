@@ -1,5 +1,5 @@
 <template>
-    <el-dialog v-model="showEditRef" title="角色菜单管理" width="800px" @close="handleClose" destroy-on-close center>
+    <el-dialog v-model="showEditRef" title="角色权限管理" width="800px" @close="handleClose" destroy-on-close center>
         <div id="authorities" class="authorities">
             <div style="height: 600px">
                 <el-tree-v2 ref="treeRef"
@@ -22,14 +22,14 @@
 
 <script setup lang="ts">
 
-import {ref, watch} from 'vue'
+import {ref, watch} from 'vue';
 
 import {ElMessage, ElMessageBox} from "element-plus";
 
 import {closeLoading, openLoading} from "@/util/loading.ts";
 
-import type {RoleAuthorityDto} from '@/api/admin'
-import adminApi from '@/api/admin'
+import type {RoleAuthorityDto} from '@/api/admin';
+import adminApi from '@/api/admin';
 
 interface Props {
     modelValue: boolean;
@@ -39,27 +39,31 @@ interface Props {
 const props = withDefaults(
     defineProps<Props>(),
     {
-        modelValue: () => false,
-        editData: () => ({roleId: 0}),
+        modelValue: false,
+        editData: ({roleId: 0}),
     }
 );
 
-const showEditRef = ref(false)
+const showEditRef = ref(false);
 
 watch(() => props.modelValue, (value) => {
-    showEditRef.value = value
+    showEditRef.value = value;
 })
 
 function close() {
-    showEditRef.value = false
+    showEditRef.value = false;
 }
 
-const emits = defineEmits(['update:modelValue'])
+interface Emits {
+    (emit: 'update:modelValue', value: boolean): void;
+}
+
+const emits = defineEmits<Emits>();
 
 function handleClose() {
-    treeDataRef.value = []
-    treeCheckedKeysRef.value = []
-    emits('update:modelValue', false)
+    treeDataRef.value = [];
+    treeCheckedKeysRef.value = [];
+    emits('update:modelValue', false);
 }
 
 interface TreeNode {
@@ -81,9 +85,9 @@ const treeProps: TreeProps = {
     children: 'children',
 }
 
-const treeRef = ref()
-const treeDataRef = ref<TreeNode[]>([])
-const treeCheckedKeysRef = ref<number[]>([])
+const treeRef = ref();
+const treeDataRef = ref<TreeNode[]>([]);
+const treeCheckedKeysRef = ref<number[]>([]);
 
 function authoritiesToTreeNodes(parent: RoleAuthorityDto | null, authorities: RoleAuthorityDto[], checkedKeys: number[]): TreeNode[] {
     if (authorities.length === 0) {
@@ -96,14 +100,15 @@ function authoritiesToTreeNodes(parent: RoleAuthorityDto | null, authorities: Ro
             label: authority.name,
             disabled: (props.editData.roleId === 1 && authority.id < 29),
             children: [],
-        }
+        };
+
         if (authority.subMenus !== null) {
-            node.children = authoritiesToTreeNodes(authority, authority.subMenus, checkedKeys)
+            node.children = authoritiesToTreeNodes(authority, authority.subMenus, checkedKeys);
             if (authority.checked) {
-                checkedKeys.push(authority.id)
+                checkedKeys.push(authority.id);
             } else {
                 if (parent !== null) {
-                    parent.checked = false
+                    parent.checked = false;
                 }
             }
         }
@@ -115,9 +120,9 @@ function getRoleAuthority(roleId: number) {
     openLoading('#authorities', '正在加载，请稍候...');
     adminApi.roleAuthorityGet(roleId)
         .then((res) => {
-            const checkedKeys: number[] = []
-            treeDataRef.value = authoritiesToTreeNodes(null, res, checkedKeys)
-            treeCheckedKeysRef.value = checkedKeys
+            const checkedKeys: number[] = [];
+            treeDataRef.value = authoritiesToTreeNodes(null, res, checkedKeys);
+            treeCheckedKeysRef.value = checkedKeys;
         })
         .catch((e) => {
             ElMessage({type: 'error', showClose: true, message: e.message});
@@ -132,20 +137,20 @@ watch(() => props.editData, (editData) => {
 })
 
 function handleSubmit() {
-    const menuIds: number[] = []
-    menuIds.push(...treeRef.value.getHalfCheckedKeys())
-    menuIds.push(...treeRef.value.getCheckedKeys())
+    const menuIds: number[] = [];
+    menuIds.push(...treeRef.value.getHalfCheckedKeys());
+    menuIds.push(...treeRef.value.getCheckedKeys());
 
     ElMessageBox.confirm('确认保存角色菜单', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
         .then(() => {
             openLoading('#authorities', '正在提交，请稍候...');
             adminApi.roleAuthoritySet(props.editData.roleId, menuIds)
                 .then(() => {
-                    close()
-                    ElMessage({type: 'success', showClose: true, message: '设置成功'})
+                    close();
+                    ElMessage({type: 'success', showClose: true, message: '设置成功'});
                 })
                 .catch((e) => {
-                    ElMessage({type: 'error', showClose: true, message: e.message})
+                    ElMessage({type: 'error', showClose: true, message: e.message});
                 })
                 .finally(() => {
                     closeLoading();

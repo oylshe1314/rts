@@ -79,8 +79,8 @@ public class MenuController {
     }
 
     @Operation(summary = "菜单状态修改")
-    @RequestMapping(value = "/change/state", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> changeState(@RequestBody @Valid Mono<ChangeStateDto> changeDtoMono, AdminAuthToken authToken) {
+    @RequestMapping(value = "/state/change", method = RequestMethod.POST)
+    public Mono<ResponseDto<?>> stateChange(@RequestBody @Valid Mono<ChangeStateDto> changeDtoMono, AdminAuthToken authToken) {
         return menuService.changeState(changeDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 }

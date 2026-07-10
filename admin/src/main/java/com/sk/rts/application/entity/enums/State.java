@@ -1,35 +1,24 @@
 package com.sk.rts.application.entity.enums;
 
-public enum Status {
+import lombok.Getter;
 
-    disable(0, "text.status.disable", "禁用"),
+@Getter
+public enum State {
 
-    enable(1, "text.status.enable", "启用"),
+    disable(0, "禁用"),
+
+    enable(1, "启用"),
     ;
 
     private final int value;
-    private final String code;
     private final String desc;
 
-    Status(int value, String code, String desc) {
+    State(int value, String desc) {
         this.value = value;
-        this.code = code;
         this.desc = desc;
     }
 
-    public int value() {
-        return value;
-    }
-
-    public String code() {
-        return code;
-    }
-
-    public String desc() {
-        return this.desc;
-    }
-
-    public static Status valueOf(Integer value) {
+    public static State valueOf(Integer value) {
         return value == null || value == disable.value() ? disable : enable;
     }
 
@@ -39,5 +28,13 @@ public enum Status {
 
     public static boolean disable(Integer value) {
         return !enable(value);
+    }
+
+    public int value() {
+        return value;
+    }
+
+    public String desc() {
+        return this.desc;
     }
 }

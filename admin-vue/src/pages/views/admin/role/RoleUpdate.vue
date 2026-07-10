@@ -9,7 +9,7 @@
                     <el-input v-model="formData.code" type="text" style="width: 240px"></el-input>
                 </el-form-item>
                 <el-form-item label="备注">
-                    <el-input v-model="formData.remark" type="textarea" rows="4" style="width: 100%"/>
+                    <el-input v-model="formData.remark" type="textarea" :rows="4" style="width: 100%"/>
                 </el-form-item>
                 <el-form-item>
                     <el-button type="primary" style="width: 80px" @click="close(false)">取消</el-button>
@@ -39,12 +39,18 @@ interface Props {
 const props = withDefaults(
     defineProps<Props>(),
     {
-        modelValue: () => false,
-        editData: () => ({id: 0, name: '', code: '', remark: ''}),
+        modelValue: false,
+        editData: ({id: 0, name: '', code: '', remark: ''}),
     }
 );
 
-const emits = defineEmits(['update:modelValue', 'editSuccess']);
+interface Emits {
+    (emit: 'update:modelValue', value: boolean): void;
+
+    (emit: 'updateSuccess'): void;
+}
+
+const emits = defineEmits<Emits>();
 
 const showEditRef = ref(props.modelValue);
 
@@ -55,7 +61,7 @@ watch(() => props.modelValue, (value: boolean) => {
 function close(success: boolean) {
     showEditRef.value = false;
     if (success) {
-        emits('editSuccess');
+        emits('updateSuccess');
     }
 }
 
@@ -67,10 +73,10 @@ const formData = reactive<RoleUpdateDto>({
 })
 
 watch(() => props.editData, (editData: RoleUpdateDto) => {
-    formData.id = editData.id
-    formData.name = editData.name
-    formData.code = editData.code
-    formData.remark = editData.remark
+    formData.id = editData.id;
+    formData.name = editData.name;
+    formData.code = editData.code;
+    formData.remark = editData.remark;
 })
 
 function init() {
@@ -86,7 +92,6 @@ function handleEditClose() {
 
 function handleSubmit() {
     const updateDto: RoleUpdateDto = {id: formData.id, name: null, code: null, remark: null};
-
     if (formData.name != props.editData.name) {
         if (formData.name === '') {
             ElMessage({type: 'error', showClose: true, message: '请输入角色名称'});
@@ -94,7 +99,6 @@ function handleSubmit() {
         }
         updateDto.name = formData.name;
     }
-
     if (formData.code != props.editData.code) {
         if (formData.code === '') {
             ElMessage({type: 'error', showClose: true, message: '请输入角色代码'});
@@ -102,7 +106,6 @@ function handleSubmit() {
         }
         updateDto.code = formData.code;
     }
-
     if (formData.remark != props.editData.remark) {
         updateDto.remark = formData.remark;
     }

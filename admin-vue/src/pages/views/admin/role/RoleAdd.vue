@@ -9,7 +9,7 @@
                     <el-input v-model="formData.code" type="text" style="width: 240px"></el-input>
                 </el-form-item>
                 <el-form-item label="备注">
-                    <el-input v-model="formData.remark" type="textarea" rows="4" style="width: 100%"/>
+                    <el-input v-model="formData.remark" type="textarea" :rows="4" style="width: 100%"/>
                 </el-form-item>
                 <el-form-item>
                     <el-button type="primary" style="width: 80px" @click="close(false)">取消</el-button>
@@ -38,13 +38,19 @@ interface Props {
 const props = withDefaults(
     defineProps<Props>(),
     {
-        modelValue: () => false,
+        modelValue: false,
     }
 );
 
-const emits = defineEmits(['update:modelValue', 'editSuccess']);
+interface Emits {
+    (emit: 'update:modelValue', value: boolean): void;
 
-const showEditRef = ref(props.modelValue);
+    (emit: 'addSuccess'): void;
+}
+
+const emits = defineEmits<Emits>();
+
+const showEditRef = ref<boolean>(props.modelValue);
 
 watch(() => props.modelValue, (value: boolean) => {
     showEditRef.value = value;
@@ -53,7 +59,7 @@ watch(() => props.modelValue, (value: boolean) => {
 function close(success: boolean) {
     showEditRef.value = false;
     if (success) {
-        emits('editSuccess');
+        emits('addSuccess');
     }
 }
 

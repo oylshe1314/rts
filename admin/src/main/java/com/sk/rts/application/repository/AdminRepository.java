@@ -3,7 +3,6 @@ package com.sk.rts.application.repository;
 import com.sk.rts.application.entity.Admin;
 import com.sk.rts.application.jooq.Tables;
 import io.vertx.core.Future;
-import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.SqlConnection;
 import io.vertx.sqlclient.Tuple;
 import lombok.AllArgsConstructor;
@@ -12,7 +11,6 @@ import org.jooq.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
-import java.util.List;
 
 @Slf4j
 @Repository
@@ -31,7 +29,7 @@ public class AdminRepository {
                         Tables.ADMIN.EMAIL,
                         Tables.ADMIN.NICKNAME,
                         Tables.ADMIN.AVATAR,
-                        Tables.ADMIN.STATUS,
+                        Tables.ADMIN.STATE,
                         Tables.ADMIN.REMARK,
                         Tables.ADMIN.CREATE_BY,
                         Tables.ADMIN.CREATE_TIME,
@@ -58,7 +56,7 @@ public class AdminRepository {
                         Tables.ADMIN.EMAIL,
                         Tables.ADMIN.NICKNAME,
                         Tables.ADMIN.AVATAR,
-                        Tables.ADMIN.STATUS,
+                        Tables.ADMIN.STATE,
                         Tables.ADMIN.REMARK,
                         Tables.ADMIN.CREATE_BY,
                         Tables.ADMIN.CREATE_TIME,
@@ -72,7 +70,7 @@ public class AdminRepository {
                         admin.getEmail(),
                         admin.getNickname(),
                         admin.getAvatar(),
-                        admin.getStatus(),
+                        admin.getState(),
                         admin.getRemark(),
                         admin.getCreateBy(),
                         admin.getCreateTime(),

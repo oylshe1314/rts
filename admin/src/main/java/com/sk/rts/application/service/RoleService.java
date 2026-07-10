@@ -5,7 +5,7 @@ import com.sk.rts.application.dto.*;
 import com.sk.rts.application.entity.Menu;
 import com.sk.rts.application.entity.Role;
 import com.sk.rts.application.entity.RoleAuthority;
-import com.sk.rts.application.entity.enums.Status;
+import com.sk.rts.application.entity.enums.State;
 import com.sk.rts.application.exception.ExceptionUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
@@ -86,7 +86,7 @@ public class RoleService {
                             Tables.ROLE.ID,
                             Tables.ROLE.NAME,
                             Tables.ROLE.CODE,
-                            Tables.ROLE.STATUS,
+                            Tables.ROLE.STATE,
                             Tables.ROLE.REMARK,
                             Tables.ROLE.CREATE_BY,
                             Tables.ROLE.CREATE_TIME,
@@ -175,7 +175,7 @@ public class RoleService {
                     Role role = new Role();
                     role.setName(addDto.getName());
                     role.setCode(addDto.getCode());
-                    role.setStatus(Status.enable.value());
+                    role.setState(State.enable.value());
                     role.initOperation(addDto.getRemark(), operator.getUsername());
 
                     return roleRepository.insert(connection, role)
@@ -281,13 +281,13 @@ public class RoleService {
     public Mono<Void> changeState(Mono<ChangeStateDto> changeDtoMono, AdminAuthDetails operator) {
         return changeDtoMono.flatMap(changeDto -> {
             Set<Long> ids = new HashSet<>(changeDto.getIds());
-            if (changeDto.getStatus() == Status.disable.value() && ids.contains(DEFAULT_ROLE_ID)) {
+            if (State.disable(changeDto.getState()) && ids.contains(DEFAULT_ROLE_ID)) {
                 return Mono.error(new StandardStatusException("默认角色禁止禁用"));
             }
 
-            Status state = Status.valueOf(changeDto.getStatus());
+            State state = State.valueOf(changeDto.getState());
 
-            Update<?> query = dslContext.update(Tables.ROLE).set(Tables.ROLE.STATUS, state.value()).set(Tables.ROLE.UPDATE_BY, operator.getUsername()).set(Tables.ROLE.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ROLE.ID.in(ids));
+            Update<?> query = dslContext.update(Tables.ROLE).set(Tables.ROLE.STATE, state.value()).set(Tables.ROLE.UPDATE_BY, operator.getUsername()).set(Tables.ROLE.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ROLE.ID.in(ids));
 
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
@@ -318,7 +318,7 @@ public class RoleService {
                         a.ROLE_ID)
                 .from(m)
                 .leftJoin(a).on(a.MENU_ID.eq(m.ID)).and(a.ROLE_ID.eq(id))
-                .where(m.STATUS.eq(Status.enable.value()))
+                .where(m.STATE.eq(State.enable.value()))
                 .orderBy(m.ID.asc());
         return Mono.<List<RoleAuthorityDto>>create(sink -> pool.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                 .map(rows -> {
@@ -406,7 +406,7 @@ public class RoleService {
         return idsDtoMono.flatMap(idsDto -> Mono.create(sink -> {
             Select<?> roleQuery = dslContext.select(Tables.ROLE.ID, Tables.ROLE.NAME).from(Tables.ROLE).where(Tables.ROLE.ID.in(idsDto.getIds()));
             Select<?> authorityQuery = dslContext.select(Tables.ROLE_AUTHORITY.ID, Tables.ROLE_AUTHORITY.ROLE_ID, Tables.ROLE_AUTHORITY.MENU_ID).from(Tables.ROLE_AUTHORITY).where(Tables.ROLE_AUTHORITY.ROLE_ID.in(idsDto.getIds()));
-            Select<?> menuQuery = dslContext.select(Tables.MENU.ID, Tables.MENU.PARENT_ID, Tables.MENU.TYPE, Tables.MENU.NAME, Tables.MENU.ICON, Tables.MENU.SORT_BY).from(Tables.MENU).where(Tables.MENU.STATUS.eq(Status.enable.value())).orderBy(Tables.MENU.ID.asc());
+            Select<?> menuQuery = dslContext.select(Tables.MENU.ID, Tables.MENU.PARENT_ID, Tables.MENU.TYPE, Tables.MENU.NAME, Tables.MENU.ICON, Tables.MENU.SORT_BY).from(Tables.MENU).where(Tables.MENU.STATE.eq(State.enable.value())).orderBy(Tables.MENU.ID.asc());
 
             Future<RowSet<Row>> roleQueryFuture = pool.preparedQuery(roleQuery.getSQL()).execute(Tuple.tuple(roleQuery.getBindValues()));
             Future<RowSet<Row>> authorityQueryFuture = pool.preparedQuery(authorityQuery.getSQL()).execute(Tuple.tuple(authorityQuery.getBindValues()));
@@ -479,7 +479,7 @@ public class RoleService {
         TableRoleAuthority a = Tables.ROLE_AUTHORITY.as("a");
         TableMenu m = Tables.MENU.as("m");
 
-        Select<?> query = dslContext.select(a.ID, a.ROLE_ID, a.MENU_ID, m.ID, m.PARENT_ID, m.TYPE, m.NAME, m.ICON, m.PATH, m.SORT_BY).from(a).innerJoin(m).on(m.ID.eq(a.MENU_ID)).where(a.ROLE_ID.eq(authDetails.getRoleId())).and(m.STATUS.eq(Status.enable.value()));
+        Select<?> query = dslContext.select(a.ID, a.ROLE_ID, a.MENU_ID, m.ID, m.PARENT_ID, m.TYPE, m.NAME, m.ICON, m.PATH, m.SORT_BY).from(a).innerJoin(m).on(m.ID.eq(a.MENU_ID)).where(a.ROLE_ID.eq(authDetails.getRoleId())).and(m.STATE.eq(State.enable.value()));
         return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(query.getSQL())
                 .execute(Tuple.tuple(query.getBindValues()))
                 .map(rows -> {

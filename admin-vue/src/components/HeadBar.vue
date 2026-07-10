@@ -16,7 +16,11 @@ import {getAvatar} from "@/util/avatars.ts";
 
 defineProps<{ userDetails: UserDetailsDto; }>();
 
-const emits = defineEmits<{ (name: 'onLogout'): void }>();
+interface Emits {
+    (emit: 'onLogout'): void;
+}
+
+const emits = defineEmits<Emits>();
 
 </script>
 

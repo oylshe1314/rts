@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 
 @Getter
@@ -13,6 +14,7 @@ import lombok.Getter;
 public class MenuAddDto {
 
     @NotNull
+    @PositiveOrZero
     @Schema(description = "上级菜单ID, 类型为2,3时必填")
     private final Long parentId;
 

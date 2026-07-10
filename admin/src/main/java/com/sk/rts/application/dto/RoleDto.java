@@ -16,7 +16,7 @@ public class RoleDto extends StatefulDto {
     private final String code;
 
     public RoleDto(Role role) {
-        super(role.getId(), role.getRemark(), role.getUpdateBy(), role.getUpdateTime(), role.getStatus());
+        super(role.getId(), role.getRemark(), role.getUpdateBy(), role.getUpdateTime(), role.getState());
         this.name = role.getName();
         this.code = role.getCode();
     }

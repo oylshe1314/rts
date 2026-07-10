@@ -6,12 +6,6 @@
 
 import service from "@/api/request.ts";
 
-const pathAdminDetails = "/common/admin/details"
-const pathRoleMenus = "/common/role/menus"
-const pathOptionsMenus = "/common/options/menus"
-const pathOptionsRoles = "/common/options/roles"
-const pathOptionsAdmins = "/common/options/admins"
-
 export interface UserDetailsDto {
     roleName: string;
     username: string;
@@ -53,31 +47,32 @@ export interface AdminOptionDto {
 export default {
     adminDetails: async (): Promise<UserDetailsDto> => {
         return service({
-            url: pathAdminDetails,
+            url: "/common/admin/details",
             method: "GET",
         });
     },
     roleMenus: async (): Promise<RoleMenuDto[]> => {
         return service({
-            url: pathRoleMenus,
+            url: "/common/role/menus",
             method: "GET",
         });
     },
-    optionsMenus: async (): Promise<MenuOptionDto[]> => {
+    menuOptions: async (type: number): Promise<MenuOptionDto[]> => {
         return service({
-            url: pathOptionsMenus,
+            url: "/common/options/menus",
+            method: "GET",
+            params: {type: type},
+        });
+    },
+    roleOptions: async (): Promise<RoleOptionDto[]> => {
+        return service({
+            url: "/common/options/roles",
             method: "GET",
         });
     },
-    optionsRoles: async (): Promise<RoleOptionDto[]> => {
+    adminOptions: async (): Promise<AdminOptionDto[]> => {
         return service({
-            url: pathOptionsRoles,
-            method: "GET",
-        });
-    },
-    optionsAdmins: async (): Promise<AdminOptionDto[]> => {
-        return service({
-            url: pathOptionsAdmins,
+            url: "/common/options/admins",
             method: "GET",
         });
     }

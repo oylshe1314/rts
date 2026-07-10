@@ -3,22 +3,22 @@
         <div>
             <el-form :model="formData" inline>
                 <el-form-item>
-                    <el-input v-model="formData.name" type="text" placeholder="名称"></el-input>
+                    <el-input v-model="formData.name" type="text" placeholder="名称" style="width: 200px"></el-input>
                 </el-form-item>
                 <el-form-item>
-                    <el-input v-model="formData.code" type="text" placeholder="代码"></el-input>
+                    <el-input v-model="formData.code" type="text" placeholder="代码" style="width: 200px"></el-input>
                 </el-form-item>
                 <el-form-item>
                     <el-button @click="handleQueryBtnClick">查询</el-button>
                     <el-button type="primary" @click="handleCommand('add', null)">添加</el-button>
                     <el-button type="danger" :disabled="btnDeleteDisabledRef" @click="handleCommand('deleteSelection', null)">删除</el-button>
-                    <el-button type="warning" :disabled="btnCompareAuthorityDisabledRef" @click="handleCommand('compareAuthority', null)">对比权限</el-button>
+                    <el-button type="warning" :disabled="btnCompareAuthorityDisabledRef" @click="handleCommand('compareAuthority', null)">比较权限</el-button>
                 </el-form-item>
             </el-form>
         </div>
         <div>
-            <el-table v-loading="tableLoadingRef" :data="tableDataRef" empty-text="无数据" height="640" @selection-change="handleSelect">
-                <el-table-column type="selection" width="80" align="center"/>
+            <el-table v-loading="tableLoadingRef" :data="tableDataRef" @selection-change="handleSelect" empty-text="无数据" height="640">
+                <el-table-column type="selection" width="40" align="center"/>
                 <el-table-column type="index" label="序号" width="80" align="center"/>
                 <el-table-column prop="name" label="名称" width="200" align="left"/>
                 <el-table-column prop="code" label="代码" width="240" align="left"/>
@@ -29,14 +29,14 @@
                 </el-table-column>
                 <el-table-column prop="remark" label="备注" align="left" :show-overflow-tooltip="true"/>
                 <el-table-column prop="updateBy" label="操作人" align="center" width="80"/>
-                <el-table-column :formatter="(row: RoleDto) => formatTime(row.updateTime)" prop="updateTime" label="操作时间" align="center"/>
+                <el-table-column :formatter="(row: RoleDto) => formatTime(row.updateTime)" prop="updateTime" label="操作时间" width="220" align="center"/>
                 <el-table-column fixed="right" label="操作" align="center" width="120">
                     <template #default="scope">
                         <el-dropdown trigger="click" @command="(command: string) => {handleCommand(command, scope.row)}">
                             <el-button link type="primary" size="default">编辑</el-button>
                             <template #dropdown>
                                 <el-dropdown-menu>
-                                    <el-dropdown-item command="detail">详情</el-dropdown-item>
+                                    <!--<el-dropdown-item command="detail">详情</el-dropdown-item>-->
                                     <el-dropdown-item command="modify" :disabled="scope.row.id === 1">修改</el-dropdown-item>
                                     <el-dropdown-item command="authority">权限</el-dropdown-item>
                                     <el-dropdown-item v-if="scope.row.state === 0" command="enable" :disabled="scope.row.id === 1">启用</el-dropdown-item>
@@ -50,19 +50,19 @@
             </el-table>
         </div>
         <div>
-            <el-pagination v-bind="pagination" style="justify-content: center"></el-pagination>
+            <el-pagination v-bind="pagination" style="justify-content: center"/>
         </div>
         <div>
-            <role-add v-model="showAddRef" @edit-success="handleEditSuccess"></role-add>
+            <role-add v-model="showAddRef" @add-success="handleEditSuccess"/>
         </div>
         <div>
-            <role-update v-model="showUpdateRef" :edit-data="editDataRef" @edit-success="handleEditSuccess"></role-update>
+            <role-update v-model="showUpdateRef" :edit-data="editDataRef" @update-success="handleEditSuccess"/>
         </div>
         <div>
-            <role-edit-authorities v-model="showEditAuthoritiesRef" :edit-data="editAuthoritiesDataRef"></role-edit-authorities>
+            <role-edit-authorities v-model="showEditAuthoritiesRef" :edit-data="editAuthoritiesDataRef"/>
         </div>
         <div>
-            <role-compare-authorities v-model="showCompareAuthoritiesRef" :edit-data="compareAuthoritiesDataRef"></role-compare-authorities>
+            <role-compare-authorities v-model="showCompareAuthoritiesRef" :edit-data="compareAuthoritiesDataRef"/>
         </div>
     </div>
 </template>
@@ -95,18 +95,16 @@ const tableLoadingRef = ref<boolean>(false);
 const tableDataRef = ref<RoleDto[]>([]);
 
 function query() {
-    const params: RoleQueryDto = {name: null, code: null};
-
+    const queryDto: RoleQueryDto = {name: null, code: null};
     if (formData.name !== '') {
-        params.name = formData.name;
+        queryDto.name = formData.name;
     }
-
     if (formData.code !== '') {
-        params.code = formData.code;
+        queryDto.code = formData.code;
     }
 
     tableLoadingRef.value = true;
-    adminApi.roleQuery(pagination.value.currentPage, pagination.value.pageSize, params).then(res => {
+    adminApi.roleQuery(pagination.value.currentPage, pagination.value.pageSize, queryDto).then(res => {
         tableDataRef.value = res.results;
         pagination.value.total = res.total;
         pagination.value.pageCount = res.pages < 1 ? 1 : res.pages;
@@ -152,15 +150,15 @@ function handleQueryBtnClick() {
     query();
 }
 
-let selectionIds: number[] = [];
+const selectionIds: number[] = [];
 
 function handleSelect(rows: RoleDto[]) {
     if (rows.length === 0) {
-        selectionIds = [];
+        selectionIds.splice(0);
         btnDeleteDisabledRef.value = true;
         btnCompareAuthorityDisabledRef.value = true;
     } else {
-        selectionIds = rows.map(row => row.id);
+        rows.forEach((row) => selectionIds.push(row.id));
         btnDeleteDisabledRef.value = false;
         if (selectionIds.length < 2 || selectionIds.length > 4) {
             btnCompareAuthorityDisabledRef.value = true;
@@ -170,24 +168,24 @@ function handleSelect(rows: RoleDto[]) {
     }
 }
 
-const showAddRef = ref(false);
-const showUpdateRef = ref(false);
+const showAddRef = ref<boolean>(false);
+const showUpdateRef = ref<boolean>(false);
 const editDataRef = ref<RoleUpdateDto>({id: 0, name: null, code: null, remark: null});
 
-const showEditAuthoritiesRef = ref(false);
+const showEditAuthoritiesRef = ref<boolean>(false);
 const editAuthoritiesDataRef = ref<{ roleId: number }>({roleId: 0});
 
-const showCompareAuthoritiesRef = ref(false);
+const showCompareAuthoritiesRef = ref<boolean>(false);
 const compareAuthoritiesDataRef = ref<{ roleIds: number[] }>({roleIds: []});
 
 function handleEditSuccess() {
     query();
 }
 
-function changeState(row: RoleDto, state: number) {
-    adminApi.roleChangeState([row.id,], state)
+function changeState(row: RoleDto, status: number) {
+    adminApi.roleStateChange([row.id,], status)
         .then(() => {
-            row.state = state;
+            row.state = status;
             ElMessage({type: 'success', showClose: true, message: '操作成功'});
         })
         .catch((e) => {

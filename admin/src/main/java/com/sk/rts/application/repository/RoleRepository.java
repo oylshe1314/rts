@@ -10,8 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Slf4j
 @Repository
 @AllArgsConstructor
@@ -24,7 +22,7 @@ public class RoleRepository {
                 Tables.ROLE.ID,
                 Tables.ROLE.NAME,
                 Tables.ROLE.CODE,
-                Tables.ROLE.STATUS,
+                Tables.ROLE.STATE,
                 Tables.ROLE.REMARK,
                 Tables.ROLE.CREATE_BY,
                 Tables.ROLE.CREATE_TIME,
@@ -44,7 +42,7 @@ public class RoleRepository {
                         Tables.ROLE,
                         Tables.ROLE.NAME,
                         Tables.ROLE.CODE,
-                        Tables.ROLE.STATUS,
+                        Tables.ROLE.STATE,
                         Tables.ROLE.REMARK,
                         Tables.ROLE.CREATE_BY,
                         Tables.ROLE.CREATE_TIME,
@@ -53,7 +51,7 @@ public class RoleRepository {
                 .values(
                         role.getName(),
                         role.getCode(),
-                        role.getStatus(),
+                        role.getState(),
                         role.getRemark(),
                         role.getCreateBy(),
                         role.getCreateTime(),

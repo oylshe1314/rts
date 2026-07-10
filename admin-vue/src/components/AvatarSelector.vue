@@ -25,11 +25,11 @@ import avatars from "@/util/avatars.ts";
 
 const props = withDefaults(defineProps<{ modelValue: string; disabled?: boolean }>(), {disabled: false,});
 
-const popoverRef = ref()
+const popoverRef = ref();
 
-const modelValueRef = ref((!props.modelValue || props.modelValue === '') ? avatars['avatar1'] : avatars[props.modelValue])
+const modelValueRef = ref<string>((!props.modelValue || props.modelValue === '') ? avatars['avatar1'] : avatars[props.modelValue])
 
-watch(() => props.modelValue, (value) => {
+watch(() => props.modelValue, (value: string) => {
     if (!value || value === '') {
         modelValueRef.value = avatars['avatar1'];
     } else {
@@ -37,18 +37,21 @@ watch(() => props.modelValue, (value) => {
     }
 })
 
-const disabledRef = ref(props.disabled)
+const disabledRef = ref<boolean>(props.disabled);
 
-watch(() => props.disabled, (disabled) => {
-    disabledRef.value = disabled
+watch(() => props.disabled, (disabled: boolean) => {
+    disabledRef.value = disabled;
 })
 
-const emits = defineEmits(['update:modelValue'])
+interface Emits {
+    (emit: 'update:modelValue', value: string):void;
+}
+
+const emits = defineEmits<Emits>();
 
 function handleAvatarSelect(avatar: string) {
-    console.log(avatar)
-    emits('update:modelValue', avatar)
-    popoverRef.value.hide()
+    emits('update:modelValue', avatar);
+    popoverRef.value.hide();
 }
 
 </script>

@@ -1,13 +1,13 @@
 package com.sk.rts.application.entity;
 
-import com.sk.rts.application.entity.base.StatusEntity;
+import com.sk.rts.application.entity.base.StateEntity;
 import io.vertx.sqlclient.Row;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class Role extends StatusEntity {
+public class Role extends StateEntity {
 
     /**
      * 角色名称
@@ -24,7 +24,7 @@ public class Role extends StatusEntity {
         role.setId(row.getLong(0));
         role.setName(row.getString(1));
         role.setCode(row.getString(2));
-        role.setStatus(row.getInteger(3));
+        role.setState(row.getInteger(3));
         role.setRemark(row.getString(4));
         role.setCreateBy(row.getString(5));
         role.setCreateTime(row.getOffsetDateTime(6));

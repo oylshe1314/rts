@@ -5,7 +5,7 @@ import com.sk.rts.application.dto.SingleIdDto;
 import com.sk.rts.application.entity.Admin;
 import com.sk.rts.application.entity.Role;
 import com.sk.rts.application.entity.enums.MenuType;
-import com.sk.rts.application.entity.enums.Status;
+import com.sk.rts.application.entity.enums.State;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
 import com.sk.rts.application.repository.OperationRecordRepository;
@@ -63,10 +63,10 @@ public class AuthService {
                         Tables.ADMIN.EMAIL,
                         Tables.ADMIN.NICKNAME,
                         Tables.ADMIN.AVATAR,
-                        Tables.ADMIN.STATUS,
+                        Tables.ADMIN.STATE,
                         Tables.ROLE.ID,
                         Tables.ROLE.NAME,
-                        Tables.ROLE.STATUS)
+                        Tables.ROLE.STATE)
                 .from(Tables.ADMIN)
                 .innerJoin(Tables.ROLE).on(Tables.ROLE.ID.eq(Tables.ADMIN.ROLE_ID))
                 .where(Tables.ADMIN.USERNAME.eq(account)).or(Tables.ADMIN.PHONE.eq(account)).or(Tables.ADMIN.EMAIL.eq(account));
@@ -89,12 +89,12 @@ public class AuthService {
                     admin.setEmail(row.getString(5));
                     admin.setNickname(row.getString(6));
                     admin.setAvatar(row.getString(7));
-                    admin.setStatus(row.getInteger(8));
+                    admin.setState(row.getInteger(8));
 
                     admin.setRole(new Role());
                     admin.getRole().setId(row.getLong(9));
                     admin.getRole().setName(row.getString(10));
-                    admin.getRole().setStatus(row.getInteger(11));
+                    admin.getRole().setState(row.getInteger(11));
 
                     return admin;
                 })
@@ -103,11 +103,11 @@ public class AuthService {
                         return Future.failedFuture(new BadCredentialsException("", new StandardStatusException("账号或密码错误")));
                     }
 
-                    if (admin.getRole().getStatus() != Status.enable.value()) {
+                    if (admin.getRole().getState() != State.enable.value()) {
                         return Future.failedFuture(new BadCredentialsException("", new StandardStatusException("角色已禁用")));
                     }
 
-                    if (admin.getStatus() != Status.enable.value()) {
+                    if (admin.getState() != State.enable.value()) {
                         return Future.failedFuture(new BadCredentialsException("", new StandardStatusException("管理员已禁用")));
                     }
 

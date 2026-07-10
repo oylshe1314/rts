@@ -4,7 +4,7 @@ import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.dto.*;
 import com.sk.rts.application.entity.Menu;
 import com.sk.rts.application.entity.enums.MenuType;
-import com.sk.rts.application.entity.enums.Status;
+import com.sk.rts.application.entity.enums.State;
 import com.sk.rts.application.exception.ExceptionUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
@@ -90,7 +90,7 @@ public class MenuService {
                             m.ICON,
                             m.PATH,
                             m.SORT_BY,
-                            m.STATUS,
+                            m.STATE,
                             m.REMARK,
                             m.CREATE_BY,
                             m.CREATE_TIME,
@@ -104,9 +104,6 @@ public class MenuService {
 
             List<Condition> conditions = new ArrayList<>();
             if (queryDto != null) {
-                if (queryDto.getParentName() != null) {
-                    conditions.add(p.NAME.like("%" + queryDto.getParentName() + "%"));
-                }
                 if (queryDto.getType() != null) {
                     conditions.add(m.TYPE.eq(queryDto.getType()));
                 }
@@ -223,7 +220,7 @@ public class MenuService {
                         menu.setName(addDto.getName());
                         menu.setPath(addDto.getPath() == null ? "" : addDto.getPath());
                         menu.setSortBy(addDto.getSortBy());
-                        menu.setStatus(Status.disable.value());
+                        menu.setState(State.disable.value());
                         menu.initOperation(addDto.getRemark(), operator.getUsername());
 
                         menu.setParent(parent);
@@ -371,13 +368,13 @@ public class MenuService {
     public Mono<Void> changeState(Mono<ChangeStateDto> changeDtoMono, AdminAuthDetails operator) {
         return changeDtoMono.flatMap(changeDto -> {
             Set<Long> ids = new HashSet<>(changeDto.getIds());
-            if (changeDto.getStatus() == Status.disable.value() && ids.containsAll(SYSTEM_MENU_IDS)) {
+            if (changeDto.getState() == State.disable.value() && ids.containsAll(SYSTEM_MENU_IDS)) {
                 return Mono.error(new StandardStatusException("系统菜单禁止禁用"));
             }
 
-            Status state = Status.valueOf(changeDto.getStatus());
+            State state = State.valueOf(changeDto.getState());
 
-            Update<?> query = dslContext.update(Tables.MENU).set(Tables.MENU.STATUS, state.value()).set(Tables.MENU.UPDATE_BY, operator.getUsername()).set(Tables.MENU.UPDATE_TIME, OffsetDateTime.now()).where(Tables.MENU.STATUS.in(ids));
+            Update<?> query = dslContext.update(Tables.MENU).set(Tables.MENU.STATE, state.value()).set(Tables.MENU.UPDATE_BY, operator.getUsername()).set(Tables.MENU.UPDATE_TIME, OffsetDateTime.now()).where(Tables.MENU.STATE.in(ids));
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
                     .compose(_ -> operationRecordRepository.add(connection, "changeState", "menu", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))

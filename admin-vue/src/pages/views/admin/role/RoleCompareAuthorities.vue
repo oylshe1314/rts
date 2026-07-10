@@ -1,5 +1,5 @@
 <template>
-    <el-dialog v-model="showEditRef" title="角色菜单管理" width="800px" @close="handleClose" destroy-on-close center>
+    <el-dialog v-model="showEditRef" title="角色权限比较" width="800px" @close="handleClose" destroy-on-close center>
         <div id="authorities" class="authorities">
             <div style="height: 600px">
                 <el-table v-loading="tableLoadingRef"
@@ -72,8 +72,8 @@ interface Props {
 const props = withDefaults(
     defineProps<Props>(),
     {
-        modelValue: () => false,
-        editData: () => ({roleIds: []}),
+        modelValue: false,
+        editData: ({roleIds: []}),
     }
 );
 
@@ -87,7 +87,11 @@ function close() {
     showEditRef.value = false
 }
 
-const emits = defineEmits(['update:modelValue'])
+interface Emits{
+    (emit: 'update:modelValue', value: boolean): void;
+}
+
+const emits = defineEmits<Emits>();
 
 function handleClose() {
     emits('update:modelValue', false)
@@ -160,7 +164,7 @@ function comparisonsToTableRow(parent: TableRow | null, columns: TableColumn[], 
 }
 
 function comparisonListToTableData(comparisonList: RoleAuthorityComparisonListDto): TableData {
-    const tableData: TableData = {columns: [], rows: []}
+    const tableData: TableData = {columns: [], rows: []};
     tableData.columns = comparisonList.roleList.map(role => ({id: role.id, label: role.name}));
     tableData.rows = comparisonsToTableRow(null, tableData.columns, comparisonList.comparisonList);
     return tableData;
@@ -179,11 +183,11 @@ function getRoleAuthorityComparisonList(roleIds: number[]) {
         })
         .finally(() => {
             closeLoading();
-        })
+        });
 }
 
 watch(() => props.editData, (editData) => {
-    getRoleAuthorityComparisonList(editData.roleIds)
+    getRoleAuthorityComparisonList(editData.roleIds);
 });
 
 const tableRowClassName = (scope: any): string => {

@@ -32,10 +32,10 @@ public class MenuDto extends StatefulDto {
     private final String path;
 
     @Schema(description = "排序值")
-    private final Integer sort;
+    private final Integer sortBy;
 
     public MenuDto(Menu menu) {
-        super(menu.getId(), menu.getRemark(), menu.getUpdateBy(), menu.getUpdateTime(), menu.getStatus());
+        super(menu.getId(), menu.getRemark(), menu.getUpdateBy(), menu.getUpdateTime(), menu.getState());
         if (menu.getParentId() == 0L) {
             this.parentId = 0L;
             this.parentName = "";
@@ -48,6 +48,6 @@ public class MenuDto extends StatefulDto {
         this.icon = menu.getIcon();
         this.name = menu.getName();
         this.path = menu.getPath();
-        this.sort = menu.getSortBy();
+        this.sortBy = menu.getSortBy();
     }
 }

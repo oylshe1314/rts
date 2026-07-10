@@ -1,13 +1,13 @@
 package com.sk.rts.application.entity;
 
-import com.sk.rts.application.entity.base.StatusEntity;
+import com.sk.rts.application.entity.base.StateEntity;
 import io.vertx.sqlclient.Row;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-public class Menu extends StatusEntity {
+public class Menu extends StateEntity {
 
     /**
      * 父级菜单ID
@@ -58,7 +58,7 @@ public class Menu extends StatusEntity {
         menu.setIcon(row.getString(4));
         menu.setPath(row.getString(5));
         menu.setSortBy(row.getInteger(6));
-        menu.setStatus(row.getInteger(7));
+        menu.setState(row.getInteger(7));
         menu.setRemark(row.getString(8));
         menu.setCreateBy(row.getString(9));
         menu.setCreateTime(row.getOffsetDateTime(10));

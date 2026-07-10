@@ -11,7 +11,6 @@ import org.jooq.*;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
-import java.util.List;
 
 @Slf4j
 @Repository
@@ -29,7 +28,7 @@ public class MenuRepository {
                         Tables.MENU.ICON,
                         Tables.MENU.PATH,
                         Tables.MENU.SORT_BY,
-                        Tables.MENU.STATUS,
+                        Tables.MENU.STATE,
                         Tables.MENU.REMARK,
                         Tables.MENU.CREATE_BY,
                         Tables.MENU.CREATE_TIME,
@@ -55,7 +54,7 @@ public class MenuRepository {
                         Tables.MENU.ICON,
                         Tables.MENU.PATH,
                         Tables.MENU.SORT_BY,
-                        Tables.MENU.STATUS,
+                        Tables.MENU.STATE,
                         Tables.MENU.REMARK,
                         Tables.MENU.CREATE_BY,
                         Tables.MENU.CREATE_TIME,
@@ -68,7 +67,7 @@ public class MenuRepository {
                         menu.getIcon(),
                         menu.getPath(),
                         menu.getSortBy(),
-                        menu.getStatus(),
+                        menu.getState(),
                         menu.getRemark(),
                         menu.getCreateBy(),
                         menu.getCreateTime(),

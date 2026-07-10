@@ -6,9 +6,6 @@
 
 import service from "@/api/request.ts";
 
-const pathAuthLogin = "/auth/login"
-const pathAuthLogout = "/auth/logout"
-
 interface AdminLoginDto {
     account: string;
     password: string;
@@ -17,14 +14,14 @@ interface AdminLoginDto {
 export default {
     login: async (data: AdminLoginDto): Promise<string> => {
         return service({
-            url: pathAuthLogin,
+            url: "/auth/login",
             method: "POST",
             data: data,
         });
     },
     logout: async (): Promise<void> => {
         return service({
-            url: pathAuthLogout,
+            url: "/auth/logout",
             method: "POST",
         });
     }

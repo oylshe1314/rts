@@ -1,19 +1,15 @@
 package com.sk.rts.application.entity;
 
-import com.sk.rts.application.entity.base.StatusEntity;
-import com.sk.rts.application.proto.caching.MsgAdminDetails;
+import com.sk.rts.application.entity.base.StateEntity;
 import io.vertx.sqlclient.Row;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 @Getter
 @Setter
 @NoArgsConstructor
-public class Admin extends StatusEntity {
+public class Admin extends StateEntity {
 
     /**
      * 角色ID
@@ -65,7 +61,7 @@ public class Admin extends StatusEntity {
         admin.setEmail(row.getString(5));
         admin.setNickname(row.getString(6));
         admin.setAvatar(row.getString(7));
-        admin.setStatus(row.getInteger(8));
+        admin.setState(row.getInteger(8));
         admin.setRemark(row.getString(9));
         admin.setCreateBy(row.getString(10));
         admin.setCreateTime(row.getOffsetDateTime(11));

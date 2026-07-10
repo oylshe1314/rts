@@ -77,8 +77,8 @@ public class AdminController {
     }
 
     @Operation(summary = "角色状态修改")
-    @RequestMapping(value = "/role/change/state", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> roleChangeState(@RequestBody @Valid Mono<ChangeStateDto> changeDtoMono, AdminAuthToken authToken) {
+    @RequestMapping(value = "/role/state/change", method = RequestMethod.POST)
+    public Mono<ResponseDto<?>> roleStateChange(@RequestBody @Valid Mono<ChangeStateDto> changeDtoMono, AdminAuthToken authToken) {
         return roleService.changeState(changeDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 
@@ -146,8 +146,8 @@ public class AdminController {
     }
 
     @Operation(summary = "管理员状态修改")
-    @RequestMapping(value = "/change/state", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> changeState(@RequestBody @Valid Mono<ChangeStateDto> changeDtoMono, AdminAuthToken authToken) {
+    @RequestMapping(value = "/state/change", method = RequestMethod.POST)
+    public Mono<ResponseDto<?>> stateChange(@RequestBody @Valid Mono<ChangeStateDto> changeDtoMono, AdminAuthToken authToken) {
         return adminService.changeState(changeDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 }

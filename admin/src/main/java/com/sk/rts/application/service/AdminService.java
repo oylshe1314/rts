@@ -5,7 +5,7 @@ import com.sk.rts.application.auth.AdminAuthUtil;
 import com.sk.rts.application.dto.*;
 import com.sk.rts.application.entity.Admin;
 import com.sk.rts.application.entity.Role;
-import com.sk.rts.application.entity.enums.Status;
+import com.sk.rts.application.entity.enums.State;
 import com.sk.rts.application.exception.ExceptionUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
@@ -111,7 +111,7 @@ public class AdminService {
                             a.EMAIL,
                             a.NICKNAME,
                             a.AVATAR,
-                            a.STATUS,
+                            a.STATE,
                             a.REMARK,
                             a.CREATE_BY,
                             a.CREATE_TIME,
@@ -224,7 +224,7 @@ public class AdminService {
                     admin.setEmail(ObjectUtils.getIfNull(addDto.getEmail(), ""));
                     admin.setNickname(addDto.getNickname());
                     admin.setAvatar(ObjectUtils.getIfNull(addDto.getAvatar(), ""));
-                    admin.setStatus(Status.enable.value());
+                    admin.setState(State.enable.value());
                     admin.initOperation(addDto.getRemark(), operator.getUsername());
 
                     return adminRepository.insert(connection, admin)
@@ -268,7 +268,7 @@ public class AdminService {
                                     return Future.failedFuture(new StandardStatusException("角色不存在"));
                                 }
 
-                                if (Status.disable(role.getStatus())) {
+                                if (State.disable(role.getState())) {
                                     return Future.failedFuture(new StandardStatusException("角色已禁用"));
                                 }
 
@@ -373,13 +373,13 @@ public class AdminService {
     public Mono<Void> changeState(Mono<ChangeStateDto> changeDtoMono, AdminAuthDetails operator) {
         return changeDtoMono.flatMap(changeDto -> {
             Set<Long> ids = new HashSet<>(changeDto.getIds());
-            if (changeDto.getStatus() == Status.disable.value() && ids.contains(DEFAULT_ADMIN_ID)) {
+            if (changeDto.getState() == State.disable.value() && ids.contains(DEFAULT_ADMIN_ID)) {
                 return Mono.error(new StandardStatusException("默认管理员禁止禁用"));
             }
 
-            Status state = Status.valueOf(changeDto.getStatus());
+            State state = State.valueOf(changeDto.getState());
 
-            Update<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.STATUS, state.value()).set(Tables.ADMIN.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN.ID.in(ids));
+            Update<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.STATE, state.value()).set(Tables.ADMIN.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN.ID.in(ids));
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
                     .compose(_ -> operationRecordRepository.add(connection, "changeState", "admin", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))

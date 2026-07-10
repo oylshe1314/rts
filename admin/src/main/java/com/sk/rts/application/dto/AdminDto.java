@@ -31,7 +31,7 @@ public class AdminDto extends StatefulDto {
     private final String phone;
 
     public AdminDto(Admin admin) {
-        super(admin.getId(), admin.getRemark(), admin.getUpdateBy(), admin.getUpdateTime(), admin.getStatus());
+        super(admin.getId(), admin.getRemark(), admin.getUpdateBy(), admin.getUpdateTime(), admin.getState());
         this.roleId = admin.getRoleId();
         this.roleName = admin.getRole().getName();
         this.username = admin.getUsername();

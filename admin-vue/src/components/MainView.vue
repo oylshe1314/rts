@@ -23,7 +23,13 @@ import type {TabCard} from "@/store/tabs.ts";
 
 defineProps<{ tabNames: string[]; tabCards: TabCard[]; }>();
 
-const emits = defineEmits<{ (emit: 'tabChange', name: string): void; (emit: 'tabRemove', name: string): void; }>();
+interface Emits {
+    (emit: 'tabChange', name: string): void;
+
+    (emit: 'tabRemove', name: string): void;
+}
+
+const emits = defineEmits<Emits>();
 
 </script>
 

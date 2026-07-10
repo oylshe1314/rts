@@ -1,5 +1,5 @@
 /**
- * auth.ts
+ * admin.ts
  * create by Snake as 2026-07-03
  * @description:
  */
@@ -63,22 +63,26 @@ export interface RoleAuthorityComparisonListDto {
     comparisonList: RoleAuthorityComparisonDto[];
 }
 
-export interface MenuQueryDto {
-    roleId: number;
-    username: string;
-    phone: string;
-    email: string;
+export interface AdminQueryDto {
+    roleId: number | null;
+    username: string | null;
+    phone: string | null;
+    email: string | null;
 }
 
-export interface AdminAddDto {
+export interface AdminDto {
+    id: number;
     roleId: number;
+    roleName: string;
     username: string;
-    password: string;
-    phone: string;
-    email: string;
     nickname: string;
     avatar: string;
+    email: string;
+    phone: string;
+    state: number;
     remark: string;
+    updateBy: string;
+    updateTime: string;
 }
 
 export interface AdminAddDto {
@@ -93,16 +97,17 @@ export interface AdminAddDto {
 }
 
 export interface AdminUpdateDto {
-    roleId: number;
-    password: string;
-    phone: string;
-    email: string;
-    nickname: string;
-    avatar: string;
-    remark: string;
+    id: number;
+    roleId: number | null;
+    password: string | null;
+    phone: string | null;
+    email: string | null;
+    nickname: string | null;
+    avatar: string | null;
+    remark: string | null;
 }
 
-const adminApi = {
+export default {
     roleQuery: (pageNo: number, pageSize: number, params: RoleQueryDto): Promise<PageResultDto<RoleDto>> => {
         return service({
             url: '/admin/role/query',
@@ -124,10 +129,10 @@ const adminApi = {
             data: data
         })
     },
-    roleChangeState: (ids: number[], state: number): Promise<void> => {
+    roleStateChange: (ids: number[], state: number): Promise<void> => {
         console.log(ids, state)
         return service({
-            url: '/admin/role/change/state',
+            url: '/admin/role/state/change',
             method: 'post',
             data: {ids: ids, state: state}
         })
@@ -153,42 +158,42 @@ const adminApi = {
             data: {roleId: roleId, menuIds: menuIds}
         })
     },
-    roleAuthorityCompare: (roleIds: number[]):Promise<RoleAuthorityComparisonListDto> => {
+    roleAuthorityCompare: (roleIds: number[]): Promise<RoleAuthorityComparisonListDto> => {
         return service({
             url: '/admin/role/authority/compare',
             method: 'post',
             data: {ids: roleIds}
         })
     },
-    query: (pageNo: number, pageSize: number, params: MenuQueryDto) => {
+    query: (pageNo: number, pageSize: number, params: AdminQueryDto): Promise<PageResultDto<AdminDto>> => {
         return service({
             url: '/admin/query',
             method: 'get',
             params: {pageNo: pageNo, pageSize: pageSize, ...params}
         })
     },
-    add: (data: AdminAddDto) => {
+    add: (data: AdminAddDto): Promise<AdminDto> => {
         return service({
             url: '/admin/add',
             method: 'post',
             data: data
         })
     },
-    update: (data: AdminUpdateDto) => {
+    update: (data: AdminUpdateDto): Promise<AdminDto> => {
         return service({
             url: '/admin/update',
             method: 'post',
             data: data
         })
     },
-    changeState: (ids: number[], state: number) => {
+    stateChange: (ids: number[], state: number): Promise<void> => {
         return service({
-            url: '/admin/change/state',
+            url: '/admin/state/change',
             method: 'post',
             data: {ids: ids, state: state}
         })
     },
-    delete: (ids: number[]) => {
+    delete: (ids: number[]): Promise<void> => {
         return service({
             url: '/admin/delete',
             method: 'post',
@@ -196,5 +201,3 @@ const adminApi = {
         })
     },
 }
-
-export default adminApi

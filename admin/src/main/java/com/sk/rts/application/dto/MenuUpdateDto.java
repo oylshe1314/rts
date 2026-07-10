@@ -17,13 +17,13 @@ public class MenuUpdateDto {
     @Schema(description = "ID")
     private final Long id;
 
-    @Integers({1, 2, 3})
-    @Schema(description = "类型, 1.目录, 2.菜单, 3.接口")
-    private final Integer type;
-
     @PositiveOrZero
     @Schema(description = "上级菜单ID")
     private final Long parentId;
+
+    @Integers({1, 2, 3})
+    @Schema(description = "类型, 1.目录, 2.菜单, 3.接口")
+    private final Integer type;
 
     @Schema(description = "图标")
     private final String icon;
