@@ -11,7 +11,7 @@
             <el-form-item label="上级菜单">
                 <el-select v-model="formData.parentId" placeholder="选择上级菜单" :disabled="parentSelectorDisableRef" style="width: 240px">
                     <el-option :key="0" :value="0" label="选择上级菜单"/>
-                    <el-option v-for="parent in parentSelectOptionsRef" :key="parent.id" :value='parent.id' :label="parent.name"/>
+                    <el-option v-for="parentOption in parentSelectOptionsRef" :key="parentOption.id" :value='parentOption.id' :label="parentOption.name"/>
                 </el-select>
             </el-form-item>
             <el-form-item label="图标">

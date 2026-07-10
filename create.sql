@@ -83,8 +83,8 @@ values (1, 0, 1, '菜单管理', 'Menu', '', '', 1, 1, '菜单管理目录', 'ad
 
 insert into menu(id, parent_id, type, name, icon, component, path, sort_by, state, remark, create_by, update_by)
 values (29, 0, 1, '操作记录', 'List', '', '', 2, 1, '操作记录', 'admin', 'admin'),
-       (30, 28, 2, '操作记录', '', '', '/operation/record/index', 0, 1, '操作记录', 'admin', 'admin'),
-       (31, 29, 3, '操作记录查询', '', '', '/operation/record/query', 0, 1, '操作记录查询', 'admin', 'admin');
+       (30, 29, 2, '操作记录', '', '', '/operation/record/index', 0, 1, '操作记录', 'admin', 'admin'),
+       (31, 30, 3, '操作记录查询', '', '', '/operation/record/query', 0, 1, '操作记录查询', 'admin', 'admin');
 
 -- 恢复menu表id序列
 SELECT setval('menu_id_seq', (select max(id) from menu), true);

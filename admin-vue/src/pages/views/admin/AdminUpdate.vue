@@ -2,7 +2,10 @@
     <el-dialog v-model="showEditRef" title="修改管理员" width="800px" @opened="handleOpened" @close="handleEditClose" destroy-on-close center>
         <el-form :model="formData" label-width="100px">
             <el-form-item label="角色" required>
-                <el-select-v2 v-model="formData.roleId" :props="roleSelectorProps" :options="roleSelectorOptionsRef" style="width: 240px"></el-select-v2>
+              <el-select v-model="formData.roleId" placeholder="选择角色" style="width: 240px">
+                <el-option :key="0" :value="0" label="选择角色"/>
+                <el-option v-for="roleOption in roleSelectorOptionsRef" :key="roleOption.id" :value='roleOption.id' :label="roleOption.name"/>
+              </el-select>
             </el-form-item>
             <el-form-item label="用户名" required>
                 <el-input v-model="formData.username" :disabled="true" type="text" style="width: 240px"/>
@@ -37,7 +40,7 @@
 
 import {ref, watch, reactive} from 'vue';
 
-import {ElSelectV2, ElMessage, ElMessageBox} from "element-plus";
+import {ElMessage, ElMessageBox} from "element-plus";
 
 import type {RoleOptionDto} from '@/api/common.ts';
 import commonApi from '@/api/common.ts';
@@ -60,7 +63,7 @@ const props = withDefaults(
     defineProps<Props>(),
     {
         modelValue: false,
-        editData: ({id: 0, roleId: null, username: null, password: null, phone: null, email: null, nickname: null, avatar: null, remark: null}),
+        editData: {id: 0, roleId: null, username: null, password: null, phone: null, email: null, nickname: null, avatar: null, remark: null},
     }
 );
 
@@ -97,14 +100,7 @@ const formData = reactive<AdminExtendedDto>({
     remark: '',
 })
 
-const roleSelectorProps = {label: 'name', value: 'id'};
-const roleSelectorOptionsRef = ref<RoleOptionDto[]>([{id: 0, name: '请选择角色'}]);
-
-function rolesToSelectOptions(roles: RoleOptionDto[]): RoleOptionDto[] {
-    const options: RoleOptionDto[] = [{id: 0, name: '请选择角色'}];
-    roles.forEach((role) => options.push({id: role.id, name: role.name}));
-    return options
-}
+const roleSelectorOptionsRef = ref<RoleOptionDto[]>([]);
 
 function init() {
     formData.id = 0;
@@ -137,7 +133,7 @@ function handleEditClose() {
 function handleOpened() {
     commonApi.roleOptions()
         .then((res) => {
-            roleSelectorOptionsRef.value = rolesToSelectOptions(res);
+            roleSelectorOptionsRef.value = res;
         })
         .catch((e) => {
             ElMessage({type: 'error', showClose: true, message: '查询角色列表失败: ' + e.message});

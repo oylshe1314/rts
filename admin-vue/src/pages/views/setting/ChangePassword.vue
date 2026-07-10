@@ -24,12 +24,18 @@
 import {reactive, ref} from "vue";
 import {ElMessage, ElMessageBox} from 'element-plus';
 
-import settingApi from '@/api/setting';
+import type {ChangePasswordDto} from '@/api/setting.ts';
+import settingApi from '@/api/setting.ts';
+
 import {closeLoading, openLoading} from "@/util/loading";
 
 const formRef = ref();
 
-const formData = reactive({
+interface ChangePasswordExtendedDto extends ChangePasswordDto {
+    confirmPassword: string;
+}
+
+const formData = reactive<ChangePasswordExtendedDto>({
     oldPassword: '',
     newPassword: '',
     confirmPassword: '',
@@ -64,8 +70,10 @@ function handleSubmit() {
         if (ok) {
             ElMessageBox.confirm('确认修改密码', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'})
                 .then(() => {
+                    const changeDto: ChangePasswordDto = {oldPassword: formData.oldPassword, newPassword: formData.newPassword};
+
                     openLoading('#changePassword', '已提交，请稍候...');
-                    settingApi.changePassword(formData).then(() => {
+                    settingApi.changePassword(changeDto).then(() => {
                         ElMessage({type: 'success', showClose: true, message: '修改成功'});
                         formData.oldPassword = '';
                         formData.newPassword = '';

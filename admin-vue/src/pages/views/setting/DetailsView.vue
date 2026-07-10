@@ -37,6 +37,8 @@ import {ElMessage, ElMessageBox} from "element-plus";
 import {closeLoading, openLoading} from "@/util/loading";
 
 import {useUserStore} from "@/store/user.ts";
+
+import type {ChangeDetailsDto} from '@/api/setting.ts';
 import settingApi from '@/api/setting.ts';
 
 import AvatarSelector from "@/components/AvatarSelector.vue";
@@ -56,7 +58,12 @@ const editState = reactive({
 
 const formRef = ref();
 
-const formData = reactive({
+interface ChangeDetailsExtendedDto extends ChangeDetailsDto {
+    roleName: string;
+    username: string;
+}
+
+const formData = reactive<ChangeDetailsExtendedDto>({
     roleName: userDetails.roleName,
     username: userDetails.username,
     phone: userDetails.phone,
@@ -94,8 +101,10 @@ function handleSubmit() {
         if (ok) {
             ElMessageBox.confirm('确认提交修改', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'})
                 .then(() => {
+                    const changeDto: ChangeDetailsDto = {phone: formData.phone, email: formData.email, nickname: formData.nickname, avatar: formData.avatar};
+
                     openLoading('#detail', '已提交，请稍候...');
-                    settingApi.changeDetail(formData).then(() => {
+                    settingApi.changeDetail(changeDto).then(() => {
 
                         userDetails.phone = formData.phone;
                         userDetails.email = formData.email;

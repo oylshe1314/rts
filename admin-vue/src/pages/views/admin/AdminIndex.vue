@@ -5,7 +5,7 @@
                 <el-form-item>
                     <el-select v-model.number="formData.roleId" placeholder="角色" style="width: 200px">
                         <el-option :key="0" :value="0" label="所有角色"/>
-                        <el-option v-for="option in roleSelectOptionsRef" :key="option.id" :value="option.id" :label="option.name"></el-option>
+                        <el-option v-for="roleOption in roleSelectOptionsRef" :key="roleOption.id" :value="roleOption.id" :label="roleOption.name"></el-option>
                     </el-select>
                 </el-form-item>
                 <el-form-item>

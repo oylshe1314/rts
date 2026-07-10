@@ -6,14 +6,14 @@
 
 import service from "@/api/request.ts";
 
-interface ChangeDetailsDto {
+export interface ChangeDetailsDto {
     phone: string;
     email: string;
     nickname: string;
     avatar: string;
 }
 
-interface ChangePasswordDto {
+export interface ChangePasswordDto {
     oldPassword: string;
     newPassword: string;
 }

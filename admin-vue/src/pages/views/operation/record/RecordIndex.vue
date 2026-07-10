@@ -3,21 +3,20 @@
         <div>
             <el-form :model="formData" inline>
                 <el-form-item>
-                    <el-select-v2 v-model.number="formData.operatorId"
-                                  :props="adminSelectorProps"
-                                  :options="adminSelectorOptionsRef"
-                                  filterable
-                                  clearable
-                                  remote
-                                  :remote-method="adminOptionsQuery"
-                                  :loading="adminSelectorLoadingRef"
-                                  placeholder="操作人"
-                                  style="width: 200px"
-                    />
+                    <el-select v-model.number="formData.operatorId"
+                               filterable
+                               clearable
+                               remote
+                               :remote-method="adminOptionsQuery"
+                               :loading="adminSelectorLoadingRef"
+                               placeholder="操作人"
+                               style="width: 200px">
+                        <el-option v-for="adminOption in adminSelectorOptionsRef" :key="adminOption.id" :value='adminOption.id' :label="adminOption.username"/>
+                    </el-select>
                 </el-form-item>
                 <el-form-item>
                     <el-select v-model.number="formData.operation" placeholder="操作" style="width: 200px">
-                        <el-option :key="''" :value="''" label="操作"/>
+                        <el-option key="" value="" label="操作"/>
                         <el-option key="add" value="add" label="add"/>
                         <el-option key="update" value="update" label="update"/>
                         <el-option key="delete" value="delete" label="delete"/>
@@ -78,7 +77,7 @@
 
 import {onMounted, reactive, ref} from "vue";
 
-import {ElMessage, ElSelectV2} from "element-plus";
+import {ElMessage} from "element-plus";
 
 import type {AdminOptionDto} from '@/api/common.ts';
 import commonApi from '@/api/common.ts';
@@ -95,9 +94,8 @@ const formData = reactive<OperationRecordQueryDto>({
     endTime: 0,
 });
 
-const adminSelectorProps = {label: 'username', value: 'id'};
 const adminSelectorLoadingRef = ref<boolean>(false);
-const adminSelectorOptionsRef = ref<AdminOptionDto[]>([{id: 0, roleId: 0, roleName: '', username: '操作人', nickname: '', avatar: ''}]);
+const adminSelectorOptionsRef = ref<AdminOptionDto[]>([]);
 
 function adminsToSelectOptions(roles: AdminOptionDto[]) {
     const options: AdminOptionDto[] = [];
