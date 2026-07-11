@@ -36,13 +36,14 @@ dependencies {
     jooqCodegen "org.postgresql:postgresql:${postgresqlVersion}"
 
     implementation "io.jsonwebtoken:jjwt:0.13.0"
+    implementation "commons-codec:commons-codec:1.22.0"
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 }
 
 jooq {
-    version = 'jooqVersion'
+    version = "${jooqVersion}"
 
     configuration {
         jdbc {

@@ -74,16 +74,17 @@ public class AuthService {
                         u.GENDER, // 3
                         u.BIRTHDAY, // 4
                         u.CREATE_TIME, // 5
-                        a.USERNAME, // 6
-                        a.PHONE, // 7
-                        a.EMAIL, // 8
-                        a.PASSWORD, // 9
-                        d.ID, // 10
-                        d.USER_ID, // 11
-                        d.PLATFORM, // 12
-                        d.SERIAL_NO, // 13
-                        d.DEVICE_NO, // 14
-                        d.CREATE_TIME) // 15
+                        a.ID, // 6
+                        a.USERNAME, // 7
+                        a.PHONE, // 8
+                        a.EMAIL, // 9
+                        a.PASSWORD, // 10
+                        d.ID, // 11
+                        d.USER_ID, // 12
+                        d.PLATFORM, // 13
+                        d.SERIAL_NO, // 14
+                        d.DEVICE_NO, // 15
+                        d.CREATE_TIME) // 16
                 .from(u)
                 .innerJoin(a).on(a.ID.eq(u.ID));
 
@@ -104,8 +105,8 @@ public class AuthService {
                     Row row = rows.iterator().next();
                     UserDetails details = UserDetails.fromRow(row, 0);
                     details.setAccount(UserAccount.fromRow(row, 6));
-                    if (row.getLong(10) != null) {
-                        details.setDevice(UserDevice.fromRow(row, 10));
+                    if (row.getLong(11) != null) {
+                        details.setDevice(UserDevice.fromRow(row, 11));
                     }
 
                     return details;
@@ -133,6 +134,7 @@ public class AuthService {
                     }
                 })
                 .map(details -> new UserAuthDetails(details, remoteDetails))
+                .onComplete(_ -> connection.close())
                 .onSuccess(sink::success)
                 .onFailure(sink::error)
         ));

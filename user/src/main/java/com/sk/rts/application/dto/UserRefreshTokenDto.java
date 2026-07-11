@@ -18,7 +18,7 @@ public class UserRefreshTokenDto {
     private final Long expiration;
 
     public UserRefreshTokenDto(UserRefreshToken refreshToken) {
-        this(refreshToken.getToken(), refreshToken.getIssueTime(), refreshToken.getExpireTime());
+        this(refreshToken.getHash(), refreshToken.getIssueTime(), refreshToken.getExpireTime());
     }
 
     public UserRefreshTokenDto(String token, Long issueTime, Long expiration) {

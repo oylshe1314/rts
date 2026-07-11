@@ -10,8 +10,8 @@ apply plugin: "java"
 apply plugin: "org.springframework.boot"
 apply plugin: "io.spring.dependency-management"
 
-group = 'com.sk.rts'
-version = ''
+group = "com.sk.rts"
+version = "1.0.0"
 
 dependencies {
 
@@ -28,8 +28,8 @@ dependencies {
     implementation "io.vertx:vertx-pg-client:${vertxVersion}"
     implementation "io.vertx:vertx-redis-client:${vertxVersion}"
 
-    implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
     implementation "org.postgresql:postgresql:${postgresqlVersion}"
+    implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
 
     compileOnly "org.jooq:jooq-codegen:${jooqVersion}"
     jooqCodegen "org.postgresql:postgresql:${postgresqlVersion}"
@@ -126,6 +126,8 @@ jooq {
         }
     }
 }
+
+compileJava.dependsOn 'jooqCodegen'
 
 sourceSets {
     main {

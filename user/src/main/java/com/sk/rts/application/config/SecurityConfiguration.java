@@ -29,10 +29,10 @@ public class SecurityConfiguration {
     public static final String PATTERN_API_DOCS = "/v3/api-docs/**";
     public static final String PATTERN_ERROR = "/error/**";
     public static final String PATTERN_OPEN = "/open/**";
-    public static final String PATH_USER_PASSWORD_RESET = "/user/password/reset";
     public static final String PATH_AUTH_PASSWORD_LOGIN = "/auth/password/login";
     public static final String PATH_AUTH_CAPTCHA_LOGIN = "/auth/captcha/login";
     public static final String PATH_AUTH_LOGOUT = "/auth/logout";
+    public static final String PATH_USER_PASSWORD_RESET = "/user/password/reset";
 
     private final UserPasswordAuthConverter userPasswordAuthConverter;
     private final UserPasswordAuthManager userPasswordAuthManager;
