@@ -183,7 +183,7 @@ public class RoleService {
                             .recover(this::recoverUniqueIndexException)
                             .compose(id -> {
                                 role.setId(id);
-                                return operationRecordRepository.add(connection, Operation.add, "role", role.getId().toString(), operator);
+                                return operationRecordRepository.add(connection, Operation.add, role.getId().toString(), "role", operator);
                             })
                             .compose(_ -> connection.transaction().commit())
                             .onComplete(_ -> connection.close())
@@ -230,7 +230,7 @@ public class RoleService {
 
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                                 .recover(this::recoverUniqueIndexException)
-                                .compose(_ -> operationRecordRepository.add(connection, Operation.update, "role", role.getId().toString(), operator))
+                                .compose(_ -> operationRecordRepository.add(connection, Operation.update, role.getId().toString(), "role", operator))
                                 .compose(_ -> connection.transaction().commit())
                                 .onComplete(_ -> connection.close())
                                 .map(_ -> new RoleDto(role));
@@ -264,7 +264,7 @@ public class RoleService {
 
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()));
                     })
-                    .compose(_ -> operationRecordRepository.add(connection, Operation.delete, "role", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
+                    .compose(_ -> operationRecordRepository.add(connection, Operation.delete, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "role", operator))
                     .compose(_ -> connection.transaction().commit())
                     .onComplete(_ -> connection.close())
                     .onSuccess(sink::success)
@@ -292,7 +292,7 @@ public class RoleService {
 
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                    .compose(_ -> operationRecordRepository.add(connection, Operation.changeState, "role", changeDto.getIds().stream().map(Object::toString).collect(Collectors.joining(",")), operator))
+                    .compose(_ -> operationRecordRepository.add(connection, Operation.changeState, changeDto.getIds().stream().map(Object::toString).collect(Collectors.joining(",")), "role," + state.name(), operator))
                     .compose(_ -> connection.transaction().commit())
                     .onComplete(_ -> connection.close())
                     .onSuccess(sink::success)

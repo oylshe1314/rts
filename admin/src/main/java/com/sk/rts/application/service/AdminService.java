@@ -164,7 +164,7 @@ public class AdminService {
             }
 
             if (pageRequestDto.getSort() == null) {
-                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(a.ID.asc());
+                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(a.ID.desc());
             } else {
                 OrderField<?> sortField = a.field(pageRequestDto.getSort());
                 if (sortField == null) {
@@ -209,7 +209,7 @@ public class AdminService {
 
     private <T> Future<T> recoverUniqueIndexException(Throwable throwable) {
         SQLException sqlException = ExceptionUtil.extractException(throwable, SQLException.class);
-        if (sqlException != null && "23505".equals(sqlException.getSQLState())) {
+        if (sqlException != null && "23505" .equals(sqlException.getSQLState())) {
             if (sqlException.getMessage().contains("idx_unique_admin_username")) {
                 return Future.failedFuture(new StandardStatusException("user.username.exists", "用户名已存在"));
             }
@@ -251,7 +251,7 @@ public class AdminService {
                             .compose(id -> {
                                 admin.setId(id);
                                 admin.setRole(role);
-                                return operationRecordRepository.add(connection, Operation.add, "admin", admin.getId().toString(), operator);
+                                return operationRecordRepository.add(connection, Operation.add, admin.getId().toString(), "admin", operator);
                             })
                             .compose(_ -> connection.transaction().commit())
                             .onComplete(_ -> connection.close())
@@ -332,7 +332,7 @@ public class AdminService {
                         Update<?> query = dslContext.update(Tables.ADMIN).set(values).where(Tables.ADMIN.ID.eq(admin.getId()));
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                                 .recover(this::recoverUniqueIndexException)
-                                .compose(_ -> operationRecordRepository.add(connection, Operation.update, "admin", admin.getId().toString(), operator))
+                                .compose(_ -> operationRecordRepository.add(connection, Operation.update, admin.getId().toString(), "admin", operator))
                                 .compose(_ -> connection.transaction().commit())
                                 .onComplete(_ -> connection.close())
                                 .map(_ -> new AdminDto(admin));
@@ -372,7 +372,7 @@ public class AdminService {
                             Delete<?> query = dslContext.deleteFrom(Tables.ADMIN).where(Tables.ADMIN.ID.in(ids));
                             return pool.getConnection().flatMap(connection -> connection.begin()
                                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                                    .compose(_ -> operationRecordRepository.add(connection, Operation.delete, "admin", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
+                                    .compose(_ -> operationRecordRepository.add(connection, Operation.delete, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "admin", operator))
                                     .compose(_ -> connection.transaction().commit())
                                     .onComplete(_ -> connection.close())
                             );
@@ -401,7 +401,7 @@ public class AdminService {
             Update<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.STATE, state.value()).set(Tables.ADMIN.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN.ID.in(ids));
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                    .compose(_ -> operationRecordRepository.add(connection, Operation.changeState, "admin", ids.stream().map(Object::toString).collect(Collectors.joining(",")), operator))
+                    .compose(_ -> operationRecordRepository.add(connection, Operation.changeState, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "admin," + state.name(), operator))
                     .compose(_ -> connection.transaction().commit())
                     .onComplete(_ -> connection.close())
                     .onSuccess(sink::success)

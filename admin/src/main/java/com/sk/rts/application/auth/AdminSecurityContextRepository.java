@@ -84,6 +84,7 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
                 msgAdminDetailsBuilder.setEmail(authDetails.getEmail());
                 msgAdminDetailsBuilder.setNickname(authDetails.getNickname());
                 msgAdminDetailsBuilder.setAvatar(authDetails.getAvatar());
+                msgAdminDetailsBuilder.setIpAddress(authDetails.getIpAddress());
                 for (ApiPatternAuthority authority : authDetails.getAuthorities()) {
                     msgAdminDetailsBuilder.addAuthority(authority.getAuthority());
                 }
