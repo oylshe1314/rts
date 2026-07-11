@@ -80,7 +80,7 @@ public class OperationRecordService {
             }
 
             if (pageRequestDto.getSort() == null) {
-                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(Tables.OPERATION_RECORD.ID.asc());
+                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(Tables.OPERATION_RECORD.ID.desc());
             } else {
                 OrderField<?> sortField = Tables.OPERATION_RECORD.field(pageRequestDto.getSort());
                 if (sortField == null) {
@@ -104,7 +104,7 @@ public class OperationRecordService {
                     .map(rows -> rows.stream().map(row -> new OperationRecordDto(OperationRecord.fromRow(row))).toList())
                     .flatMap(records -> {
                         if (records.size() < pageRequestDto.getPageSize()) {
-                            return Future.succeededFuture(new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), records.size(), records));
+                            return Future.succeededFuture(new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), (pageRequestDto.getPageSize().longValue() * (pageRequestDto.getPageNo().longValue() - 1)) + records.size(), records));
                         }
 
                         return connection.preparedQuery(countSql).execute(Tuple.tuple(countArgs)).map(rows -> new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), rows.iterator().next().getLong(0), records));

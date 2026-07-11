@@ -10,8 +10,8 @@ import service from '@/api/request.ts';
 export interface OperationRecordQueryDto {
     operatorId: number | null;
     operation: string | null;
-    beginTime: number | null;
-    endTime: number | null;
+    beginTime: string | null;
+    endTime: string | null;
 }
 
 export interface OperationRecordDto {

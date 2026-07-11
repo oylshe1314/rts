@@ -88,10 +88,10 @@ import operationRecordApi from "@/api/operation_record.ts";
 import {formatTime} from "@/util/time.ts";
 
 const formData = reactive<OperationRecordQueryDto>({
-    operatorId: 0,
+    operatorId: null,
     operation: '',
-    beginTime: 0,
-    endTime: 0,
+    beginTime: '',
+    endTime: '',
 });
 
 const adminSelectorLoadingRef = ref<boolean>(false);
@@ -123,16 +123,16 @@ const tableData = ref<OperationRecordDto[]>([]);
 
 function query() {
     const queryDto: OperationRecordQueryDto = {operatorId: null, operation: null, beginTime: null, endTime: null};
-    if (formData.operatorId !== 0) {
+    if (formData.operatorId !== null && formData.operatorId !== 0) {
         queryDto.operatorId = formData.operatorId;
     }
     if (formData.operation !== '') {
         queryDto.operation = formData.operation;
     }
-    if (formData.beginTime !== 0) {
+    if (formData.beginTime !== '') {
         queryDto.beginTime = formData.beginTime;
     }
-    if (formData.endTime !== 0) {
+    if (formData.endTime !== '') {
         queryDto.endTime = formData.endTime;
     }
 

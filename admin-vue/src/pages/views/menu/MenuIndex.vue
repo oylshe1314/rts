@@ -137,6 +137,7 @@ const pagination = ref({
         prevIcon: 'CaretLeft',
         nextIcon: 'CaretRight',
         onCurrentChange: (pageNo: number) => {
+            console.log(pageNo);
             pagination.value.currentPage = pageNo;
             query();
         },
@@ -147,6 +148,7 @@ const pagination = ref({
             }
         },
         onNextClick: (pageNo: number) => {
+            console.log(pageNo);
             if (pageNo < pagination.value.pageCount) {
                 pagination.value.currentPage = pageNo + 1;
                 query();

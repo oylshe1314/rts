@@ -137,7 +137,7 @@ public class RoleService {
                     .map(rows -> rows.stream().map(row -> new RoleDto(Role.fromRow(row))).toList())
                     .flatMap(roles -> {
                         if (roles.size() < pageRequestDto.getPageSize()) {
-                            return Future.succeededFuture(new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), roles.size(), roles));
+                            return Future.succeededFuture(new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), (pageRequestDto.getPageSize().longValue() * (pageRequestDto.getPageNo().longValue() - 1)) + roles.size(), roles));
                         }
 
                         return connection.preparedQuery(countSql).execute(Tuple.tuple(countArgs)).map(rows -> new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), rows.iterator().next().getLong(0), roles));
