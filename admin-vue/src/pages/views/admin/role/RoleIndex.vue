@@ -19,7 +19,7 @@
         <div>
             <el-table v-loading="tableLoadingRef" :data="tableDataRef" @selection-change="handleSelect" empty-text="无数据" height="640">
                 <el-table-column type="selection" width="40" align="center"/>
-                <el-table-column type="index" label="序号" width="80" align="center"/>
+                <el-table-column type="index" label="序号" width="60" align="center"/>
                 <el-table-column prop="name" label="名称" width="200" align="left"/>
                 <el-table-column prop="code" label="代码" width="240" align="left"/>
                 <el-table-column prop="state" label="状态" width="120" align="center">

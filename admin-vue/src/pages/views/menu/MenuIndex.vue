@@ -26,19 +26,19 @@
         <div>
             <el-table v-loading="tableLoadingRef" :data="tableData" @selection-change="handleSelect" empty-text="无数据" height="640">
                 <el-table-column type="selection" width="40" align="center"/>
-                <el-table-column label="序号" type="index" width="80" align="center"/>
-                <el-table-column label="上级名称" prop="parentName" width="160" align="left"/>
-                <el-table-column label="类型" prop="typeName" width="100" align="center"/>
-                <el-table-column label="图标" prop="icon" width="100" align="center">
+                <el-table-column label="序号" type="index" width="60" align="center"/>
+                <el-table-column label="上级名称" prop="parentName" width="140" align="left"/>
+                <el-table-column label="类型" prop="typeName" width="80" align="center"/>
+                <el-table-column label="名称" prop="name" width="140" align="left"/>
+                <el-table-column label="图标" prop="icon" width="80" align="center">
                     <template #default="scope">
                         <el-icon v-if="scope.row.icon !== ''">
                             <component :is="scope.row.icon"/>
                         </el-icon>
                     </template>
                 </el-table-column>
-                <el-table-column label="名称" prop="name" width="160" align="left"/>
-                <el-table-column :show-overflow-tooltip="true" label="路径" prop="path" width="260" align="left"/>
-                <el-table-column label="排序值" prop="sortBy" width="80" align="center"/>
+                <el-table-column label="路径" prop="path" width="300" align="left" show-overflow-tooltip/>
+                <el-table-column label="排序值" prop="sortBy" width="100" align="center"/>
                 <el-table-column label="状态" prop="state" width="80" align="center">
                     <template #default="scope">
                         <span :style="{color: scope.row.state === 0 ? '#FF0000' : '#409EFF'}">{{ scope.row.state === 0 ? '禁用' : '启用' }}</span>
@@ -137,7 +137,6 @@ const pagination = ref({
         prevIcon: 'CaretLeft',
         nextIcon: 'CaretRight',
         onCurrentChange: (pageNo: number) => {
-            console.log(pageNo);
             pagination.value.currentPage = pageNo;
             query();
         },
@@ -148,7 +147,6 @@ const pagination = ref({
             }
         },
         onNextClick: (pageNo: number) => {
-            console.log(pageNo);
             if (pageNo < pagination.value.pageCount) {
                 pagination.value.currentPage = pageNo + 1;
                 query();
@@ -180,7 +178,7 @@ const showAddRef = ref<boolean>(false);
 const parentDataRef = ref<MenuDto | null>(null);
 
 const showUpdateRef = ref<boolean>(false);
-const editDataRef = ref<MenuUpdateDto>({id: 0, parentId: null, type: null, icon: null, name: null, path: null, sortBy: null, remark: null});
+const editDataRef = ref<MenuUpdateDto>({id: 0, parentId: null, type: null, name: null, icon: null, path: null, sortBy: null, remark: null});
 
 function handleEditSuccess() {
     query()
@@ -212,8 +210,8 @@ function handleCommand(command: string, row: MenuDto | null) {
                 id: row!.id,
                 parentId: row!.parentId,
                 type: row!.type,
-                icon: row!.icon,
                 name: row!.name,
+                icon: row!.icon,
                 path: row!.path,
                 sortBy: row!.sortBy,
                 remark: row!.remark

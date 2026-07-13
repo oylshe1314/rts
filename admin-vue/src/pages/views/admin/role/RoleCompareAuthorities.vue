@@ -73,7 +73,7 @@ const props = withDefaults(
     defineProps<Props>(),
     {
         modelValue: false,
-        editData: {roleIds: []},
+        editData: () => ({roleIds: []}),
     }
 );
 

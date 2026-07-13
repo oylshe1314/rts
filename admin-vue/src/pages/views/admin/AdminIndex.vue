@@ -21,7 +21,7 @@
         <div>
             <el-table v-loading="tableLoadingRef" :data="tableData" @selection-change="handleSelect" empty-text="无数据" height="640">
                 <el-table-column type="selection" width="40" align="center"/>
-                <el-table-column type="index" label="序号" width="80" align="center"/>
+                <el-table-column type="index" label="序号" width="60" align="center"/>
                 <el-table-column prop="roleName" label="角色" width="120" align="left"/>
                 <el-table-column prop="username" label="用户名" width="160" align="left"/>
                 <el-table-column prop="nickname" label="昵称" width="160" align="left"/>

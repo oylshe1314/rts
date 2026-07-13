@@ -1,6 +1,6 @@
 <template>
     <div id="form" class="form">
-        <el-form ref="formRef" :model="formData" @keyup.enter="handleLogin">
+        <el-form :model="formData" @keyup.enter="handleLogin">
             <el-form-item prop="account">
                 <el-input v-model="formData.account" :prefix-icon="User" class="form-ipt" maxlength="24" size="large" type="text">
                 </el-input>
@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 
-import {reactive, ref} from 'vue';
+import {reactive} from 'vue';
 import {ElMessage} from 'element-plus';
 import {Lock, User} from '@element-plus/icons-vue';
 
@@ -26,8 +26,6 @@ import authApi from '@/api/auth.ts';
 import {useUserStore} from "@/store/user.ts";
 
 import {closeLoading, openLoading} from "@/util/loading";
-
-const formRef = ref({});
 
 const formData = reactive({
     account: 'admin',

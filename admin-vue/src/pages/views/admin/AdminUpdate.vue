@@ -2,10 +2,10 @@
     <el-dialog v-model="showEditRef" title="修改管理员" width="800px" @opened="handleOpened" @close="handleEditClose" destroy-on-close center>
         <el-form :model="formData" label-width="100px">
             <el-form-item label="角色" required>
-              <el-select v-model="formData.roleId" placeholder="选择角色" style="width: 240px">
-                <el-option :key="0" :value="0" label="选择角色"/>
-                <el-option v-for="roleOption in roleSelectorOptionsRef" :key="roleOption.id" :value='roleOption.id' :label="roleOption.name"/>
-              </el-select>
+                <el-select v-model="formData.roleId" placeholder="选择角色" style="width: 240px">
+                    <el-option :key="0" :value="0" label="选择角色"/>
+                    <el-option v-for="roleOption in roleSelectorOptionsRef" :key="roleOption.id" :value='roleOption.id' :label="roleOption.name"/>
+                </el-select>
             </el-form-item>
             <el-form-item label="用户名" required>
                 <el-input v-model="formData.username" :disabled="true" type="text" style="width: 240px"/>
@@ -63,7 +63,7 @@ const props = withDefaults(
     defineProps<Props>(),
     {
         modelValue: false,
-        editData: {id: 0, roleId: null, username: null, password: null, phone: null, email: null, nickname: null, avatar: null, remark: null},
+        editData: () => ({id: 0, roleId: null, username: null, password: null, phone: null, email: null, nickname: null, avatar: null, remark: null}),
     }
 );
 

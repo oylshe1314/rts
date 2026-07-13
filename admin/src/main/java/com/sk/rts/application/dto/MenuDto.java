@@ -22,11 +22,11 @@ public class MenuDto extends StatefulDto {
     @Schema(description = "上级菜单名称")
     private final String parentName;
 
-    @Schema(description = "图标")
-    private final String icon;
-
     @Schema(description = "名称")
     private final String name;
+
+    @Schema(description = "图标")
+    private final String icon;
 
     @Schema(description = "路径")
     private final String path;
@@ -45,8 +45,8 @@ public class MenuDto extends StatefulDto {
         }
         this.type = menu.getType();
         this.typeName = MenuType.desc(this.type);
-        this.icon = menu.getIcon();
         this.name = menu.getName();
+        this.icon = menu.getIcon();
         this.path = menu.getPath();
         this.sortBy = menu.getSortBy();
     }

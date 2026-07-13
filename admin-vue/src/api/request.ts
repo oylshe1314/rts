@@ -47,7 +47,7 @@ service.interceptors.response.use(async (response: AxiosResponse<ResponseDto<any
         }
     },
     (err) => {
-        console.log('请求失败:', err.message)
+        console.log('请求失败: ', err.message)
         return Promise.reject(new Error("请求失败"));
     }
 );
