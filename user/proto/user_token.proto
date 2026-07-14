@@ -8,16 +8,19 @@ option java_multiple_files = true;
 
 message MsgAccessToken {
     string subject = 1;
-    string token = 2;
-    int64 issueTime = 3;
-    int64 expiration = 4;
+    int64 userId = 2;
+    int64 deviceId = 3;
+    string token = 4;
+    int64 issueTime = 5;
+    int64 expireTime = 6;
 }
 
 message MsgRefreshToken {
-    int64 userId = 1;
-    int64 deviceId = 2;
-    string hash = 3;
-    int64 issueTime = 4;
-    int64 expireTime = 5;
-    int64 refreshTime = 6;
+    string subject = 1;
+    int64 userId = 2;
+    int64 deviceId = 3;
+    string hash = 4;
+    int64 issueTime = 5;
+    int64 expireTime = 6;
+    int64 refreshTime = 7;
 }

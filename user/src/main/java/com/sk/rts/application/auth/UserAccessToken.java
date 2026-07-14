@@ -14,6 +14,10 @@ public class UserAccessToken {
 
     private String subject;
 
+    private Long userId;
+
+    private Long deviceId;
+
     private String token;
 
     private Long issueTime;
@@ -22,6 +26,8 @@ public class UserAccessToken {
 
     public UserAccessToken(MsgAccessToken token) {
         this.subject = token.getSubject();
+        this.userId = token.getUserId();
+        this.deviceId = token.getDeviceId();
         this.token = token.getToken();
         this.issueTime = token.getIssueTime();
         this.expireTime = token.getExpiration();

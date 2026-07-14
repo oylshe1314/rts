@@ -127,6 +127,8 @@ jooq {
     }
 }
 
+compileJava.dependsOn 'jooqCodegen'
+
 sourceSets {
     main {
         proto {

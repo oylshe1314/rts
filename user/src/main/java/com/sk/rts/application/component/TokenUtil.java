@@ -53,25 +53,14 @@ public class TokenUtil {
         return token;
     }
 
-    public UserAccessToken generate(String subject) {
-        OffsetDateTime issueTime = OffsetDateTime.now();
-        OffsetDateTime expireTime = issueTime.plus(tokenProperties.getAccessToken().getExpiration());
-
-        String token = Jwts.builder()
+    public String generate(String subject, OffsetDateTime issueTime, OffsetDateTime expireTime) {
+        return Jwts.builder()
                 .issuer("rts")
                 .subject(subject)
                 .issuedAt(TimeUtil.toDate(issueTime))
                 .expiration(TimeUtil.toDate(expireTime))
                 .signWith(tokenProperties.getAccessToken().getSecretKey())
                 .compact();
-
-
-        return new UserAccessToken(
-                subject,
-                token,
-                issueTime.toEpochSecond(),
-                expireTime.toEpochSecond()
-        );
     }
 
     private Claims parse(String token) throws JwtException {

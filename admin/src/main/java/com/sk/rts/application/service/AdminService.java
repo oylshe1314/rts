@@ -109,7 +109,7 @@ public class AdminService {
     }
 
     /**
-     * 管理员分页查询, ID升序
+     * 管理员分页查询
      *
      * @param pageRequestDtoMono 分页查询参数
      * @return 分页查询结果

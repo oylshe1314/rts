@@ -5,12 +5,14 @@ import com.sk.rts.application.dto.PasswordLoginDto;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
+@Primary
 @Component
 @NullMarked
 public class UserPasswordAuthConverter extends UserAuthConverter {
