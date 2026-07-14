@@ -44,7 +44,7 @@
                 </el-table-column>
                 <el-table-column prop="remark" label="备注" align="left" show-overflow-tooltip/>
                 <el-table-column prop="updateBy" label="操作人" width="120" align="center"/>
-                <el-table-column :formatter="(row: AdminDto) => formatTime(row.updateTime)" prop="updateTime" label="操作时间" width="220" align="center"/>
+                <el-table-column :formatter="(row: AdminDto) => formatTime(row.updateTime)" prop="updateTime" label="操作时间" width="200" align="center"/>
                 <el-table-column fixed="right" label="操作" align="center" width="120">
                     <template #default="scope">
                         <el-dropdown trigger="click" @command="(command: string) => {handleCommand(command, scope.row)}">
