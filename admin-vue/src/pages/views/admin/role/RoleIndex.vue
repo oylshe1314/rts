@@ -153,18 +153,14 @@ function handleQueryBtnClick() {
 const selectionIds: number[] = [];
 
 function handleSelect(rows: RoleDto[]) {
+    selectionIds.length = 0;
     if (rows.length === 0) {
-        selectionIds.splice(0);
         btnDeleteDisabledRef.value = true;
         btnCompareAuthorityDisabledRef.value = true;
     } else {
         rows.forEach((row) => selectionIds.push(row.id));
         btnDeleteDisabledRef.value = false;
-        if (selectionIds.length < 2 || selectionIds.length > 4) {
-            btnCompareAuthorityDisabledRef.value = true;
-        } else {
-            btnCompareAuthorityDisabledRef.value = false;
-        }
+        btnCompareAuthorityDisabledRef.value = selectionIds.length < 2 || selectionIds.length > 4;
     }
 }
 

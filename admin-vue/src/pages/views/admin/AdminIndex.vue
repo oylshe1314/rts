@@ -185,8 +185,8 @@ onMounted(() => query());
 const selectionIds: number[] = [];
 
 function handleSelect(rows: AdminDto[]) {
+    selectionIds.length = 0;
     if (rows.length === 0) {
-        selectionIds.splice(0);
         btnDeleteDisabledRef.value = true;
     } else {
         rows.forEach((row) => selectionIds.push(row.id));

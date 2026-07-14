@@ -13,14 +13,7 @@
                         <template #header>
                             <div class="diagonal-header">
                                 <svg style="position:absolute;top:0;left:0;width:100%;height:100%;">
-                                    <line
-                                        x1="0"
-                                        y1="0"
-                                        x2="100%"
-                                        y2="100%"
-                                        stroke="#EBEEF5"
-                                        stroke-width="1"
-                                    />
+                                    <line x1="0" y1="0" x2="100%" y2="100%" stroke="#EBEEF5" stroke-width="1"/>
                                 </svg>
                                 <span class="text-bottom-left">权限</span>
                                 <span class="text-top-right">角色</span>
