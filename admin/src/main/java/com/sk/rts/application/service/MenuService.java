@@ -217,8 +217,8 @@ public class MenuService {
                         Menu menu = new Menu();
                         menu.setParentId(parent == null ? 0L : parent.getId());
                         menu.setType(menuType.value());
-                        menu.setIcon(menuType == MenuType.api ? "" : addDto.getIcon());
                         menu.setName(addDto.getName());
+                        menu.setIcon(menuType == MenuType.api ? "" : addDto.getIcon());
                         menu.setPath(addDto.getPath() == null ? "" : addDto.getPath());
                         menu.setSortBy(addDto.getSortBy());
                         menu.setState(State.disable.value());
@@ -285,21 +285,22 @@ public class MenuService {
                         return Future.succeededFuture(menu);
                     })
                     .compose(menu -> {
-                        if (updateDto.getIcon() != null && !updateDto.getIcon().equals(menu.getIcon())) {
-                            menu.setIcon(MenuType.isApi(menu.getType()) ? "" : updateDto.getIcon());
-                            values.put(Tables.MENU.ICON, menu.getIcon());
-                        }
-
                         if (updateDto.getName() != null && !updateDto.getName().equals(menu.getName())) {
                             menu.setName(updateDto.getName());
                             values.put(Tables.MENU.NAME, menu.getName());
                         }
 
+                        if (updateDto.getIcon() != null && !updateDto.getIcon().equals(menu.getIcon())) {
+                            if (MenuType.isApi(menu.getType()) && StringUtils.hasText(updateDto.getIcon())) {
+                                return Future.failedFuture(new StandardStatusException("接口无法设置图标"));
+                            }
+                            menu.setIcon(updateDto.getIcon());
+                            values.put(Tables.MENU.ICON, menu.getIcon());
+                        }
+
                         if (updateDto.getPath() != null && !updateDto.getPath().equals(menu.getPath())) {
-                            if (updateDto.getPath().isBlank()) {
-                                if (MenuType.isMenu(menu.getType()) || MenuType.isApi(menu.getType())) {
-                                    return Future.failedFuture(new StandardStatusException("菜单和接口路径不能为空"));
-                                }
+                            if ((MenuType.isMenu(menu.getType()) || MenuType.isApi(menu.getType())) && !StringUtils.hasText(updateDto.getPath())) {
+                                return Future.failedFuture(new StandardStatusException("菜单和接口路径不能为空"));
                             }
                             menu.setPath(updateDto.getPath());
                             values.put(Tables.MENU.PATH, menu.getPath());

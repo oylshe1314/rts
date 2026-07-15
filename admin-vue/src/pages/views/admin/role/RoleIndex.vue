@@ -19,7 +19,7 @@
         <div>
             <el-table v-loading="tableLoadingRef" :data="tableDataRef" @selection-change="handleSelect" empty-text="无数据" height="640">
                 <el-table-column type="selection" width="40" align="center"/>
-                <el-table-column type="index" label="序号" width="80" align="center"/>
+                <el-table-column type="index" label="序号" width="60" align="center"/>
                 <el-table-column prop="name" label="名称" width="200" align="left"/>
                 <el-table-column prop="code" label="代码" width="240" align="left"/>
                 <el-table-column prop="state" label="状态" width="120" align="center">
@@ -29,7 +29,7 @@
                 </el-table-column>
                 <el-table-column prop="remark" label="备注" align="left" show-overflow-tooltip/>
                 <el-table-column prop="updateBy" label="操作人" align="center" width="80"/>
-                <el-table-column :formatter="(row: RoleDto) => formatTime(row.updateTime)" prop="updateTime" label="操作时间" width="220" align="center"/>
+                <el-table-column :formatter="(row: RoleDto) => formatTime(row.updateTime)" prop="updateTime" label="操作时间" width="200" align="center"/>
                 <el-table-column fixed="right" label="操作" align="center" width="120">
                     <template #default="scope">
                         <el-dropdown trigger="click" @command="(command: string) => {handleCommand(command, scope.row)}">
@@ -153,18 +153,14 @@ function handleQueryBtnClick() {
 const selectionIds: number[] = [];
 
 function handleSelect(rows: RoleDto[]) {
+    selectionIds.length = 0;
     if (rows.length === 0) {
-        selectionIds.splice(0);
         btnDeleteDisabledRef.value = true;
         btnCompareAuthorityDisabledRef.value = true;
     } else {
         rows.forEach((row) => selectionIds.push(row.id));
         btnDeleteDisabledRef.value = false;
-        if (selectionIds.length < 2 || selectionIds.length > 4) {
-            btnCompareAuthorityDisabledRef.value = true;
-        } else {
-            btnCompareAuthorityDisabledRef.value = false;
-        }
+        btnCompareAuthorityDisabledRef.value = selectionIds.length < 2 || selectionIds.length > 4;
     }
 }
 

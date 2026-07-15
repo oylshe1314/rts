@@ -1,7 +1,7 @@
 <template>
     <div id="change-password" class="change-password">
         <div class="form">
-            <el-form label-width="100px" ref="formRef" :model="formData" :rules="formRules">
+            <el-form label-width="100px" :model="formData">
                 <el-form-item label="旧密码" prop="oldPassword">
                     <el-input type="password" v-model="formData.oldPassword" maxlength="24" style="width: 240px" show-password/>
                 </el-form-item>
@@ -21,15 +21,13 @@
 
 <script setup lang="ts">
 
-import {reactive, ref} from "vue";
+import {reactive} from "vue";
 import {ElMessage, ElMessageBox} from 'element-plus';
 
 import type {ChangePasswordDto} from '@/api/setting.ts';
 import settingApi from '@/api/setting.ts';
 
 import {closeLoading, openLoading} from "@/util/loading";
-
-const formRef = ref();
 
 interface ChangePasswordExtendedDto extends ChangePasswordDto {
     confirmPassword: string;
@@ -41,61 +39,46 @@ const formData = reactive<ChangePasswordExtendedDto>({
     confirmPassword: '',
 });
 
-const formRules = reactive({
-    oldPassword: [{required: true, trigger: 'blur', message: '请输入旧密码'}],
-    newPassword: [{
-        required: true, trigger: 'blur', validator: (_: any, value: any, callback: any) => {
-            if (value === '') {
-                callback('请输入新密码');
-            } else if (value === formData.oldPassword) {
-                callback('新密码不能与旧密码一致');
-            }
-            callback();
-        }
-    }],
-    confirmPassword: [{
-        required: true, trigger: 'blur', validator: (_: any, value: string, callback: any) => {
-            if (value === '') {
-                callback(new Error('请输入确认密码'));
-            } else if (value !== formData.newPassword) {
-                callback(new Error('两次输入的密码不一致'));
-            }
-            callback();
-        }
-    }],
-})
-
 function handleSubmit() {
-    formRef.value.validate().then((ok: boolean) => {
-        if (ok) {
-            ElMessageBox.confirm('确认修改密码', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'})
-                .then(() => {
-                    const changeDto: ChangePasswordDto = {oldPassword: formData.oldPassword, newPassword: formData.newPassword};
+    if (formData.oldPassword === '') {
+        ElMessage({type: 'error', showClose: true, message: '请输入旧密码'});
+        return;
+    }
+    if (formData.newPassword === '') {
+        ElMessage({type: 'error', showClose: true, message: '请输入新密码'});
+        return;
+    }
+    if (formData.newPassword === formData.oldPassword) {
+        ElMessage({type: 'error', showClose: true, message: '新密码不能与旧密码一致'});
+        return;
+    }
+    if (formData.confirmPassword === '') {
+        ElMessage({type: 'error', showClose: true, message: '请输入确认密码'});
+        return;
+    }
+    if (formData.confirmPassword !== formData.newPassword) {
+        ElMessage({type: 'error', showClose: true, message: '两次输入的密码不一致'});
+        return;
+    }
 
-                    openLoading('#changePassword', '已提交，请稍候...');
-                    settingApi.changePassword(changeDto).then(() => {
-                        ElMessage({type: 'success', showClose: true, message: '修改成功'});
-                        formData.oldPassword = '';
-                        formData.newPassword = '';
-                        formData.confirmPassword = '';
-                    }).catch((e) => {
-                        ElMessage({type: 'error', showClose: true, message: e.message});
-                    }).finally(() => {
-                        closeLoading();
-                    })
-                })
-                .catch(() => {
-                })
-        }
-    }).catch((err: any) => {
-        if (err.oldPassword) {
-            ElMessage({type: 'error', showClose: true, message: err.oldPassword[0].message});
-        } else if (err.newPassword) {
-            ElMessage({type: 'error', showClose: true, message: err.newPassword[0].message});
-        } else if (err.confirmPassword) {
-            ElMessage({type: 'error', showClose: true, message: err.confirmPassword[0].message});
-        }
-    })
+    ElMessageBox.confirm('确认修改密码', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'})
+        .then(() => {
+            const changeDto: ChangePasswordDto = {oldPassword: formData.oldPassword, newPassword: formData.newPassword};
+
+            openLoading('#changePassword', '正在提交，请稍候...');
+            settingApi.changePassword(changeDto).then(() => {
+                ElMessage({type: 'success', showClose: true, message: '修改成功'});
+                formData.oldPassword = '';
+                formData.newPassword = '';
+                formData.confirmPassword = '';
+            }).catch((e) => {
+                ElMessage({type: 'error', showClose: true, message: e.message});
+            }).finally(() => {
+                closeLoading();
+            })
+        })
+        .catch(() => {
+        });
 }
 
 </script>

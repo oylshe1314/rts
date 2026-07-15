@@ -62,7 +62,7 @@
                 <el-table-column label="登录地址" prop="ipAddress" width="160" align="center"/>
                 <el-table-column :formatter="(row: OperationRecordDto) => formatTime(row.operateTime)"
                                  label="操作时间"
-                                 prop="updateTime" width="220"
+                                 prop="updateTime" width="200"
                                  align="center"
                 />
             </el-table>

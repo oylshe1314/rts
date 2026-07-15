@@ -1,7 +1,7 @@
 <template>
     <div id="detail" class="detail">
         <div class="form">
-            <el-form label-width="100px" ref="formRef" :model="formData" :role="formRules">
+            <el-form label-width="100px" :model="formData">
                 <el-form-item label="角色">
                     <el-input v-model="formData.roleName" name="roleName" style="width: 240px" disabled></el-input>
                 </el-form-item>
@@ -9,16 +9,16 @@
                     <el-input v-model="formData.username" name="username" style="width: 240px" disabled></el-input>
                 </el-form-item>
                 <el-form-item label="手机">
-                    <el-input v-model="formData.phone" name="mobile" style="width: 240px" :disabled="editState.phone"></el-input>
+                    <el-input v-model="formData.phone!" name="mobile" style="width: 240px" :disabled="editState.phone"></el-input>
                 </el-form-item>
                 <el-form-item label="邮箱">
-                    <el-input v-model="formData.email" name="email" style="width: 240px" :disabled="editState.email"></el-input>
+                    <el-input v-model="formData.email!" name="email" style="width: 240px" :disabled="editState.email"></el-input>
                 </el-form-item>
                 <el-form-item label="昵称">
-                    <el-input v-model="formData.nickname" name="nickname" style="width: 240px" :disabled="editState.nickname"></el-input>
+                    <el-input v-model="formData.nickname!" name="nickname" style="width: 240px" :disabled="editState.nickname"></el-input>
                 </el-form-item>
                 <el-form-item label="头像">
-                    <avatar-selector v-model="formData.avatar" :disabled="editState.avatar"></avatar-selector>
+                    <avatar-selector v-model="formData.avatar!" :disabled="editState.avatar"></avatar-selector>
                 </el-form-item>
                 <el-form-item>
                     <el-button type="primary" @click="handleEditState" style="width: 80px">{{ editState.btnText }}</el-button>
@@ -31,7 +31,7 @@
 
 <script setup lang="ts">
 
-import {reactive, ref} from "vue";
+import {reactive} from "vue";
 
 import {ElMessage, ElMessageBox} from "element-plus";
 import {closeLoading, openLoading} from "@/util/loading";
@@ -55,8 +55,6 @@ const editState = reactive({
     btnText: '修改',
     showSubmit: false,
 })
-
-const formRef = ref();
 
 interface ChangeDetailsExtendedDto extends ChangeDetailsDto {
     roleName: string;
@@ -89,44 +87,45 @@ function handleEditState() {
     }
 }
 
-const formRules = reactive({
-    nickname: [{required: true, trigger: 'blur', message: '昵称不能为空'}],
-    avatar: [{required: true, trigger: 'blur'}],
-    email: [{required: false, trigger: 'blur'}],
-    mobile: [{required: false, trigger: 'blur'}],
-});
-
 function handleSubmit() {
-    formRef.value.validate().then((ok: boolean) => {
-        if (ok) {
-            ElMessageBox.confirm('确认提交修改', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'})
-                .then(() => {
-                    const changeDto: ChangeDetailsDto = {phone: formData.phone, email: formData.email, nickname: formData.nickname, avatar: formData.avatar};
-
-                    openLoading('#detail', '已提交，请稍候...');
-                    settingApi.changeDetail(changeDto).then(() => {
-
-                        userDetails.phone = formData.phone;
-                        userDetails.email = formData.email;
-                        userDetails.nickname = formData.nickname;
-                        userDetails.avatar = formData.avatar;
-
-                        handleEditState();
-                        ElMessage({type: 'success', showClose: true, message: '修改成功'});
-                    }).catch((e) => {
-                        ElMessage({type: 'error', showClose: true, message: e.message});
-                    }).finally(() => {
-                        closeLoading();
-                    })
-                })
-                .catch(() => {
-                });
+    const changeDto: ChangeDetailsDto = {phone: null, email: null, nickname: null, avatar: null};
+    if (formData.phone != userDetails.phone) {
+        changeDto.phone = formData.phone;
+    }
+    if (formData.email != userDetails.email) {
+        changeDto.email = formData.email;
+    }
+    if (formData.nickname != userDetails.nickname) {
+        if (formData.nickname === '') {
+            ElMessage({type: 'error', showClose: true, message: '昵称不能为空'});
+            return;
         }
-    }).catch((err: any) => {
-        if (err.nickname) {
-            ElMessage({type: 'error', showClose: true, message: err.oldPassword[0].message});
-        }
-    })
+        changeDto.nickname = formData.nickname;
+    }
+    if (formData.avatar != userDetails.avatar) {
+        changeDto.avatar = formData.avatar;
+    }
+
+    ElMessageBox.confirm('确认提交修改', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'})
+        .then(() => {
+            openLoading('#detail', '正在提交，请稍候...');
+            settingApi.changeDetail(changeDto).then(() => {
+
+                userDetails.phone = formData.phone!;
+                userDetails.email = formData.email!;
+                userDetails.nickname = formData.nickname!;
+                userDetails.avatar = formData.avatar!;
+
+                handleEditState();
+                ElMessage({type: 'success', showClose: true, message: '修改成功'});
+            }).catch((e) => {
+                ElMessage({type: 'error', showClose: true, message: e.message});
+            }).finally(() => {
+                closeLoading();
+            })
+        })
+        .catch(() => {
+        });
 }
 
 </script>

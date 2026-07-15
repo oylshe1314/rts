@@ -20,14 +20,14 @@ public class Menu extends StateEntity {
     private Integer type;
 
     /**
-     * 菜单名称
-     */
-    private String icon;
-
-    /**
      * 菜单图标
      */
     private String name;
+
+    /**
+     * 菜单名称
+     */
+    private String icon;
 
     /**
      * 路径

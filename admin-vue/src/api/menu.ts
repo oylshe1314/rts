@@ -19,8 +19,8 @@ export interface MenuDto {
     type: number;
     typeName: string;
     parentName: string;
-    icon: string;
     name: string;
+    icon: string;
     path: string;
     sortBy: number;
     state: number;
@@ -32,8 +32,8 @@ export interface MenuDto {
 export interface MenuAddDto {
     parentId: number;
     type: number;
-    icon: string;
     name: string;
+    icon: string;
     path: string;
     sortBy: number;
     remark: string;
@@ -43,8 +43,8 @@ export interface MenuUpdateDto {
     id: number;
     parentId: number | null;
     type: number | null;
-    icon: string | null;
     name: string | null;
+    icon: string | null;
     path: string | null;
     sortBy: number | null;
     remark: string | null;
@@ -67,13 +67,12 @@ export default {
     },
     update: (data: MenuUpdateDto): Promise<MenuDto> => {
         return service({
-            url: '/menu/add',
+            url: '/menu/update',
             method: 'post',
             data: data
         })
     },
     stateChange: (ids: number[], state: number): Promise<void> => {
-        console.log(ids, state)
         return service({
             url: '/menu/state/change',
             method: 'post',

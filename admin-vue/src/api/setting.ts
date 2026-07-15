@@ -7,10 +7,10 @@
 import service from "@/api/request.ts";
 
 export interface ChangeDetailsDto {
-    phone: string;
-    email: string;
-    nickname: string;
-    avatar: string;
+    phone: string | null;
+    email: string | null;
+    nickname: string | null;
+    avatar: string | null;
 }
 
 export interface ChangePasswordDto {

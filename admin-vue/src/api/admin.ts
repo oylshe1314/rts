@@ -130,7 +130,6 @@ export default {
         })
     },
     roleStateChange: (ids: number[], state: number): Promise<void> => {
-        console.log(ids, state)
         return service({
             url: '/admin/role/state/change',
             method: 'post',

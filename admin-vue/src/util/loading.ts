@@ -12,7 +12,7 @@ const loading = ref();
 export function openLoading(target: string, text: string) {
     loading.value = ElLoading.service({
         target: target,
-        text: (!text || text === '') ? '处理中，请稍候' : text,
+        text: (!text || text === '') ? '正在处理，请稍候...' : text,
     });
 }
 

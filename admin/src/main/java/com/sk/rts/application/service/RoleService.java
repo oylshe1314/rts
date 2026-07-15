@@ -33,6 +33,7 @@ import reactor.core.publisher.Mono;
 import java.sql.SQLException;
 import java.time.OffsetDateTime;
 import java.util.*;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 /**
@@ -74,7 +75,7 @@ public class RoleService {
     }
 
     /**
-     * 角色分页查询, ID升序
+     * 角色分页查询
      *
      * @param pageRequestDtoMono 分页查询参数
      * @return 分页查询结果
@@ -405,8 +406,10 @@ public class RoleService {
      */
     public Mono<RoleAuthorityComparisonListDto> compareAuthorities(Mono<MultipleIdDto> idsDtoMono) {
         return idsDtoMono.flatMap(idsDto -> Mono.create(sink -> {
-            Select<?> roleQuery = dslContext.select(Tables.ROLE.ID, Tables.ROLE.NAME).from(Tables.ROLE).where(Tables.ROLE.ID.in(idsDto.getIds()));
-            Select<?> authorityQuery = dslContext.select(Tables.ROLE_AUTHORITY.ID, Tables.ROLE_AUTHORITY.ROLE_ID, Tables.ROLE_AUTHORITY.MENU_ID).from(Tables.ROLE_AUTHORITY).where(Tables.ROLE_AUTHORITY.ROLE_ID.in(idsDto.getIds()));
+            Set<Long> roleIds = new HashSet<>(idsDto.getIds());
+
+            Select<?> roleQuery = dslContext.select(Tables.ROLE.ID, Tables.ROLE.NAME).from(Tables.ROLE).where(Tables.ROLE.ID.in(roleIds));
+            Select<?> authorityQuery = dslContext.select(Tables.ROLE_AUTHORITY.ID, Tables.ROLE_AUTHORITY.ROLE_ID, Tables.ROLE_AUTHORITY.MENU_ID).from(Tables.ROLE_AUTHORITY).where(Tables.ROLE_AUTHORITY.ROLE_ID.in(roleIds));
             Select<?> menuQuery = dslContext.select(Tables.MENU.ID, Tables.MENU.PARENT_ID, Tables.MENU.TYPE, Tables.MENU.NAME, Tables.MENU.ICON, Tables.MENU.SORT_BY).from(Tables.MENU).where(Tables.MENU.STATE.eq(State.enable.value())).orderBy(Tables.MENU.ID.asc());
 
             Future<RowSet<Row>> roleQueryFuture = pool.preparedQuery(roleQuery.getSQL()).execute(Tuple.tuple(roleQuery.getBindValues()));
@@ -446,9 +449,9 @@ public class RoleService {
                     menu.setIcon(row.getString(4));
                     menu.setSortBy(row.getInteger(5));
 
-                    Set<Long> roleIds = menuRolesMap.get(menu.getId());
+                    Set<Long> menuRoles = menuRolesMap.get(menu.getId());
 
-                    comparisonMap.put(menu.getId(), new RoleAuthorityComparisonDto(menu, roleIds != null && roleIds.size() != idsDto.getIds().size(), roleIds));
+                    comparisonMap.put(menu.getId(), new RoleAuthorityComparisonDto(menu, menuRoles != null && menuRoles.size() != roleIds.size(), menuRoles));
                 }
 
                 List<RoleAuthorityComparisonDto> comparisonList = new ArrayList<>();
@@ -463,6 +466,7 @@ public class RoleService {
                     }
                 });
 
+                roleList.sort(Comparator.comparingLong(RoleOptionDto::getId).reversed());
                 MenuSortableDto.sort(comparisonList);
 
                 sink.success(new RoleAuthorityComparisonListDto(roleList, comparisonList));

@@ -35,7 +35,7 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
             UserAuthDetails authDetails = (UserAuthDetails) authToken.getPrincipal();
             UserAccessToken accessToken = (UserAccessToken) authToken.getCredentials();
 
-            return cacheService.saveUserAuthDetails(authDetails, accessToken, tokenProperties.getAccessToken().getExpiration());
+            return Mono.create(sink -> cacheService.saveUserAuthDetails(authDetails, accessToken).onSuccess(sink::success).onFailure(sink::error));
         } else {
             return Mono.empty();
         }
@@ -57,12 +57,16 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
         }
 
         UserAuthDetails authDetails = new UserAuthDetails();
+        UserAuthUtil.parseSubject(subject, authDetails);
+
         UserAccessToken accessToken = new UserAccessToken();
         accessToken.setToken(subject);
         accessToken.setToken(token);
 
-        UserRemoteDetails remoteDetails = new UserRemoteDetails(request);
-
-        return cacheService.queryUserAuthDetails(authDetails, accessToken).doOnSuccess(_ -> authDetails.setIpAddress(remoteDetails.getIpAddress())).thenReturn(new SecurityContextImpl(new UserAuthToken(authDetails, accessToken)));
+        return Mono.create(sink -> cacheService.queryUserAuthDetails(authDetails, accessToken).onFailure(sink::error).onSuccess(_ -> {
+            UserRemoteDetails remoteDetails = new UserRemoteDetails(request);
+            authDetails.setIpAddress(remoteDetails.getIpAddress());
+            sink.success(new SecurityContextImpl(new UserAuthToken(authDetails, accessToken)));
+        }));
     }
 }

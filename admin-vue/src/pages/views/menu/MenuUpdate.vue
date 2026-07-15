@@ -14,11 +14,11 @@
                     <el-option v-for="roleOption in parentSelectOptionsRef" :key="roleOption.id" :value='roleOption.id' :label="roleOption.name"/>
                 </el-select>
             </el-form-item>
-            <el-form-item label="图标">
-                <icon-selector v-model="formData.icon!" :disabled="iconSelectorDisabledRef" style="width: 240px"/>
-            </el-form-item>
             <el-form-item label="名称" required>
                 <el-input v-model="formData.name" type="text" style="width: 240px"/>
+            </el-form-item>
+            <el-form-item label="图标">
+                <icon-selector v-model="formData.icon!" :disabled="iconSelectorDisabledRef" style="width: 240px"/>
             </el-form-item>
             <el-form-item label="路径">
                 <el-input v-model="formData.path" type="text" :disabled="pathDisabledRef" style="width: 100%"/>
@@ -61,7 +61,7 @@ const props = withDefaults(
     defineProps<Props>(),
     {
         modelValue: false,
-        editData: {id: 0, parentId: 0, type: 0, icon: '', name: '', path: '', sortBy: 0, remark: ''},
+        editData: () => ({id: 0, parentId: 0, type: 0, name: '', icon: '', path: '', sortBy: 0, remark: ''}),
     }
 );
 
@@ -90,8 +90,8 @@ const formData = reactive<MenuUpdateDto>({
     id: 0,
     type: 1,
     parentId: 0,
-    icon: '',
     name: '',
+    icon: '',
     path: '',
     sortBy: 0,
     remark: '',
@@ -101,6 +101,7 @@ const parentSelectorDisableRef = ref<boolean>(true);
 const parentSelectOptionsRef = ref<MenuOptionDto[]>([]);
 
 const iconSelectorDisabledRef = ref<boolean>(false);
+const componentDisabledRef = ref<boolean>(false);
 const pathDisabledRef = ref<boolean>(true);
 
 const parentsMap = new Map<number, MenuOptionDto[]>();
@@ -109,8 +110,8 @@ watch(() => props.editData, (editData: MenuUpdateDto) => {
     formData.id = editData.id;
     formData.type = editData.type;
     formData.parentId = editData.parentId;
-    formData.icon = editData.icon;
     formData.name = editData.name;
+    formData.icon = editData.icon;
     formData.path = editData.path;
     formData.sortBy = editData.sortBy;
     formData.remark = editData.remark;
@@ -160,6 +161,7 @@ function handleTypeChange(type: number) {
             parentSelectorDisableRef.value = true;
             parentSelectOptionsRef.value = [];
             iconSelectorDisabledRef.value = false;
+            componentDisabledRef.value = false;
             pathDisabledRef.value = true;
 
             formData.parentId = 0;
@@ -170,8 +172,9 @@ function handleTypeChange(type: number) {
         case 2:
             queryParents(1);
             iconSelectorDisabledRef.value = false;
+            componentDisabledRef.value = false;
             pathDisabledRef.value = false;
-            if (props.editData && type === props.editData.type) {
+            if (type === props.editData.type) {
                 formData.parentId = props.editData.parentId;
                 formData.icon = props.editData.icon;
             } else {
@@ -181,6 +184,7 @@ function handleTypeChange(type: number) {
         case 3:
             queryParents(2);
             iconSelectorDisabledRef.value = true;
+            componentDisabledRef.value = true;
             pathDisabledRef.value = false;
             if (props.editData && type === props.editData.type) {
                 formData.parentId = props.editData.parentId;
@@ -193,7 +197,7 @@ function handleTypeChange(type: number) {
 }
 
 function handleSubmit() {
-    const updateDto: MenuUpdateDto = {id: formData.id, parentId: null, type: null, icon: null, name: null, path: null, sortBy: null, remark: null};
+    const updateDto: MenuUpdateDto = {id: formData.id, parentId: null, type: null, name: null, icon: null, path: null, sortBy: null, remark: null};
     if (formData.parentId !== props.editData.parentId) {
         if (formData.parentId === 0) {
             if (formData.type !== 1) {
@@ -210,19 +214,19 @@ function handleSubmit() {
         }
         updateDto.type = formData.type;
     }
-    if (formData.type !== 3) {
-        if (formData.icon !== props.editData.icon) {
-            updateDto.icon = formData.icon;
-        }
-    } else {
-        updateDto.icon = '';
-    }
     if (formData.name !== props.editData.name) {
         if (formData.name === '') {
             ElMessage({type: 'error', showClose: true, message: '请输入菜单名称'});
             return;
         }
         updateDto.name = formData.name;
+    }
+    if (formData.type !== 3) {
+        if (formData.icon !== props.editData.icon) {
+            updateDto.icon = formData.icon;
+        }
+    } else {
+        updateDto.icon = '';
     }
     if (formData.path !== props.editData.path) {
         if (formData.path === '' && formData.type !== 1) {

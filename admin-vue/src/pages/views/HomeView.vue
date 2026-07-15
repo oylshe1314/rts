@@ -14,7 +14,7 @@
 
 .home {
     width: 100%;
-    height: 642px;
+    height: 722px;
     /*padding: 40px 40px 40px 40px;*/
 }
 

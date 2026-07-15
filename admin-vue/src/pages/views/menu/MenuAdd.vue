@@ -14,11 +14,11 @@
                     <el-option v-for="parentOption in parentSelectOptionsRef" :key="parentOption.id" :value='parentOption.id' :label="parentOption.name"/>
                 </el-select>
             </el-form-item>
-            <el-form-item label="图标">
-                <icon-selector v-model="formData.icon" :disabled="iconSelectorDisabledRef" style="width: 240px"/>
-            </el-form-item>
             <el-form-item label="名称" required>
                 <el-input v-model="formData.name" type="text" style="width: 240px"/>
+            </el-form-item>
+            <el-form-item label="图标">
+                <icon-selector v-model="formData.icon" :disabled="iconSelectorDisabledRef" style="width: 240px"/>
             </el-form-item>
             <el-form-item label="路径">
                 <el-input v-model="formData.path" type="text" :disabled="pathDisabledRef" style="width: 100%"/>
@@ -122,17 +122,25 @@ watch(() => props.parentData, (parentData: MenuDto | null) => {
         init();
     } else {
         typeSelectorDisableRef.value = true;
+
+        parentSelectorDisableRef.value = true;
+        parentSelectOptionsRef.value = [{id: parentData.id, name: parentData.name}];
+        formData.parentId = parentData.id;
+
         switch (parentData.type) {
             case 1:
                 formData.type = 2;
+
+                iconSelectorDisabledRef.value = false;
+                pathDisabledRef.value = false;
                 break;
             default:
                 formData.type = 3;
+
+                iconSelectorDisabledRef.value = true;
+                pathDisabledRef.value = false;
+                break;
         }
-        formData.parentId = parentData.id;
-        parentSelectorDisableRef.value = true;
-        parentSelectOptionsRef.value = [{id: parentData.id, name: parentData.name}];
-        pathDisabledRef.value = false;
     }
 });
 
@@ -143,29 +151,34 @@ function handleEditClose() {
     emits('update:modelValue', false);
 }
 
-function queryParents(type: number) {
-    const parents = parentsMap.get(type);
-    if (!parents) {
-        commonApi.menuOptions(type)
-            .then((parents) => {
-                parentsMap.set(type, parents);
-                parentSelectorDisableRef.value = false;
-                parentSelectOptionsRef.value = parents;
-            })
-            .catch((e) => {
-                ElMessage({type: 'error', showClose: true, message: '查询上级菜单列表失败: ' + e.message});
-            })
+function queryParents(parentType: number) {
+    if (parentType === 0) {
+        parentSelectorDisableRef.value = true;
+        parentSelectOptionsRef.value = [];
+        return;
     } else {
-        parentSelectorDisableRef.value = false;
-        parentSelectOptionsRef.value = parents;
+        const parents = parentsMap.get(parentType);
+        if (!parents) {
+            commonApi.menuOptions(parentType)
+                .then((parents) => {
+                    parentsMap.set(parentType, parents);
+                    parentSelectorDisableRef.value = false;
+                    parentSelectOptionsRef.value = parents;
+                })
+                .catch((e) => {
+                    ElMessage({type: 'error', showClose: true, message: '查询上级菜单列表失败: ' + e.message});
+                })
+        } else {
+            parentSelectorDisableRef.value = false;
+            parentSelectOptionsRef.value = parents;
+        }
     }
 }
 
 function handleTypeChange(type: number) {
     switch (type) {
         case 1:
-            parentSelectorDisableRef.value = true;
-            parentSelectOptionsRef.value = [];
+            queryParents(0);
             iconSelectorDisabledRef.value = false;
             pathDisabledRef.value = true;
 
@@ -177,9 +190,9 @@ function handleTypeChange(type: number) {
             pathDisabledRef.value = false;
             break
         case 3:
-            queryParents(2)
-            iconSelectorDisabledRef.value = true
-            pathDisabledRef.value = false
+            queryParents(2);
+            iconSelectorDisabledRef.value = true;
+            pathDisabledRef.value = false;
 
             formData.icon = '';
             break
@@ -212,8 +225,8 @@ function handleSubmit() {
     const addDto: MenuAddDto = {
         parentId: formData.parentId,
         type: formData.type,
-        icon: formData.icon,
         name: formData.name,
+        icon: formData.icon,
         path: formData.path,
         sortBy: formData.sortBy,
         remark: formData.remark
