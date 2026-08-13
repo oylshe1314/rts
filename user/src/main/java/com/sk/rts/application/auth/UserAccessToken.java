@@ -30,6 +30,6 @@ public class UserAccessToken {
         this.deviceId = token.getDeviceId();
         this.token = token.getToken();
         this.issueTime = token.getIssueTime();
-        this.expireTime = token.getExpiration();
+        this.expireTime = token.getExpireTime();
     }
 }

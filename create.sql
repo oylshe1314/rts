@@ -68,7 +68,7 @@ values (1, 0, 1, '菜单管理', 'Menu', '', '', 1, 1, '菜单管理目录', 'ad
        (14, 9, 3, '角色状态修改', '', '', '/admin/role/state/change', 0, 1, '角色状态修改接口', 'admin', 'admin'),
        (15, 9, 3, '角色权限查询', '', '', '/admin/role/authority/get', 0, 1, '角色权限查询接口', 'admin', 'admin'),
        (16, 9, 3, '角色权限修改', '', '', '/admin/role/authority/set', 0, 1, '角色权限修改接口', 'admin', 'admin'),
-       (17, 9, 3, '角色权限对比', '', '', '/admin/role/authority/compare', 0, 1, '角色权限修改接口', 'admin', 'admin'),
+       (17, 9, 3, '角色权限对比', '', '', '/admin/role/authority/comparison', 0, 1, '角色权限修改接口', 'admin', 'admin'),
        (18, 8, 2, '管理员', 'List', '', '/admin/index', 3, 1, '管理员列表菜单', 'admin', 'admin'),
        (19, 18, 3, '管理员查询', '', '', '/admin/query', 0, 1, '管理员查询接口', 'admin', 'admin'),
        (20, 18, 3, '管理员添加', '', '', '/admin/add', 0, 1, '管理员添加接口', 'admin', 'admin'),
