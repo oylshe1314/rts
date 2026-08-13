@@ -135,6 +135,7 @@ public class AuthService {
                     }
                 })
                 .map(details -> new UserAuthDetails(details, remoteDetails))
+                .onComplete(_ -> connection.close())
                 .onSuccess(sink::success)
                 .onFailure(sink::error)
         ));

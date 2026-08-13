@@ -27,5 +27,4 @@ public class VertxProperties {
      * Vertx成员端口，如果设置成员列表，测必须设置成员端口
      */
     private Integer memberPort;
-
 }
