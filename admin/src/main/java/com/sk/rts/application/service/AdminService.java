@@ -209,7 +209,7 @@ public class AdminService {
 
     private <T> Future<T> recoverUniqueIndexException(Throwable throwable) {
         SQLException sqlException = ExceptionUtil.extractException(throwable, SQLException.class);
-        if (sqlException != null && "23505" .equals(sqlException.getSQLState())) {
+        if (sqlException != null && "23505".equals(sqlException.getSQLState())) {
             if (sqlException.getMessage().contains("idx_unique_admin_username")) {
                 return Future.failedFuture(new StandardStatusException("user.username.exists", "用户名已存在"));
             }
