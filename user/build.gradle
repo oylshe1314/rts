@@ -157,11 +157,11 @@ protobuf {
     }
 }
 
-final String activeProfile = project.hasProperty('profile') ? project.property("profile") : null
+final String active = project.hasProperty('active') ? project.property("active") : null
 
 processResources {
     exclude {
-        if (activeProfile == null) {
+        if (active == null) {
             return false
         }
 
@@ -180,7 +180,7 @@ processResources {
             endIndex = filename.length()
         }
         final String fileActive = filename.substring(filePrefix.length(), endIndex)
-        return fileActive != activeProfile
+        return fileActive != active
     }
 }
 
@@ -196,8 +196,8 @@ docker {
     springBootApplication {
         baseImage = "openjdk:27-ea-jdk"
         ports = [8080]
-        images = ["rts-user-server:${project.version}", "wds-rts-server:latest"]
-        jvmArgs = ["-Dspring.profiles.active=test", "-Xmx2048m"]
+        images = ["wds-user-server:${active}.${project.version}"]
+        jvmArgs = ["-Dspring.profiles.active=${active}", "-Xmx2048m"]
     }
 }
 
