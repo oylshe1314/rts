@@ -176,13 +176,12 @@ function queryParents(parentType: number) {
 }
 
 function handleTypeChange(type: number) {
+    formData.parentId = 0;
     switch (type) {
         case 1:
             queryParents(0);
             iconSelectorDisabledRef.value = false;
             pathDisabledRef.value = true;
-
-            formData.parentId = 0;
             break
         case 2:
             queryParents(1);
