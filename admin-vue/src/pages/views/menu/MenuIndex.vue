@@ -198,9 +198,7 @@ function changeState(row: MenuDto, state: number) {
 function handleCommand(command: string, row: MenuDto | null) {
     switch (command) {
         case 'add':
-            if (row !== null) {
-                parentDataRef.value = row;
-            }
+            parentDataRef.value = row;
             showAddRef.value = true;
             break;
         case 'detail':
