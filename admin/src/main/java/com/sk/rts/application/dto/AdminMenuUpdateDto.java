@@ -11,7 +11,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "菜单修改")
-public class MenuUpdateDto {
+public class AdminMenuUpdateDto {
 
     @NotNull
     @Schema(description = "ID")
@@ -42,14 +42,14 @@ public class MenuUpdateDto {
     @Schema(description = "备注")
     private final String remark;
 
-    public MenuUpdateDto(@JsonProperty("id") Long id,
-                         @JsonProperty("parentId") Long parentId,
-                         @JsonProperty("type") Integer type,
-                         @JsonProperty("icon") String icon,
-                         @JsonProperty("name") String name,
-                         @JsonProperty("path") String path,
-                         @JsonProperty("sortBy") Integer sort,
-                         @JsonProperty("remark") String remark) {
+    public AdminMenuUpdateDto(@JsonProperty("id") Long id,
+                              @JsonProperty("parentId") Long parentId,
+                              @JsonProperty("type") Integer type,
+                              @JsonProperty("icon") String icon,
+                              @JsonProperty("name") String name,
+                              @JsonProperty("path") String path,
+                              @JsonProperty("sortBy") Integer sort,
+                              @JsonProperty("remark") String remark) {
         this.id = id;
         this.parentId = parentId;
         this.type = type;

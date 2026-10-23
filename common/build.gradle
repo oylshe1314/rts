@@ -17,7 +17,9 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-actuator-autoconfigure"
     implementation "org.springframework.boot:spring-boot-data-commons"
 
-    implementation "org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.3"
+    implementation "org.springdoc:springdoc-openapi-starter-webflux-ui:${springDocVersion}"
+
+    implementation "io.vertx:vertx-core:${vertxVersion}"
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"

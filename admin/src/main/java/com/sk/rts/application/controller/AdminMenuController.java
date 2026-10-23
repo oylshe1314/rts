@@ -3,7 +3,7 @@ package com.sk.rts.application.controller;
 import com.sk.rts.application.auth.AdminAuthToken;
 import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.dto.*;
-import com.sk.rts.application.service.MenuService;
+import com.sk.rts.application.service.AdminMenuService;
 import com.sk.rts.application.validation.NullOrNotBlank;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,9 +31,9 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 @RequestMapping("/menu")
 @Tag(name = "menu", description = "菜单相关接口")
-public class MenuController {
+public class AdminMenuController {
 
-    private final MenuService menuService;
+    private final AdminMenuService menuService;
 
     @Operation(summary = "菜单查询", parameters = {
             @Parameter(name = "pageNo", required = true, description = "页码(从1开始)"),
@@ -46,41 +46,41 @@ public class MenuController {
             @Parameter(name = "path", description = "查询参数 - 路径", schema = @Schema(implementation = String.class)),
     })
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public Mono<ResponseDto<PageResultDto<MenuDto>>> query(@NotNull @Positive Integer pageNo,
-                                                           @NotNull @Range(min = 1, max = 100) Integer pageSize,
-                                                           @Nullable @NullOrNotBlank String sort,
-                                                           @Nullable Boolean desc,
-                                                           @Parameter(hidden = true) @Nullable @Valid MenuQueryDto queryDto) {
-        return query(Mono.just(new PageQueryDto<>(pageNo, pageSize, sort, desc, queryDto)));
+    public Mono<ResponseDto<PageResultDto<AdminMenuDto>>> query(@NotNull @Positive Integer pageNo,
+                                                                @NotNull @Range(min = 1, max = 100) Integer pageSize,
+                                                                @Nullable @NullOrNotBlank String sort,
+                                                                @Nullable Boolean desc,
+                                                                @Parameter(hidden = true) @Nullable @Valid MenuQueryDto queryDto) {
+        return query(new PageQueryDto<>(pageNo, pageSize, sort, desc, queryDto));
     }
 
     @Operation(summary = "菜单查询")
     @RequestMapping(value = "/query", method = RequestMethod.POST)
-    public Mono<ResponseDto<PageResultDto<MenuDto>>> query(@RequestBody @Valid Mono<PageQueryDto<MenuQueryDto>> requestDtoMono) {
-        return menuService.query(requestDtoMono).map(ResponseDto::success);
+    public Mono<ResponseDto<PageResultDto<AdminMenuDto>>> query(@RequestBody @Valid PageQueryDto<MenuQueryDto> pageQueryDto) {
+        return menuService.query(pageQueryDto).map(ResponseDto::success);
     }
 
     @Operation(summary = "菜单添加")
     @RequestMapping(value = "/add", method = RequestMethod.POST)
-    public Mono<ResponseDto<MenuDto>> add(@RequestBody @Valid Mono<MenuAddDto> addDtoMono, AdminAuthToken authToken) {
-        return menuService.add(addDtoMono, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
+    public Mono<ResponseDto<AdminMenuDto>> add(@RequestBody @Valid AdminMenuAddDto addDto, AdminAuthToken authToken) {
+        return menuService.add(addDto, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
     }
 
     @Operation(summary = "菜单修改")
     @RequestMapping(value = "/update", method = RequestMethod.POST)
-    public Mono<ResponseDto<MenuDto>> update(@RequestBody @Valid Mono<MenuUpdateDto> updateDtoMono, AdminAuthToken authToken) {
-        return menuService.update(updateDtoMono, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
+    public Mono<ResponseDto<AdminMenuDto>> update(@RequestBody @Valid AdminMenuUpdateDto updateDto, AdminAuthToken authToken) {
+        return menuService.update(updateDto, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
     }
 
     @Operation(summary = "菜单删除")
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> delete(@RequestBody @Valid Mono<MultipleIdDto> deleteDtoMono, AdminAuthToken authToken) {
-        return menuService.delete(deleteDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    public Mono<ResponseDto<?>> delete(@RequestBody @Valid MultipleIdDto deleteDto, AdminAuthToken authToken) {
+        return menuService.delete(deleteDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 
     @Operation(summary = "菜单状态修改")
     @RequestMapping(value = "/state/change", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> stateChange(@RequestBody @Valid Mono<ChangeStateDto> changeDtoMono, AdminAuthToken authToken) {
-        return menuService.changeState(changeDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    public Mono<ResponseDto<?>> stateChange(@RequestBody @Valid StateChangeDto changeDto, AdminAuthToken authToken) {
+        return menuService.changeState(changeDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 }

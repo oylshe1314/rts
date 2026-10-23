@@ -62,7 +62,6 @@ public class TokenUtil {
         String token = Jwts.builder()
                 .issuer("rts")
                 .subject(subject)
-                .issuedAt(TimeUtil.toDate(issueTime))
                 .expiration(TimeUtil.toDate(expireTime))
                 .signWith(tokenProperties.getSecretKey())
                 .compact();

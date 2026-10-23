@@ -29,7 +29,6 @@ dependencies {
     implementation "io.vertx:vertx-redis-client:${vertxVersion}"
 
     implementation "org.postgresql:postgresql:${postgresqlVersion}"
-    implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
 
     compileOnly "org.jooq:jooq-codegen:${jooqVersion}"
     jooqCodegen "org.postgresql:postgresql:${postgresqlVersion}"
@@ -128,34 +127,6 @@ jooq {
 }
 
 compileJava.dependsOn 'jooqCodegen'
-
-sourceSets {
-    main {
-        proto {
-            srcDirs += 'proto'
-        }
-    }
-}
-
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:${protobufVersion}"
-    }
-    plugins {
-        grpc {
-            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
-        }
-    }
-
-    generateProtoTasks {
-        all().configureEach { task ->
-            task.builtins {
-                java {
-                }
-            }
-        }
-    }
-}
 
 final String active = project.hasProperty('active') ? project.property("active") : null
 

@@ -3,18 +3,18 @@ package com.sk.rts.application.service;
 import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.auth.AdminAuthUtil;
 import com.sk.rts.application.dto.*;
-import com.sk.rts.application.entity.Admin;
-import com.sk.rts.application.entity.Role;
+import com.sk.rts.application.entity.AdminUser;
+import com.sk.rts.application.entity.AdminRole;
 import com.sk.rts.application.entity.enums.Operation;
 import com.sk.rts.application.entity.enums.State;
 import com.sk.rts.application.exception.ExceptionUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
-import com.sk.rts.application.jooq.tables.TableAdmin;
-import com.sk.rts.application.jooq.tables.TableRole;
-import com.sk.rts.application.repository.AdminRepository;
-import com.sk.rts.application.repository.OperationRecordRepository;
+import com.sk.rts.application.jooq.tables.TableAdminRole;
+import com.sk.rts.application.jooq.tables.TableAdminUser;
+import com.sk.rts.application.repository.AdminUserRepository;
+import com.sk.rts.application.repository.AdminOperationRecordRepository;
 import com.sk.rts.application.repository.RoleRepository;
 import io.vertx.core.Future;
 import io.vertx.redis.client.Command;
@@ -54,9 +54,9 @@ public class AdminService {
 
     private final Redis redis;
 
-    private final AdminRepository adminRepository;
+    private final AdminUserRepository adminRepository;
     private final RoleRepository roleRepository;
-    private final OperationRecordRepository operationRecordRepository;
+    private final AdminOperationRecordRepository operationRecordRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -68,17 +68,17 @@ public class AdminService {
      */
     public Mono<List<AdminOptionDto>> adminSelectList(@Nullable String username) {
         Select<?> query = dslContext.select(
-                        Tables.ADMIN.ID,
-                        Tables.ADMIN.ROLE_ID,
-                        Tables.ADMIN.USERNAME,
-                        Tables.ADMIN.NICKNAME,
-                        Tables.ADMIN.AVATAR,
-                        Tables.ROLE.ID,
-                        Tables.ROLE.NAME)
-                .from(Tables.ADMIN)
-                .innerJoin(Tables.ROLE).on(Tables.ROLE.ID.eq(Tables.ADMIN.ROLE_ID));
+                        Tables.ADMIN_USER.ID,
+                        Tables.ADMIN_USER.ROLE_ID,
+                        Tables.ADMIN_USER.USERNAME,
+                        Tables.ADMIN_USER.NICKNAME,
+                        Tables.ADMIN_USER.AVATAR,
+                        Tables.ADMIN_ROLE.ID,
+                        Tables.ADMIN_ROLE.NAME)
+                .from(Tables.ADMIN_USER)
+                .innerJoin(Tables.ADMIN_ROLE).on(Tables.ADMIN_ROLE.ID.eq(Tables.ADMIN_USER.ROLE_ID));
         if (StringUtils.hasText(username)) {
-            query = ((SelectWhereStep<?>) query).where(Tables.ADMIN.USERNAME.like("%" + username + "%"));
+            query = ((SelectWhereStep<?>) query).where(Tables.ADMIN_USER.USERNAME.like("%" + username + "%"));
         }
 
         query = ((SelectLimitStep<?>) query).limit(20);
@@ -89,14 +89,14 @@ public class AdminService {
                 .onFailure(sink::error)
                 .onSuccess(rows -> {
                     for (Row row : rows) {
-                        Admin admin = new Admin();
+                        AdminUser admin = new AdminUser();
                         admin.setId(row.getLong(0));
                         admin.setRoleId(row.getLong(1));
                         admin.setUsername(row.getString(2));
                         admin.setNickname(row.getString(3));
                         admin.setAvatar(row.getString(4));
 
-                        admin.setRole(new Role());
+                        admin.setRole(new AdminRole());
                         ;
                         admin.getRole().setId(row.getLong(5));
                         admin.getRole().setName(row.getString(6));
@@ -118,43 +118,43 @@ public class AdminService {
         return pageRequestDtoMono.flatMap(pageRequestDto -> {
             AdminQueryDto queryDto = pageRequestDto.getQuery();
 
-            TableAdmin a = Tables.ADMIN.as("a");
-            TableRole r = Tables.ROLE.as("r");
+            TableAdminUser u = Tables.ADMIN_USER.as("u");
+            TableAdminRole r = Tables.ADMIN_ROLE.as("r");
 
             Select<?> pageQuery = dslContext.select(
-                            a.ID,
-                            a.ROLE_ID,
-                            a.USERNAME,
-                            a.PASSWORD,
-                            a.PHONE,
-                            a.EMAIL,
-                            a.NICKNAME,
-                            a.AVATAR,
-                            a.STATE,
-                            a.REMARK,
-                            a.CREATE_BY,
-                            a.CREATE_TIME,
-                            a.UPDATE_BY,
-                            a.UPDATE_TIME,
+                            u.ID,
+                            u.ROLE_ID,
+                            u.USERNAME,
+                            u.PASSWORD,
+                            u.PHONE,
+                            u.EMAIL,
+                            u.NICKNAME,
+                            u.AVATAR,
+                            u.STATE,
+                            u.REMARK,
+                            u.CREATE_BY,
+                            u.CREATE_TIME,
+                            u.UPDATE_BY,
+                            u.UPDATE_TIME,
                             r.ID,
                             r.NAME)
-                    .from(a).
-                    innerJoin(r).on(r.ID.eq(a.ROLE_ID));
-            Select<?> countQuery = dslContext.selectCount().from(a).innerJoin(r).on(r.ID.eq(a.ROLE_ID));
+                    .from(u).
+                    innerJoin(r).on(r.ID.eq(u.ROLE_ID));
+            Select<?> countQuery = dslContext.selectCount().from(u).innerJoin(r).on(r.ID.eq(u.ROLE_ID));
 
             List<Condition> conditions = new ArrayList<>();
             if (queryDto != null) {
                 if (queryDto.getRoleId() != null) {
-                    conditions.add(a.ROLE_ID.eq(queryDto.getRoleId()));
+                    conditions.add(u.ROLE_ID.eq(queryDto.getRoleId()));
                 }
                 if (queryDto.getUsername() != null) {
-                    conditions.add(a.USERNAME.like("%" + queryDto.getUsername() + "%"));
+                    conditions.add(u.USERNAME.like("%" + queryDto.getUsername() + "%"));
                 }
                 if (queryDto.getPhone() != null) {
-                    conditions.add(a.PHONE.like("%" + queryDto.getPhone() + "%"));
+                    conditions.add(u.PHONE.like("%" + queryDto.getPhone() + "%"));
                 }
                 if (queryDto.getEmail() != null) {
-                    conditions.add(a.EMAIL.like("%" + queryDto.getEmail() + "%"));
+                    conditions.add(u.EMAIL.like("%" + queryDto.getEmail() + "%"));
                 }
             }
 
@@ -164,9 +164,9 @@ public class AdminService {
             }
 
             if (pageRequestDto.getSort() == null) {
-                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(a.ID.desc());
+                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(u.ID.desc());
             } else {
-                OrderField<?> sortField = a.field(pageRequestDto.getSort());
+                OrderField<?> sortField = u.field(pageRequestDto.getSort());
                 if (sortField == null) {
                     return Mono.error(new StandardStatusException(ResponseStatus.parameter_error));
                 }
@@ -186,8 +186,8 @@ public class AdminService {
             List<Object> countArgs = countQuery.getBindValues();
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(pageSql).execute(Tuple.tuple(pageArgs))
                     .map(rows -> rows.stream().map(row -> {
-                                Admin admin = Admin.fromRow(row);
-                                admin.setRole(new Role());
+                                AdminUser admin = AdminUser.fromRow(row);
+                                admin.setRole(new AdminRole());
                                 admin.getRole().setId(row.getLong(14));
                                 admin.getRole().setName(row.getString(15));
                                 return new AdminDto(admin);
@@ -235,7 +235,7 @@ public class AdminService {
         return addDtoMono.flatMap(addDto -> Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                 .compose(_ -> roleRepository.getForUpdate(connection, addDto.getRoleId()).flatMap(role -> role == null ? Future.failedFuture(new StandardStatusException("角色不存在")) : Future.succeededFuture(role)))
                 .compose(role -> {
-                    Admin admin = new Admin();
+                    AdminUser admin = new AdminUser();
                     admin.setRoleId(role.getId());
                     admin.setUsername(addDto.getUsername());
                     admin.setPassword(passwordEncoder.encode(addDto.getPassword()));
@@ -293,7 +293,7 @@ public class AdminService {
 
                                 admin.setRoleId(role.getId());
                                 admin.setRole(role);
-                                values.put(Tables.ADMIN.ROLE_ID, admin.getRoleId());
+                                values.put(Tables.ADMIN_USER.ROLE_ID, admin.getRoleId());
                                 return Future.succeededFuture(admin);
                             });
                         }
@@ -301,35 +301,35 @@ public class AdminService {
                     .compose(admin -> {
                         if (updateDto.getPassword() != null) {
                             admin.setPassword(passwordEncoder.encode(updateDto.getPassword()));
-                            values.put(Tables.ADMIN.PASSWORD, admin.getPassword());
+                            values.put(Tables.ADMIN_USER.PASSWORD, admin.getPassword());
                         }
 
                         if (updateDto.getPhone() != null) {
                             admin.setPhone(updateDto.getPhone());
-                            values.put(Tables.ADMIN.PHONE, admin.getPhone());
+                            values.put(Tables.ADMIN_USER.PHONE, admin.getPhone());
                         }
 
                         if (updateDto.getEmail() != null) {
                             admin.setEmail(updateDto.getEmail());
-                            values.put(Tables.ADMIN.EMAIL, admin.getEmail());
+                            values.put(Tables.ADMIN_USER.EMAIL, admin.getEmail());
                         }
 
                         if (updateDto.getNickname() != null) {
                             admin.setNickname(updateDto.getNickname());
-                            values.put(Tables.ADMIN.NICKNAME, admin.getNickname());
+                            values.put(Tables.ADMIN_USER.NICKNAME, admin.getNickname());
                         }
 
                         if (updateDto.getAvatar() != null) {
                             admin.setAvatar(updateDto.getAvatar());
-                            values.put(Tables.ADMIN.AVATAR, admin.getAvatar());
+                            values.put(Tables.ADMIN_USER.AVATAR, admin.getAvatar());
                         }
 
                         admin.updateOperation(updateDto.getRemark(), operator.getUsername());
-                        values.put(Tables.ADMIN.REMARK, admin.getRemark());
-                        values.put(Tables.ADMIN.UPDATE_BY, admin.getUpdateBy());
-                        values.put(Tables.ADMIN.UPDATE_TIME, admin.getUpdateTime());
+                        values.put(Tables.ADMIN_USER.REMARK, admin.getRemark());
+                        values.put(Tables.ADMIN_USER.UPDATE_BY, admin.getUpdateBy());
+                        values.put(Tables.ADMIN_USER.UPDATE_TIME, admin.getUpdateTime());
 
-                        Update<?> query = dslContext.update(Tables.ADMIN).set(values).where(Tables.ADMIN.ID.eq(admin.getId()));
+                        Update<?> query = dslContext.update(Tables.ADMIN_USER).set(values).where(Tables.ADMIN_USER.ID.eq(admin.getId()));
                         return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                                 .recover(this::recoverUniqueIndexException)
                                 .compose(_ -> operationRecordRepository.add(connection, Operation.update, admin.getId().toString(), "admin", operator))
@@ -369,7 +369,7 @@ public class AdminService {
                                 return Future.failedFuture(new StandardStatusException("无法删除已登录的管理员"));
                             }
 
-                            Delete<?> query = dslContext.deleteFrom(Tables.ADMIN).where(Tables.ADMIN.ID.in(ids));
+                            Delete<?> query = dslContext.deleteFrom(Tables.ADMIN_USER).where(Tables.ADMIN_USER.ID.in(ids));
                             return pool.getConnection().flatMap(connection -> connection.begin()
                                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
                                     .compose(_ -> operationRecordRepository.add(connection, Operation.delete, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "admin", operator))
@@ -389,7 +389,7 @@ public class AdminService {
      * @param changeDtoMono 修改参数
      * @param operator      操作员
      */
-    public Mono<Void> changeState(Mono<ChangeStateDto> changeDtoMono, AdminAuthDetails operator) {
+    public Mono<Void> changeState(Mono<StateChangeDto> changeDtoMono, AdminAuthDetails operator) {
         return changeDtoMono.flatMap(changeDto -> {
             Set<Long> ids = new HashSet<>(changeDto.getIds());
             if (changeDto.getState() == State.disable.value() && ids.contains(DEFAULT_ADMIN_ID)) {
@@ -398,7 +398,7 @@ public class AdminService {
 
             State state = State.valueOf(changeDto.getState());
 
-            Update<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.STATE, state.value()).set(Tables.ADMIN.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN.ID.in(ids));
+            Update<?> query = dslContext.update(Tables.ADMIN_USER).set(Tables.ADMIN_USER.STATE, state.value()).set(Tables.ADMIN_USER.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN_USER.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN_USER.ID.in(ids));
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
                     .compose(_ -> operationRecordRepository.add(connection, Operation.changeState, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "admin," + state.name(), operator))

@@ -1,7 +1,7 @@
 package com.sk.rts.application.dto;
 
 import com.sk.rts.application.dto.base.StatefulDto;
-import com.sk.rts.application.entity.Admin;
+import com.sk.rts.application.entity.AdminUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
@@ -30,7 +30,7 @@ public class AdminDto extends StatefulDto {
     @Schema(description = "邮箱")
     private final String phone;
 
-    public AdminDto(Admin admin) {
+    public AdminDto(AdminUser admin) {
         super(admin.getId(), admin.getRemark(), admin.getUpdateBy(), admin.getUpdateTime(), admin.getState());
         this.roleId = admin.getRoleId();
         this.roleName = admin.getRole().getName();

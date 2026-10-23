@@ -1,19 +1,21 @@
 package com.sk.rts.application.auth;
 
-import com.sk.rts.application.entity.Admin;
-import com.sk.rts.application.proto.caching.MsgAdminDetails;
+import com.sk.rts.application.entity.AdminUser;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter
 @NullMarked
+@NoArgsConstructor
+@AllArgsConstructor
 public class AdminAuthDetails implements UserDetails {
 
     private Long adminId;
@@ -28,7 +30,7 @@ public class AdminAuthDetails implements UserDetails {
     private String ipAddress;
     private Collection<ApiPatternAuthority> authorities;
 
-    public AdminAuthDetails(Admin admin, AdminRemoteDetails remoteDetails) {
+    public AdminAuthDetails(AdminUser admin, AdminRemoteDetails remoteDetails) {
         this.adminId = admin.getId();
         this.roleId = admin.getRole().getId();
         this.roleName = admin.getRole().getName();
@@ -42,7 +44,7 @@ public class AdminAuthDetails implements UserDetails {
         this.authorities = new HashSet<>();
     }
 
-    public AdminAuthDetails(Admin admin, AdminRemoteDetails remoteDetails, Collection<ApiPatternAuthority> authorities) {
+    public AdminAuthDetails(AdminUser admin, AdminRemoteDetails remoteDetails, Collection<ApiPatternAuthority> authorities) {
         this.adminId = admin.getId();
         this.roleId = admin.getRole().getId();
         this.roleName = admin.getRole().getName();
@@ -54,20 +56,6 @@ public class AdminAuthDetails implements UserDetails {
         this.avatar = admin.getAvatar();
         this.ipAddress = remoteDetails.getIpAddress();
         this.authorities = authorities;
-    }
-
-    public AdminAuthDetails(MsgAdminDetails message) {
-        this.adminId = message.getId();
-        this.roleId = message.getRoleId();
-        this.roleName = message.getRoleName();
-        this.username = message.getUsername();
-        this.password = message.getPassword();
-        this.phone = message.getPhone();
-        this.email = message.getEmail();
-        this.nickname = message.getNickname();
-        this.avatar = message.getAvatar();
-        this.ipAddress = message.getIpAddress();
-        this.authorities = message.getAuthorityList().stream().map(ApiPatternAuthority::new).collect(Collectors.toSet());
     }
 }
 

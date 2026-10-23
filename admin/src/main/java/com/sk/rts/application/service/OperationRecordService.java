@@ -1,15 +1,13 @@
 package com.sk.rts.application.service;
 
-import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.dto.OperationRecordDto;
 import com.sk.rts.application.dto.OperationRecordQueryDto;
 import com.sk.rts.application.dto.PageQueryDto;
 import com.sk.rts.application.dto.PageResultDto;
-import com.sk.rts.application.entity.OperationRecord;
+import com.sk.rts.application.entity.AdminOperationRecord;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
-import com.sk.rts.application.repository.OperationRecordRepository;
 import com.sk.rts.application.util.TimeUtil;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.Pool;
@@ -47,30 +45,30 @@ public class OperationRecordService {
             OperationRecordQueryDto queryDto = pageRequestDto.getQuery();
 
             Select<?> pageQuery = dslContext.select(
-                            Tables.OPERATION_RECORD.ID,
-                            Tables.OPERATION_RECORD.OPERATOR_ID,
-                            Tables.OPERATION_RECORD.OPERATOR,
-                            Tables.OPERATION_RECORD.OPERATION,
-                            Tables.OPERATION_RECORD.ARGUMENTS,
-                            Tables.OPERATION_RECORD.REMARK,
-                            Tables.OPERATION_RECORD.IP_ADDRESS,
-                            Tables.OPERATION_RECORD.CREATE_TIME)
-                    .from(Tables.OPERATION_RECORD);
-            Select<?> countQuery = dslContext.selectCount().from(Tables.OPERATION_RECORD);
+                            Tables.ADMIN_OPERATION_RECORD.ID,
+                            Tables.ADMIN_OPERATION_RECORD.OPERATOR_ID,
+                            Tables.ADMIN_OPERATION_RECORD.OPERATOR,
+                            Tables.ADMIN_OPERATION_RECORD.OPERATION,
+                            Tables.ADMIN_OPERATION_RECORD.ARGUMENTS,
+                            Tables.ADMIN_OPERATION_RECORD.REMARK,
+                            Tables.ADMIN_OPERATION_RECORD.IP_ADDRESS,
+                            Tables.ADMIN_OPERATION_RECORD.CREATE_TIME)
+                    .from(Tables.ADMIN_OPERATION_RECORD);
+            Select<?> countQuery = dslContext.selectCount().from(Tables.ADMIN_OPERATION_RECORD);
 
             List<Condition> conditions = new ArrayList<>();
             if (queryDto != null) {
                 if (queryDto.getOperatorId() != null) {
-                    conditions.add(Tables.OPERATION_RECORD.OPERATOR_ID.eq(queryDto.getOperatorId()));
+                    conditions.add(Tables.ADMIN_OPERATION_RECORD.OPERATOR_ID.eq(queryDto.getOperatorId()));
                 }
                 if (queryDto.getOperation() != null) {
-                    conditions.add(Tables.OPERATION_RECORD.OPERATION.eq(queryDto.getOperation()));
+                    conditions.add(Tables.ADMIN_OPERATION_RECORD.OPERATION.eq(queryDto.getOperation()));
                 }
                 if (queryDto.getBeginTime() != null) {
-                    conditions.add(Tables.OPERATION_RECORD.CREATE_TIME.ge(TimeUtil.toOffsetDateTime(LocalDate.parse(queryDto.getBeginTime(), DateTimeFormatter.ISO_DATE))));
+                    conditions.add(Tables.ADMIN_OPERATION_RECORD.CREATE_TIME.ge(TimeUtil.toOffsetDateTime(LocalDate.parse(queryDto.getBeginTime(), DateTimeFormatter.ISO_DATE))));
                 }
                 if (queryDto.getEndTime() != null) {
-                    conditions.add(Tables.OPERATION_RECORD.CREATE_TIME.le(TimeUtil.toOffsetDateTime(LocalDate.parse(queryDto.getEndTime(), DateTimeFormatter.ISO_DATE))));
+                    conditions.add(Tables.ADMIN_OPERATION_RECORD.CREATE_TIME.le(TimeUtil.toOffsetDateTime(LocalDate.parse(queryDto.getEndTime(), DateTimeFormatter.ISO_DATE))));
                 }
             }
 
@@ -80,9 +78,9 @@ public class OperationRecordService {
             }
 
             if (pageRequestDto.getSort() == null) {
-                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(Tables.OPERATION_RECORD.ID.desc());
+                pageQuery = ((SelectOrderByStep<?>) pageQuery).orderBy(Tables.ADMIN_OPERATION_RECORD.ID.desc());
             } else {
-                OrderField<?> sortField = Tables.OPERATION_RECORD.field(pageRequestDto.getSort());
+                OrderField<?> sortField = Tables.ADMIN_OPERATION_RECORD.field(pageRequestDto.getSort());
                 if (sortField == null) {
                     return Mono.error(new StandardStatusException(ResponseStatus.parameter_error));
                 }
@@ -101,7 +99,7 @@ public class OperationRecordService {
             List<Object> pageArgs = pageQuery.getBindValues();
             List<Object> countArgs = countQuery.getBindValues();
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(pageSql).execute(Tuple.tuple(pageArgs))
-                    .map(rows -> rows.stream().map(row -> new OperationRecordDto(OperationRecord.fromRow(row))).toList())
+                    .map(rows -> rows.stream().map(row -> new OperationRecordDto(AdminOperationRecord.fromRow(row))).toList())
                     .flatMap(records -> {
                         if (records.size() < pageRequestDto.getPageSize()) {
                             return Future.succeededFuture(new PageResultDto<>(pageRequestDto.getPageNo(), pageRequestDto.getPageSize(), (pageRequestDto.getPageSize().longValue() * (pageRequestDto.getPageNo().longValue() - 1)) + records.size(), records));

@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 
 @Getter
 @Setter
-public class OperationRecord extends BaseEntity {
+public class AdminOperationRecord extends BaseEntity {
 
     /**
      * 操作员ID
@@ -46,8 +46,8 @@ public class OperationRecord extends BaseEntity {
      */
     private OffsetDateTime createTime;
 
-    public static OperationRecord fromRow(Row row) {
-        OperationRecord record = new OperationRecord();
+    public static AdminOperationRecord fromRow(Row row) {
+        AdminOperationRecord record = new AdminOperationRecord();
         record.setId(row.getLong(0));
         record.setOperatorId(row.getLong(1));
         record.setOperator(row.getString(2));

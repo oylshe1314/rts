@@ -1,7 +1,7 @@
 package com.sk.rts.application.dto;
 
 import com.sk.rts.application.dto.base.BaseDto;
-import com.sk.rts.application.entity.Menu;
+import com.sk.rts.application.entity.AdminMenu;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
@@ -17,7 +17,7 @@ public class MenuOptionDto extends BaseDto {
         this.name = name;
     }
 
-    public MenuOptionDto(Menu menu) {
+    public MenuOptionDto(AdminMenu menu) {
         super(menu.getId());
         this.name = menu.getName();
     }

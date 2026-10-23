@@ -1,6 +1,6 @@
 package com.sk.rts.application.dto;
 
-import com.sk.rts.application.entity.Menu;
+import com.sk.rts.application.entity.AdminMenu;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
@@ -17,7 +17,7 @@ public class MenuTreeDto extends MenuSortableDto<MenuTreeDto> {
     @Schema(description = "是否选中")
     private final Boolean checked;
 
-    public MenuTreeDto(Menu menu, Boolean checked) {
+    public MenuTreeDto(AdminMenu menu, Boolean checked) {
         super(menu.getId(), menu.getSortBy());
         this.parentId = menu.getParentId();
         this.name = menu.getName();

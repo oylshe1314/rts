@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "角色添加")
-public class RoleAddDto {
+public class AdminRoleAddDto {
 
     @NotBlank
     @Schema(description = "名称")
@@ -20,9 +20,9 @@ public class RoleAddDto {
     @Schema(description = "备注")
     private final String remark;
 
-    public RoleAddDto(@JsonProperty("name") String name,
-                      @JsonProperty("code") String code,
-                      @JsonProperty("remark") String remark) {
+    public AdminRoleAddDto(@JsonProperty("name") String name,
+                           @JsonProperty("code") String code,
+                           @JsonProperty("remark") String remark) {
         this.name = name;
         this.code = code;
         this.remark = remark;

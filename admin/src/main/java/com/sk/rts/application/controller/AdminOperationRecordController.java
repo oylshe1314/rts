@@ -29,7 +29,7 @@ import reactor.core.publisher.Mono;
 @AllArgsConstructor
 @RequestMapping("/operation/record")
 @Tag(name = "operationRecord", description = "操作记录相关接口")
-public class OperationRecordController {
+public class AdminOperationRecordController {
 
     private final OperationRecordService operationRecordService;
 

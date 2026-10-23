@@ -1,7 +1,7 @@
 package com.sk.rts.application.dto;
 
 import com.sk.rts.application.dto.base.BaseDto;
-import com.sk.rts.application.entity.OperationRecord;
+import com.sk.rts.application.entity.AdminOperationRecord;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
@@ -43,7 +43,7 @@ public class OperationRecordDto extends BaseDto {
         this.operateTime = operateTime;
     }
 
-    public OperationRecordDto(OperationRecord record) {
+    public OperationRecordDto(AdminOperationRecord record) {
         super(record.getId());
         this.operatorId = record.getOperatorId();
         this.operator = record.getOperator();

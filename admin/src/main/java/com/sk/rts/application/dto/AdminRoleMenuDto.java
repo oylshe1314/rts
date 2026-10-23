@@ -1,12 +1,12 @@
 package com.sk.rts.application.dto;
 
-import com.sk.rts.application.entity.Menu;
+import com.sk.rts.application.entity.AdminMenu;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 @Getter
 @Schema(description = "角色菜单")
-public class RoleMenuDto extends MenuSortableDto<RoleMenuDto> {
+public class AdminRoleMenuDto extends MenuSortableDto<AdminRoleMenuDto> {
 
     @Schema(description = "父级ID")
     private final Long parentId;
@@ -23,7 +23,7 @@ public class RoleMenuDto extends MenuSortableDto<RoleMenuDto> {
     @Schema(description = "路径")
     private final String path;
 
-    public RoleMenuDto(Menu menu) {
+    public AdminRoleMenuDto(AdminMenu menu) {
         super(menu.getId(), menu.getSortBy());
         this.parentId = menu.getParentId() == null ? null : menu.getParentId();
         this.type = menu.getType();

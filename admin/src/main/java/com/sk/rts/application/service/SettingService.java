@@ -2,15 +2,12 @@ package com.sk.rts.application.service;
 
 import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.auth.AdminAuthUtil;
-import com.sk.rts.application.auth.ApiPatternAuthority;
 import com.sk.rts.application.dto.ChangeDetailsDto;
 import com.sk.rts.application.dto.ChangePasswordDto;
 import com.sk.rts.application.entity.enums.Operation;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
-import com.sk.rts.application.jooq.Tables;
-import com.sk.rts.application.proto.caching.MsgAdminDetails;
-import com.sk.rts.application.repository.OperationRecordRepository;
+import com.sk.rts.application.repository.AdminOperationRecordRepository;
 import io.vertx.core.Future;
 import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
@@ -25,6 +22,7 @@ import org.jspecify.annotations.NullMarked;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,30 +37,18 @@ public class SettingService {
     private final Pool pool;
     private final DSLContext dslContext;
 
+    private final AdminOperationRecordRepository operationRecordRepository;
+
     private final Redis redis;
 
-    private final OperationRecordRepository operationRecordRepository;
+    private final JsonMapper jsonMapper;
 
     private final PasswordEncoder passwordEncoder;
 
     private Future<Void> updateCache(AdminAuthDetails authDetails) {
-        MsgAdminDetails.Builder msgAdminDetailsBuilder = MsgAdminDetails.newBuilder();
-        msgAdminDetailsBuilder.setId(authDetails.getAdminId());
-        msgAdminDetailsBuilder.setRoleId(authDetails.getRoleId());
-        msgAdminDetailsBuilder.setRoleName(authDetails.getRoleName());
-        msgAdminDetailsBuilder.setUsername(authDetails.getUsername());
-        msgAdminDetailsBuilder.setPassword(authDetails.getPassword());
-        msgAdminDetailsBuilder.setPhone(authDetails.getPhone());
-        msgAdminDetailsBuilder.setEmail(authDetails.getEmail());
-        msgAdminDetailsBuilder.setNickname(authDetails.getNickname());
-        msgAdminDetailsBuilder.setAvatar(authDetails.getAvatar());
-        for (ApiPatternAuthority authority : authDetails.getAuthorities()) {
-            msgAdminDetailsBuilder.addAuthority(authority.getAuthority());
-        }
-
         Request request = Request.cmd(Command.SET);
         request.arg(AdminAuthUtil.buildDetailsKey(authDetails.getAdminId()));
-        request.arg(msgAdminDetailsBuilder.build().toByteArray());
+        request.arg(jsonMapper.writeValueAsString(authDetails));
 
         return redis.send(request).mapEmpty();
     }
@@ -78,22 +64,22 @@ public class SettingService {
             Map<Field<?>, Object> values = new HashMap<>();
             List<Runnable> runs = new ArrayList<>();
             if (changeDto.getPhone() != null) {
-                values.put(Tables.ADMIN.PHONE, changeDto.getPhone());
+                values.put(Tables.ADMIN_USER.PHONE, changeDto.getPhone());
                 runs.add(() -> authDetails.setPhone(changeDto.getPhone()));
             }
 
             if (changeDto.getEmail() != null) {
-                values.put(Tables.ADMIN.EMAIL, changeDto.getEmail());
+                values.put(Tables.ADMIN_USER.EMAIL, changeDto.getEmail());
                 runs.add(() -> authDetails.setEmail(changeDto.getEmail()));
             }
 
             if (changeDto.getNickname() != null) {
-                values.put(Tables.ADMIN.NICKNAME, changeDto.getNickname());
+                values.put(Tables.ADMIN_USER.NICKNAME, changeDto.getNickname());
                 runs.add(() -> authDetails.setNickname(changeDto.getNickname()));
             }
 
             if (changeDto.getAvatar() != null) {
-                values.put(Tables.ADMIN.AVATAR, changeDto.getAvatar());
+                values.put(Tables.ADMIN_USER.AVATAR, changeDto.getAvatar());
                 runs.add(() -> authDetails.setAvatar(changeDto.getAvatar()));
             }
 
@@ -101,7 +87,7 @@ public class SettingService {
                 return Mono.error(new StandardStatusException(ResponseStatus.parameter_error));
             }
 
-            UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN).set(values).where(Tables.ADMIN.ID.eq(authDetails.getAdminId()));
+            UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN_USER).set(values).where(Tables.ADMIN_USER.ID.eq(authDetails.getAdminId()));
             return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                     .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
                     .compose(_ -> operationRecordRepository.add(connection, Operation.changeDetails, String.valueOf(authDetails.getAdminId()), "", authDetails))
@@ -138,7 +124,7 @@ public class SettingService {
                     return Mono.just(newPassword);
                 })
                 .flatMap(newPassword -> {
-                    UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN).set(Tables.ADMIN.PASSWORD, newPassword).where(Tables.ADMIN.ID.eq(authDetails.getAdminId()));
+                    UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN_USER).set(Tables.ADMIN_USER.PASSWORD, newPassword).where(Tables.ADMIN_USER.ID.eq(authDetails.getAdminId()));
                     return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
                             .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
                             .compose(_ -> operationRecordRepository.add(connection, Operation.changePassword, String.valueOf(authDetails.getAdminId()), "", authDetails))

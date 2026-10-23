@@ -10,14 +10,14 @@ import java.util.List;
 
 @Getter
 @Schema(description = "通用状态修改")
-public class ChangeStateDto extends MultipleIdDto {
+public class StateChangeDto extends MultipleIdDto {
 
     @NotNull
     @Integers({0, 1})
     @Schema(description = "状态")
     private final Integer state;
 
-    public ChangeStateDto(@JsonProperty("ids") List<Long> ids, @JsonProperty("state") Integer state) {
+    public StateChangeDto(@JsonProperty("ids") List<Long> ids, @JsonProperty("state") Integer state) {
         super(ids);
         this.state = state;
     }

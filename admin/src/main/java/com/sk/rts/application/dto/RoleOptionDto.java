@@ -1,7 +1,7 @@
 package com.sk.rts.application.dto;
 
 import com.sk.rts.application.dto.base.BaseDto;
-import com.sk.rts.application.entity.Role;
+import com.sk.rts.application.entity.AdminRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
@@ -17,7 +17,7 @@ public class RoleOptionDto extends BaseDto {
         this.name = name;
     }
 
-    public RoleOptionDto(Role role) {
+    public RoleOptionDto(AdminRole role) {
         super(role.getId());
         this.name = role.getName();
     }

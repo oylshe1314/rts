@@ -11,7 +11,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "菜单添加")
-public class MenuAddDto {
+public class AdminMenuAddDto {
 
     @NotNull
     @PositiveOrZero
@@ -41,13 +41,13 @@ public class MenuAddDto {
     @Schema(description = "备注")
     private final String remark;
 
-    public MenuAddDto(@JsonProperty("parentId") Long parentId,
-                      @JsonProperty("type") Integer type,
-                      @JsonProperty("icon") String icon,
-                      @JsonProperty("name") String name,
-                      @JsonProperty("path") String path,
-                      @JsonProperty("sortBy") Integer sortBy,
-                      @JsonProperty("remark") String remark) {
+    public AdminMenuAddDto(@JsonProperty("parentId") Long parentId,
+                           @JsonProperty("type") Integer type,
+                           @JsonProperty("icon") String icon,
+                           @JsonProperty("name") String name,
+                           @JsonProperty("path") String path,
+                           @JsonProperty("sortBy") Integer sortBy,
+                           @JsonProperty("remark") String remark) {
         this.parentId = parentId;
         this.type = type;
         this.icon = icon;

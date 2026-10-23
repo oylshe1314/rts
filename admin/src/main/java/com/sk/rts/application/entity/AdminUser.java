@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Admin extends StateEntity {
+public class AdminUser extends StateEntity {
 
     /**
      * 角色ID
@@ -49,10 +49,10 @@ public class Admin extends StateEntity {
     /**
      * 角色
      */
-    private Role role;
+    private AdminRole role;
 
-    public static Admin fromRow(Row row){
-        Admin admin = new Admin();
+    public static AdminUser fromRow(Row row){
+        AdminUser admin = new AdminUser();
         admin.setId(row.getLong(0));
         admin.setRoleId(row.getLong(1));
         admin.setUsername(row.getString(2));

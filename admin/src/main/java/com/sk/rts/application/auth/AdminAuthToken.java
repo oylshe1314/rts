@@ -21,10 +21,10 @@ public class AdminAuthToken extends AbstractAuthenticationToken {
         this.setAuthenticated(false);
     }
 
-    public AdminAuthToken(AdminAuthDetails adminAuthDetails, AdminAccessToken tokenDetail) {
-        super(adminAuthDetails.getAuthorities());
-        this.principal = adminAuthDetails;
-        this.credentials = tokenDetail;
+    public AdminAuthToken(AdminAuthDetails authDetails, AdminAccessToken accessToken) {
+        super(authDetails.getAuthorities());
+        this.principal = authDetails;
+        this.credentials = accessToken;
         this.setAuthenticated(true);
     }
 }

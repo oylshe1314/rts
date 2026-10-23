@@ -2,14 +2,14 @@ package com.sk.rts.application.service;
 
 import com.sk.rts.application.auth.*;
 import com.sk.rts.application.dto.SingleIdDto;
-import com.sk.rts.application.entity.Admin;
-import com.sk.rts.application.entity.Role;
+import com.sk.rts.application.entity.AdminUser;
+import com.sk.rts.application.entity.AdminRole;
 import com.sk.rts.application.entity.enums.MenuType;
 import com.sk.rts.application.entity.enums.Operation;
 import com.sk.rts.application.entity.enums.State;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
-import com.sk.rts.application.repository.OperationRecordRepository;
+import com.sk.rts.application.repository.AdminOperationRecordRepository;
 import com.sk.rts.application.util.CodecUtil;
 import com.sk.rts.application.util.FeistelUtil;
 import io.vertx.core.Future;
@@ -42,7 +42,7 @@ public class AuthService {
 
     private final Redis redis;
 
-    private final OperationRecordRepository operationRecordRepository;
+    private final AdminOperationRecordRepository operationRecordRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -56,21 +56,21 @@ public class AuthService {
      */
     public Mono<AdminAuthDetails> login(String account, String password, AdminRemoteDetails remoteDetails) {
         Select<?> adminQuery = dslContext.select(
-                        Tables.ADMIN.ID,
-                        Tables.ADMIN.ROLE_ID,
-                        Tables.ADMIN.USERNAME,
-                        Tables.ADMIN.PASSWORD,
-                        Tables.ADMIN.PHONE,
-                        Tables.ADMIN.EMAIL,
-                        Tables.ADMIN.NICKNAME,
-                        Tables.ADMIN.AVATAR,
-                        Tables.ADMIN.STATE,
-                        Tables.ROLE.ID,
-                        Tables.ROLE.NAME,
-                        Tables.ROLE.STATE)
-                .from(Tables.ADMIN)
-                .innerJoin(Tables.ROLE).on(Tables.ROLE.ID.eq(Tables.ADMIN.ROLE_ID))
-                .where(Tables.ADMIN.USERNAME.eq(account)).or(Tables.ADMIN.PHONE.eq(account)).or(Tables.ADMIN.EMAIL.eq(account));
+                        Tables.ADMIN_USER.ID,
+                        Tables.ADMIN_USER.ROLE_ID,
+                        Tables.ADMIN_USER.USERNAME,
+                        Tables.ADMIN_USER.PASSWORD,
+                        Tables.ADMIN_USER.PHONE,
+                        Tables.ADMIN_USER.EMAIL,
+                        Tables.ADMIN_USER.NICKNAME,
+                        Tables.ADMIN_USER.AVATAR,
+                        Tables.ADMIN_USER.STATE,
+                        Tables.ADMIN_ROLE.ID,
+                        Tables.ADMIN_ROLE.NAME,
+                        Tables.ADMIN_ROLE.STATE)
+                .from(Tables.ADMIN_USER)
+                .innerJoin(Tables.ADMIN_ROLE).on(Tables.ADMIN_ROLE.ID.eq(Tables.ADMIN_USER.ROLE_ID))
+                .where(Tables.ADMIN_USER.USERNAME.eq(account)).or(Tables.ADMIN_USER.PHONE.eq(account)).or(Tables.ADMIN_USER.EMAIL.eq(account));
 
         return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.preparedQuery(adminQuery.getSQL())
                 .execute(Tuple.tuple(adminQuery.getBindValues()))
@@ -81,7 +81,7 @@ public class AuthService {
 
                     Row row = rows.iterator().next();
 
-                    Admin admin = new Admin();
+                    AdminUser admin = new AdminUser();
                     admin.setId(row.getLong(0));
                     admin.setRoleId(row.getLong(1));
                     admin.setUsername(row.getString(2));
@@ -92,7 +92,7 @@ public class AuthService {
                     admin.setAvatar(row.getString(7));
                     admin.setState(row.getInteger(8));
 
-                    admin.setRole(new Role());
+                    admin.setRole(new AdminRole());
                     admin.getRole().setId(row.getLong(9));
                     admin.getRole().setName(row.getString(10));
                     admin.getRole().setState(row.getInteger(11));
@@ -119,11 +119,11 @@ public class AuthService {
                     AdminAuthDetails authDetails = new AdminAuthDetails(admin, remoteDetails);
 
                     Select<?> authoritiesQuery = dslContext.select(
-                                    Tables.MENU.PATH)
+                                    Tables.ADMIN_MENU.PATH)
                             .from(Tables.ROLE_AUTHORITY)
-                            .innerJoin(Tables.MENU).on(Tables.MENU.ID.eq(Tables.ROLE_AUTHORITY.MENU_ID))
-                            .where(Tables.ROLE_AUTHORITY.ROLE_ID.eq(admin.getRoleId())).and(Tables.MENU.TYPE.eq(MenuType.api.value()))
-                            .orderBy(Tables.MENU.ID.asc());
+                            .innerJoin(Tables.ADMIN_MENU).on(Tables.ADMIN_MENU.ID.eq(Tables.ROLE_AUTHORITY.MENU_ID))
+                            .where(Tables.ROLE_AUTHORITY.ROLE_ID.eq(admin.getRoleId())).and(Tables.ADMIN_MENU.TYPE.eq(MenuType.api.value()))
+                            .orderBy(Tables.ADMIN_MENU.ID.asc());
                     return connection.preparedQuery(authoritiesQuery.getSQL()).execute(Tuple.tuple(authoritiesQuery.getBindValues()))
                             .map(rows -> rows.stream().map(row -> new ApiPatternAuthority(row.getString(0))).collect(authDetails::getAuthorities, Collection::add, Collection::addAll))
                             .flatMap(_ -> operationRecordRepository.add(connection, Operation.login, String.valueOf(authDetails.getAdminId()), "", authDetails))

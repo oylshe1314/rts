@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Menu extends StateEntity {
+public class AdminMenu extends StateEntity {
 
     /**
      * 父级菜单ID
@@ -47,10 +47,10 @@ public class Menu extends StateEntity {
     /**
      * 上级菜单
      */
-    private Menu parent;
+    private AdminMenu parent;
 
-    public static Menu fromRow(Row row) {
-        Menu menu = new Menu();
+    public static AdminMenu fromRow(Row row) {
+        AdminMenu menu = new AdminMenu();
         menu.setId(row.getLong(0));
         menu.setParentId(row.getLong(1));
         menu.setType(row.getInteger(2));

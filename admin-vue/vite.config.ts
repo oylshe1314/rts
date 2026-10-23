@@ -17,7 +17,7 @@ export default defineConfig({
     server: {
         proxy: {
             "/rts/admin/api": {
-                target:"http://localhost:9080",
+                target:"http://localhost:29800",
                 changeOrigin:true,
             }
         }

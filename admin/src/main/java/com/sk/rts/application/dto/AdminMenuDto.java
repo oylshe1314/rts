@@ -1,14 +1,14 @@
 package com.sk.rts.application.dto;
 
 import com.sk.rts.application.dto.base.StatefulDto;
-import com.sk.rts.application.entity.Menu;
+import com.sk.rts.application.entity.AdminMenu;
 import com.sk.rts.application.entity.enums.MenuType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 @Getter
 @Schema(description = "菜单")
-public class MenuDto extends StatefulDto {
+public class AdminMenuDto extends StatefulDto {
 
     @Schema(description = "上级菜单ID")
     private final Long parentId;
@@ -34,7 +34,7 @@ public class MenuDto extends StatefulDto {
     @Schema(description = "排序值")
     private final Integer sortBy;
 
-    public MenuDto(Menu menu) {
+    public AdminMenuDto(AdminMenu menu) {
         super(menu.getId(), menu.getRemark(), menu.getUpdateBy(), menu.getUpdateTime(), menu.getState());
         if (menu.getParentId() == 0L) {
             this.parentId = 0L;

@@ -1,7 +1,7 @@
 package com.sk.rts.application.dto;
 
 import com.sk.rts.application.dto.base.BaseDto;
-import com.sk.rts.application.entity.Admin;
+import com.sk.rts.application.entity.AdminUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
@@ -29,7 +29,7 @@ public class AdminOptionDto extends BaseDto {
         this.nickname = nickname;
     }
 
-    public AdminOptionDto(Admin admin) {
+    public AdminOptionDto(AdminUser admin) {
         super(admin.getId());
         this.roleId = admin.getRoleId();
         this.roleName = admin.getRole().getName();

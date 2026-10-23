@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class Role extends StateEntity {
+public class AdminRole extends StateEntity {
 
     /**
      * 角色名称
@@ -19,8 +19,8 @@ public class Role extends StateEntity {
      */
     private String code;
 
-    public static Role fromRow(Row row) {
-        Role role = new Role();
+    public static AdminRole fromRow(Row row) {
+        AdminRole role = new AdminRole();
         role.setId(row.getLong(0));
         role.setName(row.getString(1));
         role.setCode(row.getString(2));

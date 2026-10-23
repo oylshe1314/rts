@@ -1,6 +1,6 @@
 package com.sk.rts.application.dto;
 
-import com.sk.rts.application.entity.Menu;
+import com.sk.rts.application.entity.AdminMenu;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
@@ -28,7 +28,7 @@ public class RoleAuthorityComparisonDto extends MenuSortableDto<RoleAuthorityCom
     @Schema(description = "选中的角色ID")
     private final Set<Long> roles;
 
-    public RoleAuthorityComparisonDto(Menu menu, Boolean highlight, Set<Long> roles) {
+    public RoleAuthorityComparisonDto(AdminMenu menu, Boolean highlight, Set<Long> roles) {
         super(menu.getId(), menu.getSortBy());
         this.parentId = menu.getParentId();
         this.type = menu.getType();
