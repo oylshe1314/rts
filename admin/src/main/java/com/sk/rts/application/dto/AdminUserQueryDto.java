@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "管理员查询")
-public class AdminQueryDto {
+public class AdminUserQueryDto {
 
     @Positive
     @Schema(description = "角色ID(下拉框选择)")
@@ -26,10 +26,10 @@ public class AdminQueryDto {
     @Schema(description = "用户名")
     private final String email;
 
-    public AdminQueryDto(@JsonProperty("roleId") Long roleId,
-                         @JsonProperty("username") String username,
-                         @JsonProperty("phone") String phone,
-                         @JsonProperty("email") String email) {
+    public AdminUserQueryDto(@JsonProperty("roleId") Long roleId,
+                             @JsonProperty("username") String username,
+                             @JsonProperty("phone") String phone,
+                             @JsonProperty("email") String email) {
         this.roleId = roleId;
         this.username = username;
         this.phone = phone;

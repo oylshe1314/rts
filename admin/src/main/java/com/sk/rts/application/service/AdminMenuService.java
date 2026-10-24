@@ -57,9 +57,9 @@ public class AdminMenuService {
      * @param type 菜单类型，1：目录，2：菜单，3：接口
      * @return 菜单选择列表
      */
-    public Mono<List<MenuOptionDto>> menuSelectList(Integer type) {
+    public Mono<List<AdminMenuOptionDto>> menuSelectList(Integer type) {
         Select<?> query = dslContext.select(Tables.ADMIN_MENU.ID, Tables.ADMIN_MENU.NAME).from(Tables.ADMIN_MENU).where(Tables.ADMIN_MENU.TYPE.eq(type));
-        Future<List<MenuOptionDto>> future = pool.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.stream().map(row -> new MenuOptionDto(row.getLong(0), row.getString(1))).toList());
+        Future<List<AdminMenuOptionDto>> future = pool.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.stream().map(row -> new AdminMenuOptionDto(row.getLong(0), row.getString(1))).toList());
         return ReactiveUtil.toMono(future);
     }
 
@@ -69,8 +69,8 @@ public class AdminMenuService {
      * @param pageQueryDto 分页查询参数
      * @return 分页查询结果
      */
-    public Mono<PageResultDto<AdminMenuDto>> query(PageQueryDto<@Nullable MenuQueryDto> pageQueryDto) {
-        MenuQueryDto menuQueryDto = pageQueryDto.getQuery();
+    public Mono<PageResultDto<AdminMenuDto>> query(PageQueryDto<@Nullable AdminMenuQueryDto> pageQueryDto) {
+        AdminMenuQueryDto adminMenuQueryDto = pageQueryDto.getQuery();
 
         TableAdminMenu m = Tables.ADMIN_MENU.as("m");
         TableAdminMenu p = Tables.ADMIN_MENU.as("p");
@@ -96,15 +96,15 @@ public class AdminMenuService {
         Select<?> countQuery = dslContext.selectCount().from(m).leftJoin(p).on(p.ID.eq(m.PARENT_ID));
 
         List<Condition> conditions = new ArrayList<>();
-        if (menuQueryDto != null) {
-            if (menuQueryDto.getType() != null) {
-                conditions.add(m.TYPE.eq(menuQueryDto.getType()));
+        if (adminMenuQueryDto != null) {
+            if (adminMenuQueryDto.getType() != null) {
+                conditions.add(m.TYPE.eq(adminMenuQueryDto.getType()));
             }
-            if (menuQueryDto.getName() != null) {
-                conditions.add(m.NAME.like("%" + menuQueryDto.getName() + "%"));
+            if (adminMenuQueryDto.getName() != null) {
+                conditions.add(m.NAME.like("%" + adminMenuQueryDto.getName() + "%"));
             }
-            if (menuQueryDto.getPath() != null) {
-                conditions.add(p.NAME.like("%" + menuQueryDto.getPath() + "%"));
+            if (adminMenuQueryDto.getPath() != null) {
+                conditions.add(p.NAME.like("%" + adminMenuQueryDto.getPath() + "%"));
             }
         }
 

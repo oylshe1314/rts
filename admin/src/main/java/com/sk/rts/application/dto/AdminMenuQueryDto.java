@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "菜单查询")
-public class MenuQueryDto {
+public class AdminMenuQueryDto {
 
     @Integers({1, 2, 3})
     @Schema(description = "类型, 1.目录, 2.菜单, 3.接口")
@@ -22,9 +22,9 @@ public class MenuQueryDto {
     @Schema(description = "路径")
     private final String path;
 
-    public MenuQueryDto(@JsonProperty("type") Integer type,
-                        @JsonProperty("name") String name,
-                        @JsonProperty("path") String path) {
+    public AdminMenuQueryDto(@JsonProperty("type") Integer type,
+                             @JsonProperty("name") String name,
+                             @JsonProperty("path") String path) {
         this.type = type;
         this.name = name;
         this.path = path;

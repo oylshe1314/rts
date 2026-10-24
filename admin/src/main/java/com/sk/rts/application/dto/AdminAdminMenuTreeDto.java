@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "菜单树")
-public class MenuTreeDto extends MenuSortableDto<MenuTreeDto> {
+public class AdminAdminMenuTreeDto extends AdminMenuSortableDto<AdminAdminMenuTreeDto> {
 
     @Schema(description = "上级菜单ID")
     private final Long parentId;
@@ -17,7 +17,7 @@ public class MenuTreeDto extends MenuSortableDto<MenuTreeDto> {
     @Schema(description = "是否选中")
     private final Boolean checked;
 
-    public MenuTreeDto(AdminMenu menu, Boolean checked) {
+    public AdminAdminMenuTreeDto(AdminMenu menu, Boolean checked) {
         super(menu.getId(), menu.getSortBy());
         this.parentId = menu.getParentId();
         this.name = menu.getName();

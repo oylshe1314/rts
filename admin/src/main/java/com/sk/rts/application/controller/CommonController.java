@@ -39,14 +39,14 @@ public class CommonController {
 
     @Operation(summary = "管理员详情")
     @RequestMapping(value = "/admin/details", method = RequestMethod.GET)
-    public Mono<ResponseDto<AdminDetailDto>> adminDetails(AdminAuthToken authToken) {
+    public Mono<ResponseDto<AdminUserDetailDto>> adminDetails(AdminAuthToken authToken) {
         AdminAuthDetails authDetails = (AdminAuthDetails) authToken.getPrincipal();
-        return Mono.just(ResponseDto.success(new AdminDetailDto(authDetails)));
+        return Mono.just(ResponseDto.success(new AdminUserDetailDto(authDetails)));
     }
 
     @Operation(summary = "角色菜单")
     @RequestMapping(value = "/role/menus", method = RequestMethod.GET)
-    public Mono<ResponseDto<Collection<AdminRoleMenuDto>>> roleMenus(AdminAuthToken authToken) {
+    public Mono<ResponseDto<Collection<AdminRoleAdminMenuDto>>> roleMenus(AdminAuthToken authToken) {
         return adminRoleService.roleMenus((AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
     }
 
@@ -54,13 +54,13 @@ public class CommonController {
             @Parameter(name = "type", required = true, description = "菜单类型")
     })
     @RequestMapping(value = "/options/menus", method = RequestMethod.GET)
-    public Mono<ResponseDto<Collection<MenuOptionDto>>> selectMenus(@NotNull @Integers({1, 2}) Integer type) {
+    public Mono<ResponseDto<Collection<AdminMenuOptionDto>>> selectMenus(@NotNull @Integers({1, 2}) Integer type) {
         return adminMenuService.menuSelectList(type).map(ResponseDto::success);
     }
 
     @Operation(summary = "角色选择列表")
     @RequestMapping(value = "/options/roles", method = RequestMethod.GET)
-    public Mono<ResponseDto<Collection<RoleOptionDto>>> selectRoles() {
+    public Mono<ResponseDto<Collection<AdminRoleOptionDto>>> selectRoles() {
         return adminRoleService.roleSelectList().map(ResponseDto::success);
     }
 
@@ -68,7 +68,7 @@ public class CommonController {
             @Parameter(name = "username", description = "用户名")
     })
     @RequestMapping(value = "/options/admins", method = RequestMethod.GET)
-    public Mono<ResponseDto<Collection<AdminOptionDto>>> selectRoles(@RequestParam(required = false) @NullOrNotBlank String username) {
+    public Mono<ResponseDto<Collection<AdminUserOptionDto>>> selectRoles(@RequestParam(required = false) @NullOrNotBlank String username) {
         return adminUserService.adminSelectList(username).map(ResponseDto::success);
     }
 }

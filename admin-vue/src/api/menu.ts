@@ -53,35 +53,35 @@ export interface MenuUpdateDto {
 export default {
     query: (pageNo: number, pageSize: number, params: MenuQueryDto): Promise<PageResultDto<MenuDto>> => {
         return service({
-            url: '/menu/query',
+            url: '/admin/menu/query',
             method: 'get',
             params: {pageNo: pageNo, pageSize: pageSize, ...params}
         });
     },
     add: (data: MenuAddDto): Promise<MenuDto> => {
         return service({
-            url: '/menu/add',
+            url: '/admin/menu/add',
             method: 'post',
             data: data
         })
     },
     update: (data: MenuUpdateDto): Promise<MenuDto> => {
         return service({
-            url: '/menu/update',
+            url: '/admin/menu/update',
             method: 'post',
             data: data
         })
     },
     stateChange: (ids: number[], state: number): Promise<void> => {
         return service({
-            url: '/menu/state/change',
+            url: '/admin/menu/state/change',
             method: 'post',
             data: {ids: ids, state: state}
         })
     },
     delete: (ids: number[]): Promise<void> => {
         return service({
-            url: '/menu/delete',
+            url: '/admin/menu/delete',
             method: 'post',
             data: {ids: ids}
         })

@@ -3,7 +3,7 @@ package com.sk.rts.application.service;
 import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.auth.AdminAuthUtil;
 import com.sk.rts.application.dto.PasswordChangeDto;
-import com.sk.rts.application.dto.DetailsChangeDto;
+import com.sk.rts.application.dto.AdminUserDetailsChangeDto;
 import com.sk.rts.application.entity.enums.Operation;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
@@ -62,7 +62,7 @@ public class SettingService {
      * @param changeDto   信息修改参数
      * @param authDetails 管理员信息
      */
-    public Mono<Void> changeDetails(DetailsChangeDto changeDto, AdminAuthDetails authDetails) {
+    public Mono<Void> changeDetails(AdminUserDetailsChangeDto changeDto, AdminAuthDetails authDetails) {
         List<Runnable> runs = new ArrayList<>();
         Map<Field<?>, Object> values = new HashMap<>();
         UpdateRemarkBuilder remarkBuilder = new UpdateRemarkBuilder();

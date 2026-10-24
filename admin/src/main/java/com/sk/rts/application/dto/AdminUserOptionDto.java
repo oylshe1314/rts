@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "角色选择列表")
-public class AdminOptionDto extends BaseDto {
+public class AdminUserOptionDto extends BaseDto {
 
     @Schema(description = "角色名称")
     private final Long roleId;
@@ -21,7 +21,7 @@ public class AdminOptionDto extends BaseDto {
     @Schema(description = "昵称")
     private final String nickname;
 
-    public AdminOptionDto(Long id, Long roleId, String roleName, String username, String nickname, String avatar) {
+    public AdminUserOptionDto(Long id, Long roleId, String roleName, String username, String nickname, String avatar) {
         super(id);
         this.roleId = roleId;
         this.roleName = roleName;
@@ -29,7 +29,7 @@ public class AdminOptionDto extends BaseDto {
         this.nickname = nickname;
     }
 
-    public AdminOptionDto(AdminUser admin) {
+    public AdminUserOptionDto(AdminUser admin) {
         super(admin.getId());
         this.roleId = admin.getRoleId();
         this.roleName = admin.getRole().getName();

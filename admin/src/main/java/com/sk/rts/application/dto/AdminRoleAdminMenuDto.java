@@ -4,13 +4,11 @@ import com.sk.rts.application.entity.AdminMenu;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
-import java.util.Set;
-
 @Getter
-@Schema(description = "角色权限对比")
-public class RoleAuthorityComparisonDto extends MenuSortableDto<RoleAuthorityComparisonDto> {
+@Schema(description = "角色菜单")
+public class AdminRoleAdminMenuDto extends AdminMenuSortableDto<AdminRoleAdminMenuDto> {
 
-    @Schema(description = "上级菜单ID")
+    @Schema(description = "父级ID")
     private final Long parentId;
 
     @Schema(description = "类型: 1.目录, 2.菜单, 3.接口")
@@ -22,20 +20,15 @@ public class RoleAuthorityComparisonDto extends MenuSortableDto<RoleAuthorityCom
     @Schema(description = "图标")
     private final String icon;
 
-    @Schema(description = "高亮")
-    private final Boolean highlight;
+    @Schema(description = "路径")
+    private final String path;
 
-    @Schema(description = "选中的角色ID")
-    private final Set<Long> roles;
-
-    public RoleAuthorityComparisonDto(AdminMenu menu, Boolean highlight, Set<Long> roles) {
+    public AdminRoleAdminMenuDto(AdminMenu menu) {
         super(menu.getId(), menu.getSortBy());
-        this.parentId = menu.getParentId();
+        this.parentId = menu.getParentId() == null ? null : menu.getParentId();
         this.type = menu.getType();
         this.name = menu.getName();
         this.icon = menu.getIcon();
-        this.highlight = highlight;
-        this.roles = roles;
+        this.path = menu.getPath();
     }
-
 }

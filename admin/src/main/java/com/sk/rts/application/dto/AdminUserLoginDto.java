@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "管理员登录信息")
-public class AdminLoginDto {
+public class AdminUserLoginDto {
 
     @NotBlank
     @Schema(description = "用户名")
@@ -19,7 +19,7 @@ public class AdminLoginDto {
     private final String password;
 
     @JsonCreator
-    public AdminLoginDto(@JsonProperty("account") String account, @JsonProperty("password") String password) {
+    public AdminUserLoginDto(@JsonProperty("account") String account, @JsonProperty("password") String password) {
         this.account = account;
         this.password = password;
     }

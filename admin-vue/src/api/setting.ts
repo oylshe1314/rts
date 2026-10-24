@@ -21,14 +21,14 @@ export interface ChangePasswordDto {
 export default {
     changeDetail: async (data: ChangeDetailsDto): Promise<void> => {
         return service({
-            url: '/setting/details/change',
+            url: '/admin/setting/details/change',
             method: "post",
             data: data
         })
     },
     changePassword: async (data: ChangePasswordDto): Promise<void> => {
         return service({
-            url: '/setting/password/change',
+            url: '/admin/setting/password/change',
             method: "post",
             data: data
         })

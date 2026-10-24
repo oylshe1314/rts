@@ -7,17 +7,17 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "角色选择列表")
-public class RoleOptionDto extends BaseDto {
+public class AdminRoleOptionDto extends BaseDto {
 
     @Schema(description = "名称")
     private final String name;
 
-    public RoleOptionDto(Long id, String name) {
+    public AdminRoleOptionDto(Long id, String name) {
         super(id);
         this.name = name;
     }
 
-    public RoleOptionDto(AdminRole role) {
+    public AdminRoleOptionDto(AdminRole role) {
         super(role.getId());
         this.name = role.getName();
     }

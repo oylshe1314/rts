@@ -27,7 +27,7 @@ import {ElMessage, ElMessageBox} from 'element-plus';
 import type {ChangePasswordDto} from '@/api/setting.ts';
 import settingApi from '@/api/setting.ts';
 
-import {closeLoading, openLoading} from "@/util/loading";
+import {closeLoading, openLoading} from "@/util/loading.ts";
 
 interface ChangePasswordExtendedDto extends ChangePasswordDto {
     confirmPassword: string;

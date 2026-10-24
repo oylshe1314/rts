@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "管理员添加")
-public class AdminAddDto {
+public class AdminUserAddDto {
 
     @NotNull
     @Schema(description = "角色ID")
@@ -38,14 +38,14 @@ public class AdminAddDto {
     @Schema(description = "备注")
     private final String remark;
 
-    public AdminAddDto(@JsonProperty("roleId") Long roleId,
-                       @JsonProperty("username") String username,
-                       @JsonProperty("password") String password,
-                       @JsonProperty("email") String email,
-                       @JsonProperty("account") String phone,
-                       @JsonProperty("nickname") String nickname,
-                       @JsonProperty("avatar") String avatar,
-                       @JsonProperty("remark") String remark) {
+    public AdminUserAddDto(@JsonProperty("roleId") Long roleId,
+                           @JsonProperty("username") String username,
+                           @JsonProperty("password") String password,
+                           @JsonProperty("email") String email,
+                           @JsonProperty("account") String phone,
+                           @JsonProperty("nickname") String nickname,
+                           @JsonProperty("avatar") String avatar,
+                           @JsonProperty("remark") String remark) {
         this.roleId = roleId;
         this.username = username;
         this.password = password;

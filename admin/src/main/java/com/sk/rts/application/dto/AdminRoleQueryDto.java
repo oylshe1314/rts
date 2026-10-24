@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "角色查询")
-public class RoleQueryDto {
+public class AdminRoleQueryDto {
 
     @NullOrNotBlank
     @Schema(description = "名称")
@@ -19,7 +19,7 @@ public class RoleQueryDto {
     private final String code;
 
     @JsonCreator
-    public RoleQueryDto(@JsonProperty("name") String name, @JsonProperty("code") String code) {
+    public AdminRoleQueryDto(@JsonProperty("name") String name, @JsonProperty("code") String code) {
         this.name = name;
         this.code = code;
     }

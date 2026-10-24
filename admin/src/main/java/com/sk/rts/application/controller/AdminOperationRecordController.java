@@ -27,7 +27,7 @@ import reactor.core.publisher.Mono;
 @NullMarked
 @RestController
 @AllArgsConstructor
-@RequestMapping("/operation/record")
+@RequestMapping("/admin/operation/record")
 @Tag(name = "operationRecord", description = "操作记录相关接口")
 public class AdminOperationRecordController {
 

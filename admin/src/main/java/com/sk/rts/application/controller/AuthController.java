@@ -2,10 +2,7 @@ package com.sk.rts.application.controller;
 
 import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.auth.AdminAuthToken;
-import com.sk.rts.application.dto.AdminDetailDto;
-import com.sk.rts.application.dto.AdminLoginDto;
-import com.sk.rts.application.dto.ResponseDto;
-import com.sk.rts.application.dto.SingleIdDto;
+import com.sk.rts.application.dto.*;
 import com.sk.rts.application.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,7 +29,7 @@ public class AuthController {
 
     @Operation(summary = "管理员登录")
     @RequestMapping(value = "/login", method = RequestMethod.POST)
-    public Mono<ResponseDto<AdminDetailDto>> login(@RequestBody @Valid Mono<AdminLoginDto> loginDto) {
+    public Mono<ResponseDto<AdminUserDetailDto>> login(@RequestBody @Valid Mono<AdminUserLoginDto> loginDto) {
         throw new IllegalStateException("这个接口仅用于文档生成，实际登录由过滤器处理");
     }
 

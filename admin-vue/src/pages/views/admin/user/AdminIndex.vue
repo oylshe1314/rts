@@ -96,10 +96,10 @@ import {getAvatar} from "@/util/avatars.ts";
 
 import {formatTime} from "@/util/time.ts";
 
-import AdminAdd from "@/pages/views/admin/AdminAdd.vue";
+import AdminAdd from "@/pages/views/admin/user/AdminAdd.vue";
 
-import type {AdminExtendedDto} from "@/pages/views/admin/AdminUpdate.vue";
-import AdminUpdate from "@/pages/views/admin/AdminUpdate.vue";
+import type {AdminExtendedDto} from "@/pages/views/admin/user/AdminUpdate.vue";
+import AdminUpdate from "@/pages/views/admin/user/AdminUpdate.vue";
 
 const formData = reactive({
     roleId: 0,

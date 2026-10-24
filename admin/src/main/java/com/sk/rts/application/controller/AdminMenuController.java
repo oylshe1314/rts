@@ -29,7 +29,7 @@ import reactor.core.publisher.Mono;
 @NullMarked
 @RestController
 @AllArgsConstructor
-@RequestMapping("/menu")
+@RequestMapping("/admin/menu")
 @Tag(name = "menu", description = "菜单相关接口")
 public class AdminMenuController {
 
@@ -50,13 +50,13 @@ public class AdminMenuController {
                                                                 @NotNull @Range(min = 1, max = 100) Integer pageSize,
                                                                 @Nullable @NullOrNotBlank String sort,
                                                                 @Nullable Boolean desc,
-                                                                @Parameter(hidden = true) @Nullable @Valid MenuQueryDto queryDto) {
+                                                                @Parameter(hidden = true) @Nullable @Valid AdminMenuQueryDto queryDto) {
         return query(new PageQueryDto<>(pageNo, pageSize, sort, desc, queryDto));
     }
 
     @Operation(summary = "菜单查询")
     @RequestMapping(value = "/query", method = RequestMethod.POST)
-    public Mono<ResponseDto<PageResultDto<AdminMenuDto>>> query(@RequestBody @Valid PageQueryDto<MenuQueryDto> pageQueryDto) {
+    public Mono<ResponseDto<PageResultDto<AdminMenuDto>>> query(@RequestBody @Valid PageQueryDto<AdminMenuQueryDto> pageQueryDto) {
         return adminMenuService.query(pageQueryDto).map(ResponseDto::success);
     }
 

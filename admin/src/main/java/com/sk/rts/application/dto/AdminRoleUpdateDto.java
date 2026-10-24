@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "角色修改")
-public class RoleUpdateDto extends BaseDto {
+public class AdminRoleUpdateDto extends BaseDto {
 
     @NullOrNotBlank
     @Schema(description = "名称")
@@ -21,10 +21,10 @@ public class RoleUpdateDto extends BaseDto {
     @Schema(description = "备注")
     private final String remark;
 
-    public RoleUpdateDto(@JsonProperty("id") Long id,
-                         @JsonProperty("name") String name,
-                         @JsonProperty("code") String code,
-                         @JsonProperty("remark") String remark) {
+    public AdminRoleUpdateDto(@JsonProperty("id") Long id,
+                              @JsonProperty("name") String name,
+                              @JsonProperty("code") String code,
+                              @JsonProperty("remark") String remark) {
         super(id);
         this.name = name;
         this.code = code;

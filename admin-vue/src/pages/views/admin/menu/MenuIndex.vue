@@ -89,8 +89,8 @@ import menuApi from '@/api/menu.ts';
 
 import {formatTime} from "@/util/time.ts";
 
-import MenuAdd from "@/pages/views/menu/MenuAdd.vue";
-import MenuUpdate from "@/pages/views/menu/MenuUpdate.vue";
+import MenuAdd from "@/pages/views/admin/menu/MenuAdd.vue";
+import MenuUpdate from "@/pages/views/admin/menu/MenuUpdate.vue";
 
 const formData = reactive<MenuQueryDto>({
     type: 0,

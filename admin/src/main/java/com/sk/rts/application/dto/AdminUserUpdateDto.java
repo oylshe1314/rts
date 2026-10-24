@@ -9,7 +9,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "管理员修改")
-public class AdminUpdateDto extends BaseDto {
+public class AdminUserUpdateDto extends BaseDto {
 
     @Positive
     @Schema(description = "角色ID")
@@ -35,14 +35,14 @@ public class AdminUpdateDto extends BaseDto {
     @Schema(description = "备注")
     private final String remark;
 
-    public AdminUpdateDto(@JsonProperty("id") Long id,
-                          @JsonProperty("roleId") Long roleId,
-                          @JsonProperty("password") String password,
-                          @JsonProperty("account") String phone,
-                          @JsonProperty("email") String email,
-                          @JsonProperty("nickname") String nickname,
-                          @JsonProperty("avatar") String avatar,
-                          @JsonProperty("remark") String remark) {
+    public AdminUserUpdateDto(@JsonProperty("id") Long id,
+                              @JsonProperty("roleId") Long roleId,
+                              @JsonProperty("password") String password,
+                              @JsonProperty("account") String phone,
+                              @JsonProperty("email") String email,
+                              @JsonProperty("nickname") String nickname,
+                              @JsonProperty("avatar") String avatar,
+                              @JsonProperty("remark") String remark) {
         super(id);
         this.roleId = roleId;
         this.password = password;

@@ -34,7 +34,7 @@
 import {reactive} from "vue";
 
 import {ElMessage, ElMessageBox} from "element-plus";
-import {closeLoading, openLoading} from "@/util/loading";
+import {closeLoading, openLoading} from "@/util/loading.ts";
 
 import {useUserStore} from "@/store/user.ts";
 

@@ -28,7 +28,7 @@ export interface OperationRecordDto {
 export default {
     query: (pageNo: number, pageSize: number, params: OperationRecordQueryDto): Promise<PageResultDto<OperationRecordDto>> => {
         return service({
-            url: '/operation/record/query',
+            url: '/admin/operation/record/query',
             method: 'get',
             params: {pageNo: pageNo, pageSize: pageSize, ...params}
         });

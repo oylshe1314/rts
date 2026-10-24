@@ -7,15 +7,15 @@ import java.util.List;
 
 @Getter
 @Schema(description = "角色权限对比列表")
-public class RoleAuthorityComparisonListDto {
+public class AdminRoleAuthorityComparisonListDto {
 
     @Schema(description = "角色列表")
-    private final List<RoleOptionDto> roleList;
+    private final List<AdminRoleOptionDto> roleList;
 
     @Schema(description = "权限对比列表")
-    private final List<RoleAuthorityComparisonDto> comparisonList;
+    private final List<AdminRoleAuthorityComparisonDtoAdmin> comparisonList;
 
-    public RoleAuthorityComparisonListDto(List<RoleOptionDto> roleList, List<RoleAuthorityComparisonDto> comparisonList) {
+    public AdminRoleAuthorityComparisonListDto(List<AdminRoleOptionDto> roleList, List<AdminRoleAuthorityComparisonDtoAdmin> comparisonList) {
         this.roleList = roleList;
         this.comparisonList = comparisonList;
     }

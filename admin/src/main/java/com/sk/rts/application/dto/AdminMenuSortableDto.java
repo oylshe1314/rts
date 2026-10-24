@@ -10,7 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 
 @Getter
-public class MenuSortableDto<T extends MenuSortableDto<T>> extends BaseDto {
+public class AdminMenuSortableDto<T extends AdminMenuSortableDto<T>> extends BaseDto {
 
     @Schema(description = "排序值")
     private final Integer sortBy;
@@ -18,17 +18,17 @@ public class MenuSortableDto<T extends MenuSortableDto<T>> extends BaseDto {
     @Schema(description = "子菜单")
     private final List<T> subMenus;
 
-    public MenuSortableDto(Long id, Integer sortBy) {
+    public AdminMenuSortableDto(Long id, Integer sortBy) {
         super(id);
         this.sortBy = sortBy;
         this.subMenus = new ArrayList<>();
     }
 
-    public static <T extends MenuSortableDto<T>> void sort(List<T> menus) {
+    public static <T extends AdminMenuSortableDto<T>> void sort(List<T> menus) {
         if (CollectionUtils.isEmpty(menus)) {
             return;
         }
-        menus.sort(Comparator.comparingInt(MenuSortableDto::getSortBy));
+        menus.sort(Comparator.comparingInt(AdminMenuSortableDto::getSortBy));
         for (T menu : menus) {
             sort(menu.getSubMenus());
         }

@@ -1,7 +1,7 @@
 package com.sk.rts.application.auth;
 
 import com.sk.rts.application.component.ValidationUtil;
-import com.sk.rts.application.dto.AdminLoginDto;
+import com.sk.rts.application.dto.AdminUserLoginDto;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import lombok.AllArgsConstructor;
@@ -36,7 +36,7 @@ public class AdminAuthConverter implements ServerAuthenticationConverter {
 
         return DataBufferUtils.join(request.getBody()).handle((buffer, sink) -> {
             try {
-                AdminLoginDto loginDto = jsonMapper.readValue(buffer.asInputStream(true), AdminLoginDto.class);
+                AdminUserLoginDto loginDto = jsonMapper.readValue(buffer.asInputStream(true), AdminUserLoginDto.class);
                 if (validationUtil.validate(loginDto)) {
                     AdminAuthToken authRequest = new AdminAuthToken(loginDto.getAccount(), loginDto.getPassword());
                     authRequest.setDetails(new AdminRemoteDetails(request));

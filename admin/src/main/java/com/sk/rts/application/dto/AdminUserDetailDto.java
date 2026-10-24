@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Schema(description = "管理员详细信息")
-public class AdminDetailDto extends BaseDto {
+public class AdminUserDetailDto extends BaseDto {
 
     @Schema(description = "角色名称")
     private final String roleName;
@@ -29,7 +29,7 @@ public class AdminDetailDto extends BaseDto {
     @Schema(description = "头像")
     private final String avatar;
 
-    public AdminDetailDto(AdminAuthDetails authDetails) {
+    public AdminUserDetailDto(AdminAuthDetails authDetails) {
         super(authDetails.getAdminId());
         this.roleName = authDetails.getRoleName();
         this.username = authDetails.getUsername();

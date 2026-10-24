@@ -62,9 +62,9 @@ public class AdminRoleService {
      *
      * @return 角色选择列表
      */
-    public Mono<List<RoleOptionDto>> roleSelectList() {
+    public Mono<List<AdminRoleOptionDto>> roleSelectList() {
         Select<?> query = dslContext.select(Tables.ADMIN_ROLE.ID, Tables.ADMIN_ROLE.NAME).from(Tables.ADMIN_ROLE);
-        Future<List<RoleOptionDto>> future = pool.withConnection(connection -> connection.query(query.getSQL()).execute().map(rows -> rows.stream().map(row -> new RoleOptionDto(row.getLong(0), row.getString(1))).toList()));
+        Future<List<AdminRoleOptionDto>> future = pool.withConnection(connection -> connection.query(query.getSQL()).execute().map(rows -> rows.stream().map(row -> new AdminRoleOptionDto(row.getLong(0), row.getString(1))).toList()));
         return ReactiveUtil.toMono(future);
     }
 
@@ -74,8 +74,8 @@ public class AdminRoleService {
      * @param pageQueryDto 分页查询参数
      * @return 分页查询结果
      */
-    public Mono<PageResultDto<AdminRoleDto>> query(PageQueryDto<@Nullable RoleQueryDto> pageQueryDto) {
-        RoleQueryDto queryDto = pageQueryDto.getQuery();
+    public Mono<PageResultDto<AdminRoleDto>> query(PageQueryDto<@Nullable AdminRoleQueryDto> pageQueryDto) {
+        AdminRoleQueryDto queryDto = pageQueryDto.getQuery();
 
         Select<?> pageQuery = dslContext.select(
                         Tables.ADMIN_ROLE.ID,
@@ -188,7 +188,7 @@ public class AdminRoleService {
      * @param operator  操作员
      * @return 修改后的角色信息
      */
-    public Mono<AdminRoleDto> update(RoleUpdateDto updateDto, AdminAuthDetails operator) {
+    public Mono<AdminRoleDto> update(AdminRoleUpdateDto updateDto, AdminAuthDetails operator) {
         if (DEFAULT_ROLE_ID.equals(updateDto.getId())) {
             return Mono.error(new StandardStatusException("默认角色禁止修改"));
         }
@@ -282,7 +282,7 @@ public class AdminRoleService {
      * @param id 角色ID
      * @return 角色菜单权限树
      */
-    public Mono<List<RoleAuthorityDto>> getAuthorities(Long id) {
+    public Mono<List<AdminRoleAuthorityDtoAdmin>> getAuthorities(Long id) {
         TableAdminMenu m = Tables.ADMIN_MENU.as("m");
         TableAdminRoleAuthority a = Tables.ADMIN_ROLE_AUTHORITY.as("a");
 
@@ -296,9 +296,9 @@ public class AdminRoleService {
                 .leftJoin(a).on(a.MENU_ID.eq(m.ID)).and(a.ROLE_ID.eq(id))
                 .where(m.STATE.eq(State.enable.value()))
                 .orderBy(m.ID.asc());
-        Future<List<RoleAuthorityDto>> future = pool.withConnection(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+        Future<List<AdminRoleAuthorityDtoAdmin>> future = pool.withConnection(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                 .map(rows -> {
-                    Map<Long, RoleAuthorityDto> authorityMap = new HashMap<>();
+                    Map<Long, AdminRoleAuthorityDtoAdmin> authorityMap = new HashMap<>();
                     for (Row row : rows) {
                         AdminMenu menu = new AdminMenu();
                         menu.setId(row.getLong(0));
@@ -306,22 +306,22 @@ public class AdminRoleService {
                         menu.setName(row.getString(2));
                         menu.setSortBy(row.getInteger(3));
 
-                        authorityMap.put(menu.getId(), new RoleAuthorityDto(menu, row.getLong(4) != null));
+                        authorityMap.put(menu.getId(), new AdminRoleAuthorityDtoAdmin(menu, row.getLong(4) != null));
                     }
 
-                    List<RoleAuthorityDto> authorityList = new ArrayList<>();
+                    List<AdminRoleAuthorityDtoAdmin> authorityList = new ArrayList<>();
                     authorityMap.forEach((_, authority) -> {
                         if (authority.getParentId() == 0L) {
                             authorityList.add(authority);
                         } else {
-                            RoleAuthorityDto parent = authorityMap.get(authority.getParentId());
+                            AdminRoleAuthorityDtoAdmin parent = authorityMap.get(authority.getParentId());
                             if (parent != null) {
                                 parent.getSubMenus().add(authority);
                             }
                         }
                     });
 
-                    MenuSortableDto.sort(authorityList);
+                    AdminMenuSortableDto.sort(authorityList);
                     return authorityList;
                 })
         );
@@ -333,7 +333,7 @@ public class AdminRoleService {
      *
      * @param setDto 角色菜单权限参数
      */
-    public Mono<Void> setAuthorities(RoleAuthoritySetDto setDto, AdminAuthDetails operator) {
+    public Mono<Void> setAuthorities(AdminRoleAuthoritySetDto setDto, AdminAuthDetails operator) {
         Future<Void> future = pool.withTransaction(connection -> adminRoleRepository.getForUpdate(connection, setDto.getRoleId())
                 .compose(role -> {
                     if (role == null) {
@@ -373,26 +373,26 @@ public class AdminRoleService {
      * @param idsDto 角色ID列表
      * @return 菜单权限比较列表
      */
-    public Mono<RoleAuthorityComparisonListDto> compareAuthorities(MultipleIdDto idsDto) {
+    public Mono<AdminRoleAuthorityComparisonListDto> compareAuthorities(MultipleIdDto idsDto) {
         Set<Long> roleIds = new LinkedHashSet<>(idsDto.getIds());
 
         Select<?> roleQuery = dslContext.select(Tables.ADMIN_ROLE.ID, Tables.ADMIN_ROLE.NAME).from(Tables.ADMIN_ROLE).where(Tables.ADMIN_ROLE.ID.in(roleIds));
         Select<?> authorityQuery = dslContext.select(Tables.ADMIN_ROLE_AUTHORITY.ID, Tables.ADMIN_ROLE_AUTHORITY.ROLE_ID, Tables.ADMIN_ROLE_AUTHORITY.MENU_ID).from(Tables.ADMIN_ROLE_AUTHORITY).where(Tables.ADMIN_ROLE_AUTHORITY.ROLE_ID.in(roleIds));
         Select<?> menuQuery = dslContext.select(Tables.ADMIN_MENU.ID, Tables.ADMIN_MENU.PARENT_ID, Tables.ADMIN_MENU.TYPE, Tables.ADMIN_MENU.NAME, Tables.ADMIN_MENU.ICON, Tables.ADMIN_MENU.SORT_BY).from(Tables.ADMIN_MENU).where(Tables.ADMIN_MENU.STATE.eq(State.enable.value())).orderBy(Tables.ADMIN_MENU.ID.asc());
-        Future<RoleAuthorityComparisonListDto> future = pool.withConnection(connection -> {
+        Future<AdminRoleAuthorityComparisonListDto> future = pool.withConnection(connection -> {
             Future<RowSet<Row>> roleQueryFuture = connection.preparedQuery(roleQuery.getSQL()).execute(Tuple.tuple(roleQuery.getBindValues()));
             Future<RowSet<Row>> authorityQueryFuture = connection.preparedQuery(authorityQuery.getSQL()).execute(Tuple.tuple(authorityQuery.getBindValues()));
             Future<RowSet<Row>> menuQueryFuture = connection.preparedQuery(menuQuery.getSQL()).execute(Tuple.tuple(menuQuery.getBindValues()));
 
             return Future.all(roleQueryFuture, authorityQueryFuture, menuQueryFuture).map(compositeFuture -> {
                 RowSet<Row> roleRows = compositeFuture.resultAt(0);
-                List<RoleOptionDto> roleList = new ArrayList<>();
+                List<AdminRoleOptionDto> roleList = new ArrayList<>();
                 for (Row row : roleRows) {
                     AdminRole role = new AdminRole();
                     role.setId(row.getLong(0));
                     role.setName(row.getString(1));
 
-                    roleList.add(new RoleOptionDto(role));
+                    roleList.add(new AdminRoleOptionDto(role));
                 }
 
                 RowSet<Row> authorityRows = compositeFuture.resultAt(1);
@@ -406,7 +406,7 @@ public class AdminRoleService {
                     menuRolesMap.computeIfAbsent(authority.getMenuId(), _ -> new HashSet<>()).add(authority.getRoleId());
                 }
 
-                Map<Long, RoleAuthorityComparisonDto> comparisonMap = new HashMap<>();
+                Map<Long, AdminRoleAuthorityComparisonDtoAdmin> comparisonMap = new HashMap<>();
                 RowSet<Row> menuRows = compositeFuture.resultAt(2);
                 for (Row row : menuRows) {
                     AdminMenu menu = new AdminMenu();
@@ -419,24 +419,24 @@ public class AdminRoleService {
 
                     Set<Long> menuRoles = menuRolesMap.get(menu.getId());
 
-                    comparisonMap.put(menu.getId(), new RoleAuthorityComparisonDto(menu, menuRoles != null && menuRoles.size() != roleIds.size(), menuRoles));
+                    comparisonMap.put(menu.getId(), new AdminRoleAuthorityComparisonDtoAdmin(menu, menuRoles != null && menuRoles.size() != roleIds.size(), menuRoles));
                 }
 
-                List<RoleAuthorityComparisonDto> comparisonList = new ArrayList<>();
+                List<AdminRoleAuthorityComparisonDtoAdmin> comparisonList = new ArrayList<>();
                 comparisonMap.forEach((_, comparison) -> {
                     if (comparison.getParentId() == 0L) {
                         comparisonList.add(comparison);
                     } else {
-                        RoleAuthorityComparisonDto parent = comparisonMap.get(comparison.getParentId());
+                        AdminRoleAuthorityComparisonDtoAdmin parent = comparisonMap.get(comparison.getParentId());
                         if (parent != null) {
                             parent.getSubMenus().add(comparison);
                         }
                     }
                 });
 
-                roleList.sort(Comparator.comparingLong(RoleOptionDto::getId).reversed());
-                MenuSortableDto.sort(comparisonList);
-                return new RoleAuthorityComparisonListDto(roleList, comparisonList);
+                roleList.sort(Comparator.comparingLong(AdminRoleOptionDto::getId).reversed());
+                AdminMenuSortableDto.sort(comparisonList);
+                return new AdminRoleAuthorityComparisonListDto(roleList, comparisonList);
             });
         });
         return ReactiveUtil.toMono(future);
@@ -448,14 +448,14 @@ public class AdminRoleService {
      * @param authDetails 管理员认证信息
      * @return 角色菜单列表
      */
-    public Mono<List<AdminRoleMenuDto>> roleMenus(AdminAuthDetails authDetails) {
+    public Mono<List<AdminRoleAdminMenuDto>> roleMenus(AdminAuthDetails authDetails) {
         TableAdminRoleAuthority a = Tables.ADMIN_ROLE_AUTHORITY.as("a");
         TableAdminMenu m = Tables.ADMIN_MENU.as("m");
 
         Select<?> query = dslContext.select(a.ID, a.ROLE_ID, a.MENU_ID, m.ID, m.PARENT_ID, m.TYPE, m.NAME, m.ICON, m.PATH, m.SORT_BY).from(a).innerJoin(m).on(m.ID.eq(a.MENU_ID)).where(a.ROLE_ID.eq(authDetails.getRoleId())).and(m.STATE.eq(State.enable.value()));
-        Future<List<AdminRoleMenuDto>> future = pool.withConnection(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+        Future<List<AdminRoleAdminMenuDto>> future = pool.withConnection(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
                 .map(rows -> {
-                    Map<Long, AdminRoleMenuDto> menuMap = new HashMap<>(rows.size());
+                    Map<Long, AdminRoleAdminMenuDto> menuMap = new HashMap<>(rows.size());
                     for (Row row : rows) {
                         AdminRoleAuthority authority = new AdminRoleAuthority();
                         authority.setId(row.getLong(0));
@@ -471,22 +471,22 @@ public class AdminRoleService {
                         authority.getMenu().setPath(row.getString(8));
                         authority.getMenu().setSortBy(row.getInteger(9));
 
-                        menuMap.put(authority.getMenu().getId(), new AdminRoleMenuDto(authority.getMenu()));
+                        menuMap.put(authority.getMenu().getId(), new AdminRoleAdminMenuDto(authority.getMenu()));
                     }
 
-                    List<AdminRoleMenuDto> menus = new ArrayList<>();
+                    List<AdminRoleAdminMenuDto> menus = new ArrayList<>();
                     menuMap.forEach((_, menu) -> {
                         if (menu.getParentId() == 0L) {
                             menus.add(menu);
                         } else {
-                            AdminRoleMenuDto parent = menuMap.get(menu.getParentId());
+                            AdminRoleAdminMenuDto parent = menuMap.get(menu.getParentId());
                             if (parent != null) {
                                 parent.getSubMenus().add(menu);
                             }
                         }
                     });
 
-                    MenuSortableDto.sort(menus);
+                    AdminMenuSortableDto.sort(menus);
                     return menus;
                 })
         );

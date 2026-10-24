@@ -28,8 +28,8 @@ import {ElMessage, ElMessageBox} from "element-plus";
 
 import {closeLoading, openLoading} from "@/util/loading.ts";
 
-import type {RoleAuthorityDto} from '@/api/admin';
-import adminApi from '@/api/admin';
+import type {RoleAuthorityDto} from '@/api/admin.ts';
+import adminApi from '@/api/admin.ts';
 
 interface Props {
     modelValue: boolean;

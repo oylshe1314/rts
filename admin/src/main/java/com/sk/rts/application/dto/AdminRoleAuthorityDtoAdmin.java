@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "权限树")
-public class RoleAuthorityDto extends MenuSortableDto<RoleAuthorityDto> {
+public class AdminRoleAuthorityDtoAdmin extends AdminMenuSortableDto<AdminRoleAuthorityDtoAdmin> {
 
     @Schema(description = "上级菜单ID")
     private final Long parentId;
@@ -17,7 +17,7 @@ public class RoleAuthorityDto extends MenuSortableDto<RoleAuthorityDto> {
     @Schema(description = "是否选中")
     private final Boolean checked;
 
-    public RoleAuthorityDto(AdminMenu menu, Boolean checked) {
+    public AdminRoleAuthorityDtoAdmin(AdminMenu menu, Boolean checked) {
         super(menu.getId(), menu.getSortBy());
         this.parentId = menu.getParentId();
         this.name = menu.getName();

@@ -67,7 +67,7 @@ public class AdminUserService {
      * @param username 用户名
      * @return 管理员选择列表
      */
-    public Mono<List<AdminOptionDto>> adminSelectList(@Nullable String username) {
+    public Mono<List<AdminUserOptionDto>> adminSelectList(@Nullable String username) {
         Select<?> query = dslContext.select(
                         Tables.ADMIN_USER.ID,
                         Tables.ADMIN_USER.ROLE_ID,
@@ -86,7 +86,7 @@ public class AdminUserService {
 
         String sql = query.getSQL();
         List<Object> args = query.getBindValues();
-        Future<List<AdminOptionDto>> future = pool.withConnection(connection -> connection.preparedQuery(sql).execute(Tuple.tuple(args)).map(rows -> rows.stream().map(row -> {
+        Future<List<AdminUserOptionDto>> future = pool.withConnection(connection -> connection.preparedQuery(sql).execute(Tuple.tuple(args)).map(rows -> rows.stream().map(row -> {
                     AdminUser admin = new AdminUser();
                     admin.setId(row.getLong(0));
                     admin.setRoleId(row.getLong(1));
@@ -98,7 +98,7 @@ public class AdminUserService {
                     admin.getRole().setId(row.getLong(5));
                     admin.getRole().setName(row.getString(6));
 
-                    return new AdminOptionDto(admin);
+                    return new AdminUserOptionDto(admin);
                 }).toList()
         ));
         return ReactiveUtil.toMono(future);
@@ -110,8 +110,8 @@ public class AdminUserService {
      * @param pageQueryDto 分页查询参数
      * @return 分页查询结果
      */
-    public Mono<PageResultDto<AdminUserDto>> query(PageQueryDto<@Nullable AdminQueryDto> pageQueryDto) {
-        AdminQueryDto queryDto = pageQueryDto.getQuery();
+    public Mono<PageResultDto<AdminUserDto>> query(PageQueryDto<@Nullable AdminUserQueryDto> pageQueryDto) {
+        AdminUserQueryDto queryDto = pageQueryDto.getQuery();
 
         TableAdminUser u = Tables.ADMIN_USER.as("u");
         TableAdminRole r = Tables.ADMIN_ROLE.as("r");
@@ -239,7 +239,7 @@ public class AdminUserService {
      * @return 新添加的管理员信息
      * @throws StandardStatusException 影响状态错误异常
      */
-    public Mono<AdminUserDto> add(AdminAddDto addDto, AdminAuthDetails operator) {
+    public Mono<AdminUserDto> add(AdminUserAddDto addDto, AdminAuthDetails operator) {
         Future<AdminUserDto> future = pool.withTransaction(connection -> adminRoleRepository.getForUpdate(connection, addDto.getRoleId())
                 .flatMap(role -> {
                     if (role == null) {
@@ -280,7 +280,7 @@ public class AdminUserService {
      * @param operator  操作员
      * @return 修改后的管理信息
      */
-    public Mono<AdminUserDto> update(AdminUpdateDto updateDto, AdminAuthDetails operator) {
+    public Mono<AdminUserDto> update(AdminUserUpdateDto updateDto, AdminAuthDetails operator) {
         if (DEFAULT_ADMIN_ID.equals(updateDto.getId())) {
             return Mono.error(new StandardStatusException("默认管理员禁止修改"));
         }
