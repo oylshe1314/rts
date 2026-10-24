@@ -4,10 +4,11 @@ import com.sk.rts.application.dto.base.StatefulDto;
 import com.sk.rts.application.entity.AdminUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 @Schema(description = "管理员")
-public class AdminDto extends StatefulDto {
+public class AdminUserDto extends StatefulDto {
 
     @Schema(description = "角色ID")
     private final Long roleId;
@@ -30,7 +31,11 @@ public class AdminDto extends StatefulDto {
     @Schema(description = "邮箱")
     private final String phone;
 
-    public AdminDto(AdminUser admin) {
+    @Setter
+    @Schema(description = "是否已登录")
+    private Boolean loggedIn;
+
+    public AdminUserDto(AdminUser admin) {
         super(admin.getId(), admin.getRemark(), admin.getUpdateBy(), admin.getUpdateTime(), admin.getState());
         this.roleId = admin.getRoleId();
         this.roleName = admin.getRole().getName();

@@ -7,11 +7,10 @@ import com.sk.rts.application.validation.NullOrNotBlank;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
-import org.springframework.format.annotation.DateTimeFormat;
 
 @Getter
 @Schema(description = "操作记录查询")
-public class OperationRecordQueryDto {
+public class AdminOperationRecordQueryDto {
 
     @Positive
     @Schema(description = "操作人ID")
@@ -30,10 +29,10 @@ public class OperationRecordQueryDto {
     private final String endTime;
 
     @JsonCreator
-    public OperationRecordQueryDto(@JsonProperty("operatorId") Long operatorId,
-                                   @JsonProperty("operation") String operation,
-                                   @JsonProperty("beginTime") String beginTime,
-                                   @JsonProperty("endTime") String endTime) {
+    public AdminOperationRecordQueryDto(@JsonProperty("operatorId") Long operatorId,
+                                        @JsonProperty("operation") String operation,
+                                        @JsonProperty("beginTime") String beginTime,
+                                        @JsonProperty("endTime") String endTime) {
         this.operatorId = operatorId;
         this.operation = operation;
         this.beginTime = beginTime;

@@ -5,7 +5,7 @@ import com.sk.rts.application.auth.AdminAuthToken;
 import com.sk.rts.application.dto.*;
 import com.sk.rts.application.service.AdminMenuService;
 import com.sk.rts.application.service.AdminRoleService;
-import com.sk.rts.application.service.AdminService;
+import com.sk.rts.application.service.AdminUserService;
 import com.sk.rts.application.validation.Integers;
 import com.sk.rts.application.validation.NullOrNotBlank;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,9 +33,9 @@ import java.util.Collection;
 @Tag(name = "公共", description = "公共接口")
 public class CommonController {
 
-    private final AdminMenuService menuService;
-    private final AdminRoleService roleService;
-    private final AdminService adminService;
+    private final AdminMenuService adminMenuService;
+    private final AdminRoleService adminRoleService;
+    private final AdminUserService adminUserService;
 
     @Operation(summary = "管理员详情")
     @RequestMapping(value = "/admin/details", method = RequestMethod.GET)
@@ -47,7 +47,7 @@ public class CommonController {
     @Operation(summary = "角色菜单")
     @RequestMapping(value = "/role/menus", method = RequestMethod.GET)
     public Mono<ResponseDto<Collection<AdminRoleMenuDto>>> roleMenus(AdminAuthToken authToken) {
-        return roleService.roleMenus((AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
+        return adminRoleService.roleMenus((AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
     }
 
     @Operation(summary = "菜单选择列表", parameters = {
@@ -55,13 +55,13 @@ public class CommonController {
     })
     @RequestMapping(value = "/options/menus", method = RequestMethod.GET)
     public Mono<ResponseDto<Collection<MenuOptionDto>>> selectMenus(@NotNull @Integers({1, 2}) Integer type) {
-        return menuService.menuSelectList(type).map(ResponseDto::success);
+        return adminMenuService.menuSelectList(type).map(ResponseDto::success);
     }
 
     @Operation(summary = "角色选择列表")
     @RequestMapping(value = "/options/roles", method = RequestMethod.GET)
     public Mono<ResponseDto<Collection<RoleOptionDto>>> selectRoles() {
-        return roleService.roleSelectList().map(ResponseDto::success);
+        return adminRoleService.roleSelectList().map(ResponseDto::success);
     }
 
     @Operation(summary = "管理员选择列表", parameters = {
@@ -69,6 +69,6 @@ public class CommonController {
     })
     @RequestMapping(value = "/options/admins", method = RequestMethod.GET)
     public Mono<ResponseDto<Collection<AdminOptionDto>>> selectRoles(@RequestParam(required = false) @NullOrNotBlank String username) {
-        return adminService.adminSelectList(username).map(ResponseDto::success);
+        return adminUserService.adminSelectList(username).map(ResponseDto::success);
     }
 }

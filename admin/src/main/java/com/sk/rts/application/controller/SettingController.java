@@ -2,8 +2,8 @@ package com.sk.rts.application.controller;
 
 import com.sk.rts.application.auth.AdminAuthToken;
 import com.sk.rts.application.auth.AdminAuthDetails;
-import com.sk.rts.application.dto.ChangeDetailsDto;
-import com.sk.rts.application.dto.ChangePasswordDto;
+import com.sk.rts.application.dto.DetailsChangeDto;
+import com.sk.rts.application.dto.PasswordChangeDto;
 import com.sk.rts.application.dto.ResponseDto;
 import com.sk.rts.application.service.SettingService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,13 +32,13 @@ public class SettingController {
 
     @Operation(summary = "详细信息修改")
     @RequestMapping(value = "/details/change", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> changeDetails(@RequestBody @Valid Mono<ChangeDetailsDto> changeDtoMono, AdminAuthToken authToken) throws Exception {
-        return settingService.changeDetails(changeDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    public Mono<ResponseDto<?>> changeDetails(@RequestBody @Valid DetailsChangeDto changeDto, AdminAuthToken authToken) {
+        return settingService.changeDetails(changeDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 
     @Operation(summary = "密码修改")
     @RequestMapping(value = "/password/change", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> changePassword(@RequestBody @Valid Mono<ChangePasswordDto> changeDtoMono, AdminAuthToken authToken) throws Exception {
-        return settingService.changePassword(changeDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    public Mono<ResponseDto<?>> changePassword(@RequestBody @Valid PasswordChangeDto changeDto, AdminAuthToken authToken) {
+        return settingService.changePassword(changeDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 }

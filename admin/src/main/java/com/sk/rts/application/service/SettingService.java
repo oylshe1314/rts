@@ -2,12 +2,15 @@ package com.sk.rts.application.service;
 
 import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.auth.AdminAuthUtil;
-import com.sk.rts.application.dto.ChangeDetailsDto;
-import com.sk.rts.application.dto.ChangePasswordDto;
+import com.sk.rts.application.dto.PasswordChangeDto;
+import com.sk.rts.application.dto.DetailsChangeDto;
 import com.sk.rts.application.entity.enums.Operation;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
+import com.sk.rts.application.jooq.Tables;
 import com.sk.rts.application.repository.AdminOperationRecordRepository;
+import com.sk.rts.application.tools.UpdateRemarkBuilder;
+import com.sk.rts.application.util.ReactiveUtil;
 import io.vertx.core.Future;
 import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
@@ -56,87 +59,80 @@ public class SettingService {
     /**
      * 管理员信息修改
      *
-     * @param changeDtoMono 信息修改参数
-     * @param authDetails   管理员信息
+     * @param changeDto   信息修改参数
+     * @param authDetails 管理员信息
      */
-    public Mono<Void> changeDetails(Mono<ChangeDetailsDto> changeDtoMono, AdminAuthDetails authDetails) {
-        return changeDtoMono.flatMap(changeDto -> {
-            Map<Field<?>, Object> values = new HashMap<>();
-            List<Runnable> runs = new ArrayList<>();
-            if (changeDto.getPhone() != null) {
-                values.put(Tables.ADMIN_USER.PHONE, changeDto.getPhone());
-                runs.add(() -> authDetails.setPhone(changeDto.getPhone()));
-            }
+    public Mono<Void> changeDetails(DetailsChangeDto changeDto, AdminAuthDetails authDetails) {
+        List<Runnable> runs = new ArrayList<>();
+        Map<Field<?>, Object> values = new HashMap<>();
+        UpdateRemarkBuilder remarkBuilder = new UpdateRemarkBuilder();
+        if (changeDto.getPhone() != null) {
+            remarkBuilder.add("phone", authDetails.getPhone(), changeDto.getPhone());
+            values.put(Tables.ADMIN_USER.PHONE, changeDto.getPhone());
+            runs.add(() -> authDetails.setPhone(changeDto.getPhone()));
+        }
 
-            if (changeDto.getEmail() != null) {
-                values.put(Tables.ADMIN_USER.EMAIL, changeDto.getEmail());
-                runs.add(() -> authDetails.setEmail(changeDto.getEmail()));
-            }
+        if (changeDto.getEmail() != null) {
+            remarkBuilder.add("email", authDetails.getEmail(), changeDto.getEmail());
+            values.put(Tables.ADMIN_USER.EMAIL, changeDto.getEmail());
+            runs.add(() -> authDetails.setEmail(changeDto.getEmail()));
+        }
 
-            if (changeDto.getNickname() != null) {
-                values.put(Tables.ADMIN_USER.NICKNAME, changeDto.getNickname());
-                runs.add(() -> authDetails.setNickname(changeDto.getNickname()));
-            }
+        if (changeDto.getNickname() != null) {
+            remarkBuilder.add("nickname", authDetails.getNickname(), changeDto.getNickname());
+            values.put(Tables.ADMIN_USER.NICKNAME, changeDto.getNickname());
+            runs.add(() -> authDetails.setNickname(changeDto.getNickname()));
+        }
 
-            if (changeDto.getAvatar() != null) {
-                values.put(Tables.ADMIN_USER.AVATAR, changeDto.getAvatar());
-                runs.add(() -> authDetails.setAvatar(changeDto.getAvatar()));
-            }
+        if (changeDto.getAvatar() != null) {
+            remarkBuilder.add("avatar", authDetails.getAvatar(), changeDto.getAvatar());
+            values.put(Tables.ADMIN_USER.AVATAR, changeDto.getAvatar());
+            runs.add(() -> authDetails.setAvatar(changeDto.getAvatar()));
+        }
 
-            if (values.isEmpty()) {
-                return Mono.error(new StandardStatusException(ResponseStatus.parameter_error));
-            }
+        if (values.isEmpty()) {
+            return Mono.error(new StandardStatusException(ResponseStatus.parameter_error));
+        }
 
-            UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN_USER).set(values).where(Tables.ADMIN_USER.ID.eq(authDetails.getAdminId()));
-            return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
-                    .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                    .compose(_ -> operationRecordRepository.add(connection, Operation.changeDetails, String.valueOf(authDetails.getAdminId()), "", authDetails))
-                    .compose(_ -> {
-                        runs.forEach(Runnable::run);
-                        return updateCache(authDetails);
-                    })
-                    .compose(_ -> connection.transaction().commit())
-                    .onComplete(_ -> connection.close())
-                    .onSuccess(sink::success)
-                    .onFailure(sink::error)
-            ));
-        });
+        UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN_USER).set(values).where(Tables.ADMIN_USER.ID.eq(authDetails.getAdminId()));
+        Future<Void> future = pool.withTransaction(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+                .compose(_ -> operationRecordRepository.add(connection, Operation.changeDetails, String.valueOf(authDetails.getAdminId()), "admin_user", remarkBuilder.build(), authDetails))
+                .compose(_ -> {
+                    runs.forEach(Runnable::run);
+                    return updateCache(authDetails);
+                })
+        );
+        return ReactiveUtil.toMono(future);
     }
 
     /**
      * 管理员修改密码
      *
-     * @param changeDtoMono 密码修改参数
-     * @param authDetails   管理员信息
+     * @param changeDto   密码修改参数
+     * @param authDetails 管理员信息
      * @throws StandardStatusException 影响状态错误异常
      */
-    public Mono<Void> changePassword(Mono<ChangePasswordDto> changeDtoMono, AdminAuthDetails authDetails) {
-        return changeDtoMono.flatMap(changeDto -> {
-                    if (!passwordEncoder.matches(changeDto.getOldPassword(), authDetails.getPassword())) {
-                        return Mono.error(new StandardStatusException("旧密码错误"));
-                    }
+    public Mono<Void> changePassword(PasswordChangeDto changeDto, AdminAuthDetails authDetails) {
+        if (!passwordEncoder.matches(changeDto.getOldPassword(), authDetails.getPassword())) {
+            return Mono.error(new StandardStatusException("旧密码错误"));
+        }
 
-                    String newPassword = passwordEncoder.encode(changeDto.getNewPassword());
-                    if (newPassword == null) {
-                        return Mono.error(new StandardStatusException(ResponseStatus.internal_error));
-                    }
+        String newPassword = passwordEncoder.encode(changeDto.getNewPassword());
+        if (newPassword == null) {
+            return Mono.error(new StandardStatusException(ResponseStatus.internal_error));
+        }
 
-                    return Mono.just(newPassword);
+        UpdateRemarkBuilder remarkBuilder = new UpdateRemarkBuilder();
+        remarkBuilder.add("password", authDetails.getPassword(), newPassword);
+
+        UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN_USER).set(Tables.ADMIN_USER.PASSWORD, newPassword).where(Tables.ADMIN_USER.ID.eq(authDetails.getAdminId()));
+        Future<Void> future = pool.withTransaction(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+                .compose(_ -> operationRecordRepository.add(connection, Operation.changePassword, String.valueOf(authDetails.getAdminId()), "admin_user", remarkBuilder.build(), authDetails))
+                .compose(_ -> {
+                    authDetails.setPassword(newPassword);
+                    return updateCache(authDetails);
                 })
-                .flatMap(newPassword -> {
-                    UpdateConditionStep<?> query = dslContext.update(Tables.ADMIN_USER).set(Tables.ADMIN_USER.PASSWORD, newPassword).where(Tables.ADMIN_USER.ID.eq(authDetails.getAdminId()));
-                    return Mono.create(sink -> pool.getConnection().flatMap(connection -> connection.begin()
-                            .compose(_ -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())))
-                            .compose(_ -> operationRecordRepository.add(connection, Operation.changePassword, String.valueOf(authDetails.getAdminId()), "", authDetails))
-                            .compose(_ -> {
-                                authDetails.setPassword(newPassword);
-                                return updateCache(authDetails);
-                            })
-                            .compose(_ -> connection.transaction().commit())
-                            .onComplete(_ -> connection.close())
-                            .onSuccess(sink::success)
-                            .onFailure(sink::error)
-                    ));
-                });
+        );
+        return ReactiveUtil.toMono(future);
     }
 }

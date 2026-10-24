@@ -8,7 +8,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "修改密码")
-public class ChangePasswordDto {
+public class PasswordChangeDto {
 
     @NotBlank
     @Schema(description = "旧密码")
@@ -19,7 +19,7 @@ public class ChangePasswordDto {
     private final String newPassword;
 
     @JsonCreator
-    public ChangePasswordDto(@JsonProperty("oldPassword") String oldPassword, @JsonProperty("newPassword") String newPassword) {
+    public PasswordChangeDto(@JsonProperty("oldPassword") String oldPassword, @JsonProperty("newPassword") String newPassword) {
         this.oldPassword = oldPassword;
         this.newPassword = newPassword;
     }

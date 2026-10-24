@@ -15,7 +15,8 @@ import com.sk.rts.application.jooq.tables.TableAdminMenu;
 import com.sk.rts.application.jooq.tables.TableAdminRoleAuthority;
 import com.sk.rts.application.repository.AdminOperationRecordRepository;
 import com.sk.rts.application.repository.AdminUserRepository;
-import com.sk.rts.application.repository.RoleRepository;
+import com.sk.rts.application.repository.AdminRoleRepository;
+import com.sk.rts.application.tools.UpdateRemarkBuilder;
 import com.sk.rts.application.util.ReactiveUtil;
 import io.vertx.core.Future;
 import io.vertx.sqlclient.Pool;
@@ -52,9 +53,9 @@ public class AdminRoleService {
     private final Pool pool;
     private final DSLContext dslContext;
 
-    private final RoleRepository roleRepository;
-    private final AdminUserRepository adminRepository;
-    private final AdminOperationRecordRepository operationRecordRepository;
+    private final AdminRoleRepository adminRoleRepository;
+    private final AdminUserRepository adminUserRepository;
+    private final AdminOperationRecordRepository adminOperationRecordRepository;
 
     /**
      * 角色选择列表，适用于前端下拉选择列表
@@ -169,10 +170,10 @@ public class AdminRoleService {
         role.setState(State.enable.value());
         role.initOperation(addDto.getRemark(), operator.getUsername());
 
-        Future<AdminRoleDto> future = pool.withTransaction(connection -> roleRepository.insert(connection, role)
+        Future<AdminRoleDto> future = pool.withTransaction(connection -> adminRoleRepository.insert(connection, role)
                 .compose(id -> {
                     role.setId(id);
-                    return operationRecordRepository.add(connection, Operation.add, role.getId().toString(), "role", operator);
+                    return adminOperationRecordRepository.add(connection, Operation.add, role.getId().toString(), "admin_role", "", operator);
                 })
                 .map(_ -> new AdminRoleDto(role))
                 .recover(this::recoverUniqueIndexException)
@@ -193,7 +194,8 @@ public class AdminRoleService {
         }
 
         Map<Field<?>, Object> values = new HashMap<>();
-        Future<AdminRoleDto> future = pool.withTransaction(connection -> roleRepository.getForUpdate(connection, updateDto.getId())
+        UpdateRemarkBuilder remarkBuilder = new UpdateRemarkBuilder();
+        Future<AdminRoleDto> future = pool.withTransaction(connection -> adminRoleRepository.getForUpdate(connection, updateDto.getId())
                 .flatMap(menu -> {
                     if (menu == null) {
                         return Future.failedFuture(new StandardStatusException("角色不存在"));
@@ -202,11 +204,13 @@ public class AdminRoleService {
                 })
                 .compose(role -> {
                     if (updateDto.getName() != null && !updateDto.getName().equals(role.getName())) {
+                        remarkBuilder.add("name", role.getName(), updateDto.getName());
                         role.setName(updateDto.getName());
                         values.put(Tables.ADMIN_ROLE.NAME, role.getName());
                     }
 
                     if (updateDto.getCode() != null && !updateDto.getCode().equals(role.getCode())) {
+                        remarkBuilder.add("code", role.getCode(), updateDto.getCode());
                         role.setCode(updateDto.getCode());
                         values.put(Tables.ADMIN_ROLE.CODE, role.getCode());
                     }
@@ -218,7 +222,7 @@ public class AdminRoleService {
 
                     Update<?> query = dslContext.update(Tables.ADMIN_ROLE).set(values).where(Tables.ADMIN_ROLE.ID.eq(role.getId()));
                     return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
-                            .compose(_ -> operationRecordRepository.add(connection, Operation.update, role.getId().toString(), "role", operator))
+                            .compose(_ -> adminOperationRecordRepository.add(connection, Operation.update, role.getId().toString(), "admin_role", remarkBuilder.build(), operator))
                             .map(_ -> new AdminRoleDto(role))
                             .recover(this::recoverUniqueIndexException);
                 })
@@ -238,7 +242,7 @@ public class AdminRoleService {
         }
 
         Delete<?> query = dslContext.deleteFrom(Tables.ADMIN_ROLE).where(Tables.ADMIN_ROLE.ID.in(ids));
-        Future<Void> future = pool.withTransaction(connection -> adminRepository.existsByRoleIdIn(connection, ids)
+        Future<Void> future = pool.withTransaction(connection -> adminUserRepository.existsByRoleIdIn(connection, ids)
                 .compose(exists -> {
                     if (exists) {
                         return Future.failedFuture(new StandardStatusException("请先删除角色下的管理员"));
@@ -246,7 +250,7 @@ public class AdminRoleService {
 
                     return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()));
                 })
-                .compose(_ -> operationRecordRepository.add(connection, Operation.delete, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "role", operator))
+                .compose(_ -> adminOperationRecordRepository.add(connection, Operation.delete, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "admin_role", "", operator))
         );
         return ReactiveUtil.toMono(future);
     }
@@ -267,7 +271,7 @@ public class AdminRoleService {
 
         Update<?> query = dslContext.update(Tables.ADMIN_ROLE).set(Tables.ADMIN_ROLE.STATE, state.value()).set(Tables.ADMIN_ROLE.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN_ROLE.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN_ROLE.ID.in(ids));
         Future<Void> future = pool.withConnection(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
-                .compose(_ -> operationRecordRepository.add(connection, Operation.changeState, changeDto.getIds().stream().map(Object::toString).collect(Collectors.joining(",")), "role," + state.name(), operator))
+                .compose(_ -> adminOperationRecordRepository.add(connection, Operation.changeState, changeDto.getIds().stream().map(Object::toString).collect(Collectors.joining(",")), "admin_role", state.name(), operator))
         );
         return ReactiveUtil.toMono(future);
     }
@@ -330,7 +334,7 @@ public class AdminRoleService {
      * @param setDto 角色菜单权限参数
      */
     public Mono<Void> setAuthorities(RoleAuthoritySetDto setDto, AdminAuthDetails operator) {
-        Future<Void> future = pool.withTransaction(connection -> roleRepository.getForUpdate(connection, setDto.getRoleId())
+        Future<Void> future = pool.withTransaction(connection -> adminRoleRepository.getForUpdate(connection, setDto.getRoleId())
                 .compose(role -> {
                     if (role == null) {
                         return Future.failedFuture(new StandardStatusException("角色不存在"));
@@ -357,7 +361,7 @@ public class AdminRoleService {
                     List<Object> insertArgs = insertQuery.getBindValues();
                     return connection.preparedQuery(deleteSql).execute(Tuple.tuple(deleteArgs))
                             .compose(_ -> connection.preparedQuery(insertSql).execute(Tuple.tuple(insertArgs)))
-                            .compose(_ -> operationRecordRepository.add(connection, Operation.setAuthorities, role.getId().toString(), setDto.getMenuIds().stream().map(Object::toString).collect(Collectors.joining(",")), operator));
+                            .compose(_ -> adminOperationRecordRepository.add(connection, Operation.setAuthorities, role.getId().toString(), "admin_role_authority", setDto.getMenuIds().stream().map(Object::toString).collect(Collectors.joining(",")), operator));
                 })
         );
         return ReactiveUtil.toMono(future);

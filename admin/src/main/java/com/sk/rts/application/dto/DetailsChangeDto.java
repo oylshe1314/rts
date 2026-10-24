@@ -7,7 +7,7 @@ import lombok.Getter;
 
 @Getter
 @Schema(description = "详细信息修改")
-public class ChangeDetailsDto {
+public class DetailsChangeDto {
 
     @Schema(description = "手机")
     private final String phone;
@@ -23,7 +23,7 @@ public class ChangeDetailsDto {
     @Schema(description = "头像")
     private final String avatar;
 
-    public ChangeDetailsDto(
+    public DetailsChangeDto(
             @JsonProperty("account") String phone,
             @JsonProperty("email") String email,
             @JsonProperty("nickname") String nickname,

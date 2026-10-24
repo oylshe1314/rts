@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 @Slf4j
 @Repository
 @AllArgsConstructor
-public class RoleRepository {
+public class AdminRoleRepository {
 
     private final DSLContext dslContext;
 

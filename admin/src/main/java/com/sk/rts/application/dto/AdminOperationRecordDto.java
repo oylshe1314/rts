@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 
 @Getter
 @Schema(description = "操作记录")
-public class OperationRecordDto extends BaseDto {
+public class AdminOperationRecordDto extends BaseDto {
 
     @Schema(description = "操作员ID")
     private final Long operatorId;
@@ -32,7 +32,7 @@ public class OperationRecordDto extends BaseDto {
     @Schema(description = "操作时间")
     private final OffsetDateTime operateTime;
 
-    public OperationRecordDto(Long id, Long operatorId, String operator, String operation, String operateArgs, String remark, String ipAddress, OffsetDateTime operateTime) {
+    public AdminOperationRecordDto(Long id, Long operatorId, String operator, String operation, String operateArgs, String remark, String ipAddress, OffsetDateTime operateTime) {
         super(id);
         this.operatorId = operatorId;
         this.operator = operator;
@@ -43,7 +43,7 @@ public class OperationRecordDto extends BaseDto {
         this.operateTime = operateTime;
     }
 
-    public OperationRecordDto(AdminOperationRecord record) {
+    public AdminOperationRecordDto(AdminOperationRecord record) {
         super(record.getId());
         this.operatorId = record.getOperatorId();
         this.operator = record.getOperator();

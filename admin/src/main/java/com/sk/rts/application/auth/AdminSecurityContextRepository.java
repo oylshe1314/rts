@@ -22,6 +22,8 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.List;
+
 @Slf4j
 @Component
 @NullMarked
@@ -45,16 +47,20 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
             AdminAuthDetails authDetails = (AdminAuthDetails) authToken.getPrincipal();
             AdminAccessToken accessToken = (AdminAccessToken) authToken.getCredentials();
 
-            Request request = Request.cmd(Command.MSETEX);
-            request.arg(2);
-            request.arg(AdminAuthUtil.buildTokenKey(accessToken.getSubject()));
-            request.arg(AdminAuthUtil.buildDetailsKey(authDetails.getAdminId()));
-            request.arg(jsonMapper.writeValueAsString(accessToken));
-            request.arg(jsonMapper.writeValueAsString(authDetails));
-            request.arg("EX");
-            request.arg(tokenProperties.getExpiration().toSeconds());
+            Request request1 = Request.cmd(Command.MSETEX);
+            request1.arg(2);
+            request1.arg(AdminAuthUtil.buildTokenKey(accessToken.getSubject()));
+            request1.arg(AdminAuthUtil.buildDetailsKey(authDetails.getAdminId()));
+            request1.arg(jsonMapper.writeValueAsString(accessToken));
+            request1.arg(jsonMapper.writeValueAsString(authDetails));
+            request1.arg("EX");
+            request1.arg(tokenProperties.getExpiration().toSeconds());
 
-            return ReactiveUtil.toMono(redis.send(request).mapEmpty());
+            Request request2 = Request.cmd(Command.SADD);
+            request2.arg(AdminAuthUtil.buildLoggedIdsKey());
+            request2.arg(authDetails.getAdminId());
+
+            return ReactiveUtil.toMono(redis.batch(List.of(request1, request2)).mapEmpty());
         } else {
             return Mono.empty();
         }

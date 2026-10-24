@@ -33,7 +33,7 @@ import reactor.core.publisher.Mono;
 @Tag(name = "menu", description = "菜单相关接口")
 public class AdminMenuController {
 
-    private final AdminMenuService menuService;
+    private final AdminMenuService adminMenuService;
 
     @Operation(summary = "菜单查询", parameters = {
             @Parameter(name = "pageNo", required = true, description = "页码(从1开始)"),
@@ -57,30 +57,30 @@ public class AdminMenuController {
     @Operation(summary = "菜单查询")
     @RequestMapping(value = "/query", method = RequestMethod.POST)
     public Mono<ResponseDto<PageResultDto<AdminMenuDto>>> query(@RequestBody @Valid PageQueryDto<MenuQueryDto> pageQueryDto) {
-        return menuService.query(pageQueryDto).map(ResponseDto::success);
+        return adminMenuService.query(pageQueryDto).map(ResponseDto::success);
     }
 
     @Operation(summary = "菜单添加")
     @RequestMapping(value = "/add", method = RequestMethod.POST)
     public Mono<ResponseDto<AdminMenuDto>> add(@RequestBody @Valid AdminMenuAddDto addDto, AdminAuthToken authToken) {
-        return menuService.add(addDto, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
+        return adminMenuService.add(addDto, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
     }
 
     @Operation(summary = "菜单修改")
     @RequestMapping(value = "/update", method = RequestMethod.POST)
     public Mono<ResponseDto<AdminMenuDto>> update(@RequestBody @Valid AdminMenuUpdateDto updateDto, AdminAuthToken authToken) {
-        return menuService.update(updateDto, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
+        return adminMenuService.update(updateDto, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
     }
 
     @Operation(summary = "菜单删除")
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public Mono<ResponseDto<?>> delete(@RequestBody @Valid MultipleIdDto deleteDto, AdminAuthToken authToken) {
-        return menuService.delete(deleteDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+        return adminMenuService.delete(deleteDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 
     @Operation(summary = "菜单状态修改")
     @RequestMapping(value = "/state/change", method = RequestMethod.POST)
     public Mono<ResponseDto<?>> stateChange(@RequestBody @Valid StateChangeDto changeDto, AdminAuthToken authToken) {
-        return menuService.changeState(changeDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+        return adminMenuService.changeState(changeDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
     }
 }

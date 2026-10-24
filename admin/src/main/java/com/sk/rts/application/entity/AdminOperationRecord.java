@@ -34,6 +34,11 @@ public class AdminOperationRecord extends BaseEntity {
     /**
      * 备注
      */
+    private String details;
+
+    /**
+     * 备注
+     */
     private String remark;
 
     /**
@@ -53,9 +58,10 @@ public class AdminOperationRecord extends BaseEntity {
         record.setOperator(row.getString(2));
         record.setOperation(row.getString(3));
         record.setArguments(row.getString(4));
-        record.setRemark(row.getString(5));
-        record.setIpAddress(row.getString(6));
-        record.setCreateTime(row.getOffsetDateTime(7));
+        record.setDetails(row.getString(5));
+        record.setRemark(row.getString(6));
+        record.setIpAddress(row.getString(7));
+        record.setCreateTime(row.getOffsetDateTime(8));
         return record;
     }
 }

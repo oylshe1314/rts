@@ -24,24 +24,26 @@ public class AdminOperationRecordRepository {
     private final Pool pool;
     private final DSLContext dslContext;
 
-    public Future<Void> add(Operation operation, String arguments, String remark, AdminAuthDetails operator) {
+    public Future<Void> add(Operation operation, String arguments, String details, String remark, AdminAuthDetails operator) {
         AdminOperationRecord record = new AdminOperationRecord();
         record.setOperatorId(operator.getAdminId());
         record.setOperator(operator.getUsername());
         record.setOperation(operation.name());
         record.setArguments(arguments);
+        record.setDetails(details);
         record.setRemark(remark);
         record.setIpAddress(operator.getIpAddress());
         record.setCreateTime(OffsetDateTime.now());
         return pool.getConnection().flatMap(connection -> insert(connection, record)).mapEmpty();
     }
 
-    public Future<Void> add(SqlConnection connection, Operation operation, String arguments, String remark, AdminAuthDetails operator) {
+    public Future<Void> add(SqlConnection connection, Operation operation, String arguments, String details, String remark, AdminAuthDetails operator) {
         AdminOperationRecord record = new AdminOperationRecord();
         record.setOperatorId(operator.getAdminId());
         record.setOperator(operator.getUsername());
         record.setOperation(operation.name());
         record.setArguments(arguments);
+        record.setDetails(details);
         record.setRemark(remark);
         record.setIpAddress(operator.getIpAddress());
         record.setCreateTime(OffsetDateTime.now());
@@ -55,6 +57,7 @@ public class AdminOperationRecordRepository {
                         Tables.ADMIN_OPERATION_RECORD.OPERATOR,
                         Tables.ADMIN_OPERATION_RECORD.OPERATION,
                         Tables.ADMIN_OPERATION_RECORD.ARGUMENTS,
+                        Tables.ADMIN_OPERATION_RECORD.DETAILS,
                         Tables.ADMIN_OPERATION_RECORD.REMARK,
                         Tables.ADMIN_OPERATION_RECORD.IP_ADDRESS,
                         Tables.ADMIN_OPERATION_RECORD.CREATE_TIME
@@ -63,6 +66,7 @@ public class AdminOperationRecordRepository {
                         record.getOperator(),
                         record.getOperation(),
                         record.getArguments(),
+                        record.getDetails(),
                         record.getRemark(),
                         record.getIpAddress(),
                         record.getCreateTime())

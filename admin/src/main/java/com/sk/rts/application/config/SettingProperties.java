@@ -1,5 +1,6 @@
 package com.sk.rts.application.config;
 
+import com.sk.rts.application.strategy.LoginConflictStrategy;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -14,5 +15,5 @@ public class SettingProperties {
     /**
      * 登录冲突策略
      */
-    private String loginConflictStrategy = "com.sk.rts.application.strategy.DenyLoginStrategy";
+    private Class<? extends LoginConflictStrategy> loginConflictStrategy = com.sk.rts.application.strategy.DenyLoginStrategy.class;
 }
