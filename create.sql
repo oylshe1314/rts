@@ -117,7 +117,7 @@ comment on column admin_role.update_time is '修改时间';
 
 -- 插入默认角色，默认ID为1，删除角色时默认角色应不能禁用和删除
 insert into admin_role(id, name, code, state, remark, create_by, update_by)
-values (1, '管理员', 'ADMIN_USER', 1, '默认角色', 'admin', 'admin');
+values (1, '管理员', 'ADMIN', 1, '默认角色', 'admin', 'admin');
 
 -- 恢复role表id序列
 SELECT setval('admin_role_id_seq', (select max(id) from admin_role), true);
@@ -164,7 +164,8 @@ values (1, 1),
        (1, 27),
        (1, 28),
        (1, 29),
-       (1, 30);
+       (1, 30),
+       (1, 31);
 
 
 create table admin_user
@@ -207,7 +208,7 @@ comment on column admin_user.update_time is '修改时间';
 
 --插入默认管理员，默认ID为1，默认管理员应不能禁用和删除， 密码：rts.sk.org
 insert into admin_user(id, role_id, username, password, phone, email, nickname, avatar, state, remark, create_by, update_by)
-values (1, 1, 'admin', '$2b$10$sjE9ZEaCOgMOP2I6FWXCT.b8WjTXQXcJzROJPz6tYCzb1EA6tMfCG', '', '', '管理员', '', 1, '默认管理员', 'admin', 'admin');
+values (1, 1, 'admin', '$2b$10$sjE9ZEaCOgMOP2I6FWXCT.b8WjTXQXcJzROJPz6tYCzb1EA6tMfCG', '', '', '管理员', 'avatar7', 1, '默认管理员', 'admin', 'admin');
 
 -- 恢复admin表id序列
 SELECT setval('admin_user_id_seq', (select max(id) from admin_user), true);

@@ -132,8 +132,8 @@ public class AdminUserController {
 
     @Operation(summary = "管理员添加")
     @RequestMapping(value = "/add", method = RequestMethod.POST)
-    public Mono<ResponseDto<AdminUserDto>> add(@RequestBody @Valid Mono<AdminAddDto> addDtoMono, AdminAuthToken authToken) {
-        return adminUserService.add(addDtoMono, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
+    public Mono<ResponseDto<AdminUserDto>> add(@RequestBody @Valid AdminAddDto addDto, AdminAuthToken authToken) {
+        return adminUserService.add(addDto, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
     }
 
     @Operation(summary = "管理员修改")

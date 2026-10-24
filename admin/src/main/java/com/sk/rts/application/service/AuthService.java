@@ -127,7 +127,7 @@ public class AuthService {
                             .orderBy(Tables.ADMIN_MENU.ID.asc());
                     return connection.preparedQuery(authoritiesQuery.getSQL()).execute(Tuple.tuple(authoritiesQuery.getBindValues()))
                             .map(rows -> rows.stream().map(row -> new ApiPatternAuthority(row.getString(0))).collect(authDetails::getAuthorities, Collection::add, Collection::addAll))
-                            .flatMap(_ -> operationRecordRepository.add(connection, Operation.login, authDetails.getAdminId().toString(), "admin_user", remoteDetails.getIpAddress(), authDetails))
+                            .flatMap(_ -> operationRecordRepository.add(connection, Operation.login, authDetails.getAdminId().toString(), "admin_user", "", authDetails))
                             .map(authDetails);
                 })
         );

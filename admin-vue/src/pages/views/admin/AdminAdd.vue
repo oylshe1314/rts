@@ -148,7 +148,7 @@ function handleSubmit() {
         avatar: formData.avatar,
         remark: formData.remark,
     };
-    ElMessageBox.confirm('确认提交', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+    ElMessageBox.confirm('确认提交？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
         .then(() => {
             adminApi.add(addDto)
                 .then(() => {

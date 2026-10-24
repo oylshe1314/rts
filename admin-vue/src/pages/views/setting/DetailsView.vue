@@ -106,7 +106,7 @@ function handleSubmit() {
         changeDto.avatar = formData.avatar;
     }
 
-    ElMessageBox.confirm('确认提交修改', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'})
+    ElMessageBox.confirm('确认提交修改？', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'})
         .then(() => {
             openLoading('#detail', '正在提交，请稍候...');
             settingApi.changeDetail(changeDto).then(() => {

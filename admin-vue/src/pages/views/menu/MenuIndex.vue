@@ -220,7 +220,7 @@ function handleCommand(command: string, row: MenuDto | null) {
             changeState(row!, 1);
             break;
         case 'disable':
-            ElMessageBox.confirm('确认禁用', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+            ElMessageBox.confirm('确认禁用？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
                 .then(() => {
                     changeState(row!, 0);
                 })
@@ -228,7 +228,7 @@ function handleCommand(command: string, row: MenuDto | null) {
                 });
             break;
         case 'delete':
-            ElMessageBox.confirm('确认删除', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+            ElMessageBox.confirm('确认删除？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
                 .then(() => {
                     menuApi.delete([row!.id])
                         .then(() => {
@@ -242,7 +242,7 @@ function handleCommand(command: string, row: MenuDto | null) {
                 });
             break;
         case 'deleteSelection':
-            ElMessageBox.confirm('确认删除', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+            ElMessageBox.confirm('确认删除？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
                 .then(() => {
                     menuApi.delete(selectionIds)
                         .then(() => {

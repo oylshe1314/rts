@@ -50,6 +50,7 @@ public class AdminOperationRecordService {
                         Tables.ADMIN_OPERATION_RECORD.OPERATOR,
                         Tables.ADMIN_OPERATION_RECORD.OPERATION,
                         Tables.ADMIN_OPERATION_RECORD.ARGUMENTS,
+                        Tables.ADMIN_OPERATION_RECORD.DETAILS,
                         Tables.ADMIN_OPERATION_RECORD.REMARK,
                         Tables.ADMIN_OPERATION_RECORD.IP_ADDRESS,
                         Tables.ADMIN_OPERATION_RECORD.CREATE_TIME)

@@ -165,7 +165,7 @@ function handleSubmit() {
         }
         updateDto.nickname = formData.nickname;
     }
-    ElMessageBox.confirm('确认提交', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+    ElMessageBox.confirm('确认提交？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
         .then(() => {
             adminApi.update(updateDto)
                 .then(() => {

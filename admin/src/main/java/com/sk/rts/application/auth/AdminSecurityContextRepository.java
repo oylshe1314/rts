@@ -50,8 +50,8 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
             Request request1 = Request.cmd(Command.MSETEX);
             request1.arg(2);
             request1.arg(AdminAuthUtil.buildTokenKey(accessToken.getSubject()));
-            request1.arg(AdminAuthUtil.buildDetailsKey(authDetails.getAdminId()));
             request1.arg(jsonMapper.writeValueAsString(accessToken));
+            request1.arg(AdminAuthUtil.buildDetailsKey(authDetails.getAdminId()));
             request1.arg(jsonMapper.writeValueAsString(authDetails));
             request1.arg("EX");
             request1.arg(tokenProperties.getExpiration().toSeconds());

@@ -61,7 +61,7 @@ function handleSubmit() {
         return;
     }
 
-    ElMessageBox.confirm('确认修改密码', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'})
+    ElMessageBox.confirm('确认修改密码？', '警告', {confirmButtonText: '确认', cancelButtonText: '取消'})
         .then(() => {
             const changeDto: ChangePasswordDto = {oldPassword: formData.oldPassword, newPassword: formData.newPassword};
 

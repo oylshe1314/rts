@@ -242,7 +242,7 @@ function handleSubmit() {
         updateDto.remark = formData.remark;
     }
 
-    ElMessageBox.confirm('确认提交', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+    ElMessageBox.confirm('确认提交？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
         .then(() => {
             menuApi.update(formData)
                 .then(() => {

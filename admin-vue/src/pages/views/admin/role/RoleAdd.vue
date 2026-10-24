@@ -91,7 +91,7 @@ function handleSubmit() {
     }
 
     const addDto: RoleAddDto = {name: formData.name, code: formData.code, remark: formData.remark};
-    ElMessageBox.confirm('确认提交', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+    ElMessageBox.confirm('确认提交？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
         .then(() => {
             openLoading('#add', '正在提交，请稍候...');
             adminApi.roleAdd(addDto)

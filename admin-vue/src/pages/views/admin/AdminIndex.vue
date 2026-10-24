@@ -43,6 +43,11 @@
                     </template>
                 </el-table-column>
                 <el-table-column prop="remark" label="备注" align="left" show-overflow-tooltip/>
+                <el-table-column prop="remark" label="是否登录" width="120" align="center">
+                    <template #default="scope">
+                        <span :style="{color: scope.row.loggedIn ? '#A8ABB2' : '#409EFF'}">{{ scope.row.loggedIn ? '未登录' : '已登录' }}</span>
+                    </template>
+                </el-table-column>
                 <el-table-column prop="updateBy" label="操作人" width="120" align="center"/>
                 <el-table-column :formatter="(row: AdminDto) => formatTime(row.updateTime)" prop="updateTime" label="操作时间" width="200" align="center"/>
                 <el-table-column fixed="right" label="操作" align="center" width="120">
@@ -248,7 +253,7 @@ function handleCommand(command: string, row: AdminDto | null) {
             changeState(row!, 1);
             break
         case 'disable':
-            ElMessageBox.confirm('确认禁用', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+            ElMessageBox.confirm('确认禁用？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
                 .then(() => {
                     changeState(row!, 0);
                 })
@@ -256,7 +261,7 @@ function handleCommand(command: string, row: AdminDto | null) {
                 });
             break
         case 'delete':
-            ElMessageBox.confirm('确认删除', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+            ElMessageBox.confirm('确认删除？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
                 .then(() => {
                     adminApi.delete([row!.id,])
                         .then(() => {
@@ -270,7 +275,7 @@ function handleCommand(command: string, row: AdminDto | null) {
                 });
             break;
         case 'deleteSelection':
-            ElMessageBox.confirm('确认删除', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+            ElMessageBox.confirm('确认删除？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
                 .then(() => {
                     adminApi.roleDelete(selectionIds)
                         .then(() => {
