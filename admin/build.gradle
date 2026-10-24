@@ -31,14 +31,14 @@ dependencies {
 
     implementation "org.postgresql:postgresql:${postgresqlVersion}"
 
-    compileOnly "org.jooq:jooq-codegen:${jooqVersion}"
-    jooqCodegen "org.postgresql:postgresql:${postgresqlVersion}"
-
     implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
     implementation "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
     implementation "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 
     implementation "commons-codec:commons-codec:1.22.0"
+
+    compileOnly "org.jooq:jooq-codegen:${jooqVersion}"
+    jooqCodegen "org.postgresql:postgresql:${postgresqlVersion}"
 
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
