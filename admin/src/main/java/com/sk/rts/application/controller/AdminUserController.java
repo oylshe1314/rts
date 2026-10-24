@@ -115,7 +115,7 @@ public class AdminUserController {
             @Parameter(name = "phone", description = "查询参数 - 手机号", schema = @Schema(implementation = String.class)),
             @Parameter(name = "email", description = "查询参数 - 邮箱", schema = @Schema(implementation = String.class)),
     })
-    @RequestMapping(value = "/query", method = RequestMethod.GET)
+    @RequestMapping(value = "/user/query", method = RequestMethod.GET)
     public Mono<ResponseDto<PageResultDto<AdminUserDto>>> query(@NotNull @Positive Integer pageNo,
                                                                 @NotNull @Range(min = 1, max = 100) Integer pageSize,
                                                                 @Nullable @NullOrNotBlank String sort,

@@ -23,7 +23,7 @@ public abstract class CustomRestHandler {
     protected <T> Mono<Void> respond(ServerHttpResponse response, Mono<ResponseDto<T>> responseDtoMono) {
         response.setStatusCode(HttpStatus.OK);
         response.getHeaders().set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-        return response.writeWith(Mono.just(responseDtoMono).map(dto -> response.bufferFactory().wrap(jsonMapper.writeValueAsBytes(dto))));
+        return response.writeWith(responseDtoMono.map(dto -> response.bufferFactory().wrap(jsonMapper.writeValueAsBytes(dto))));
     }
 
     protected <T> Mono<Void> respond(ServerHttpResponse response, Mono<ResponseDto<T>> responseDtoMono, HttpHeaders headers) {

@@ -21,7 +21,10 @@ public class AdminOperationRecordDto extends BaseDto {
     private final String operation;
 
     @Schema(description = "操作参数，表名，登录账号等")
-    private final String operateArgs;
+    private final String arguments;
+
+    @Schema(description = "备注")
+    private final String details;
 
     @Schema(description = "备注")
     private final String remark;
@@ -32,12 +35,13 @@ public class AdminOperationRecordDto extends BaseDto {
     @Schema(description = "操作时间")
     private final OffsetDateTime operateTime;
 
-    public AdminOperationRecordDto(Long id, Long operatorId, String operator, String operation, String operateArgs, String remark, String ipAddress, OffsetDateTime operateTime) {
+    public AdminOperationRecordDto(Long id, Long operatorId, String operator, String operation, String arguments, String details, String remark, String ipAddress, OffsetDateTime operateTime) {
         super(id);
         this.operatorId = operatorId;
         this.operator = operator;
         this.operation = operation;
-        this.operateArgs = operateArgs;
+        this.arguments = arguments;
+        this.details = details;
         this.remark = remark;
         this.ipAddress = ipAddress;
         this.operateTime = operateTime;
@@ -48,7 +52,8 @@ public class AdminOperationRecordDto extends BaseDto {
         this.operatorId = record.getOperatorId();
         this.operator = record.getOperator();
         this.operation = record.getOperation();
-        this.operateArgs = record.getArguments();
+        this.arguments = record.getArguments();
+        this.details = record.getDetails();
         this.remark = record.getRemark();
         this.ipAddress = record.getIpAddress();
         this.operateTime = record.getCreateTime();

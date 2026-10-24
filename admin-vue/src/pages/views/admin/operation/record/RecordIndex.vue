@@ -57,7 +57,8 @@
                 <el-table-column label="序号" type="index" width="80" align="center"/>
                 <el-table-column label="操作人" prop="operator" width="200" align="left"/>
                 <el-table-column label="操作" prop="operation" width="160" align="left"/>
-                <el-table-column label="操作参数" prop="operateArgs" width="480" align="left"/>
+                <el-table-column label="参数" prop="arguments" width="360" align="left"/>
+                <el-table-column label="详情" prop="details" width="240" align="left"/>
                 <el-table-column label="备注" prop="remark" align="left" show-overflow-tooltip/>
                 <el-table-column label="登录地址" prop="ipAddress" width="160" align="center"/>
                 <el-table-column :formatter="(row: OperationRecordDto) => formatTime(row.operateTime)"

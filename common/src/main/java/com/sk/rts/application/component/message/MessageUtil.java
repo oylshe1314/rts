@@ -55,19 +55,22 @@ public class MessageUtil {
     }
 
     public static Mono<String> getMessage(String code, String defaultMessage, Object... args) {
-        if (messageSource == null) {
-            return Mono.just(defaultMessage);
-        } else {
-            return Mono.deferContextual(contextView -> {
+        return Mono.deferContextual(contextView -> {
+            if (messageSource == null) {
+                return Mono.just(defaultMessage);
+            } else {
                 Locale locale = getLocale(contextView);
                 try {
                     String message = messageSource.getMessage(code, args, locale);
+                    if (code.equals(message)) {
+                        return Mono.just(defaultMessage);
+                    }
                     return Mono.just(message);
                 } catch (NoSuchMessageException e) {
                     return Mono.just(defaultMessage);
                 }
-            });
-        }
+            }
+        });
     }
 
     public static Mono<String> getMessage(StatusException statusException, Object... args) {
