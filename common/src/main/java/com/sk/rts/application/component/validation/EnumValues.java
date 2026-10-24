@@ -1,17 +1,19 @@
-package com.sk.rts.application.validation;
+package com.sk.rts.application.component.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
 
-@Constraint(validatedBy = IntegersValidator.class)
+@Constraint(validatedBy = EnumValuesValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface Integers {
+public @interface EnumValues {
 
-    int[] value();
+    Class<? extends EnumValue<?>> value();
+
+    String[] excludes() default {};
 
     String message() default "";
 

@@ -35,13 +35,13 @@ public class AuthController {
 
     @Operation(summary = "管理员登出")
     @RequestMapping(value = "/logout", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> logout(Authentication authentication) {
+    public Mono<ResponseDto<Void>> logout(Authentication authentication) {
         throw new IllegalStateException("这个接口仅用于文档生成，实际登出由过滤器处理");
     }
 
     @Operation(summary = "管理员踢出")
     @RequestMapping(value = "/kickout", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> kickout(@RequestBody @Valid Mono<SingleIdDto> kickoutDtoMono, AdminAuthToken authToken) {
-        return authService.kickout(kickoutDtoMono, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    public Mono<ResponseDto<Void>> kickout(@RequestBody @Valid Mono<SingleIdDto> kickoutDtoMono, AdminAuthToken authToken) {
+        return authService.kickout(kickoutDtoMono, (AdminAuthDetails) authToken.getPrincipal()).then(ResponseDto.success());
     }
 }

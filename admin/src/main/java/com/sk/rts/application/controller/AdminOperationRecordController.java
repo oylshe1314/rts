@@ -1,8 +1,8 @@
 package com.sk.rts.application.controller;
 
+import com.sk.rts.application.component.validation.NullOrNotBlank;
 import com.sk.rts.application.dto.*;
 import com.sk.rts.application.service.AdminOperationRecordService;
-import com.sk.rts.application.validation.NullOrNotBlank;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -48,12 +48,12 @@ public class AdminOperationRecordController {
                                                                            @Nullable @NullOrNotBlank String sort,
                                                                            @Nullable Boolean desc,
                                                                            @Parameter(hidden = true) @Nullable @Valid AdminOperationRecordQueryDto queryDto) {
-        return adminOperationRecordService.query(new PageQueryDto<>(pageNo, pageSize, sort, desc, queryDto)).map(ResponseDto::success);
+        return adminOperationRecordService.query(new PageQueryDto<>(pageNo, pageSize, sort, desc, queryDto)).flatMap(ResponseDto::success);
     }
 
     @Operation(summary = "操作记录查询")
     @RequestMapping(value = "/query", method = RequestMethod.POST)
     public Mono<ResponseDto<PageResultDto<AdminOperationRecordDto>>> query(@RequestBody @Valid PageQueryDto<@Nullable AdminOperationRecordQueryDto> pageQueryDto) {
-        return adminOperationRecordService.query(pageQueryDto).map(ResponseDto::success);
+        return adminOperationRecordService.query(pageQueryDto).flatMap(ResponseDto::success);
     }
 }

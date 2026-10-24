@@ -1,15 +1,19 @@
-package com.sk.rts.application.validation;
+package com.sk.rts.application.component.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
 
-@Constraint(validatedBy = NullOrNotEmptyValidator.class)
+@Constraint(validatedBy = EnumOrdinalsValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface NullOrNotEmpty {
+public @interface EnumOrdinals {
+
+    Class<? extends Enum<?>> value();
+
+    String[] excludes() default {};
 
     String message() default "";
 

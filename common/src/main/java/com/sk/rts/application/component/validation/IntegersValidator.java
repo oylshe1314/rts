@@ -1,4 +1,4 @@
-package com.sk.rts.application.validation;
+package com.sk.rts.application.component.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

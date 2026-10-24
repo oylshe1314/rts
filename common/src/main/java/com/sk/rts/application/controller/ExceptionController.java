@@ -54,37 +54,37 @@ public class ExceptionController implements ErrorWebExceptionHandler {
 
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable cause) {
-        return handlerException(exchange, (Exception) cause).flatMap(responseDto -> respond(exchange.getResponse(), responseDto));
+        return handlerException(exchange, (Exception) cause).contextWrite(context -> context.put(ServerWebExchange.class, exchange)).flatMap(responseDto -> respond(exchange.getResponse(), responseDto));
     }
 
     @ExceptionHandler(Exception.class)
-    public Mono<ResponseDto<?>> handlerException(ServerWebExchange webExchange, Exception exception) {
+    public Mono<ResponseDto<Void>> handlerException(ServerWebExchange webExchange, Exception exception) {
         StatusException statusException = StatusException.extractStatusException(exception);
         if (statusException != null) {
             log.info("异常响应, status: {}, message: {}", statusException.getStatus(), statusException.getMessage());
-            return Mono.just(ResponseDto.failure(statusException));
+            return ResponseDto.failure(statusException);
         } else {
             if (exception instanceof ErrorResponse errorResponse) {
                 HttpStatus httpStatus = (HttpStatus) errorResponse.getStatusCode();
                 log.info("错误响应, status={}, reason={}", httpStatus.value(), httpStatus.getReasonPhrase());
                 webExchange.getResponse().setStatusCode(httpStatus);
-                return Mono.just(ResponseDto.failure(httpStatus.value(), httpStatus.getReasonPhrase()));
+                return ResponseDto.failure(httpStatus.value(), httpStatus.getReasonPhrase());
             } else {
                 log.error("服务器内部异常", exception);
-                return Mono.just(ResponseDto.failure(ResponseStatus.internal_error));
+                return ResponseDto.failure(ResponseStatus.internal_error);
             }
         }
     }
 
     @ExceptionHandler({HttpStatusException.class})
-    public Mono<ResponseDto<?>> handlerException(ServerWebExchange webExchange, HttpStatusException exception) {
+    public Mono<ResponseDto<Void>> handlerException(ServerWebExchange webExchange, HttpStatusException exception) {
         log.warn("HTTP状态异常， status: {}, message: {}", exception.getStatus(), exception.getMessage());
         webExchange.getResponse().setStatusCode(HttpStatus.valueOf(exception.getStatus()));
-        return Mono.just(ResponseDto.failure(exception));
+        return ResponseDto.failure(exception);
     }
 
     @ExceptionHandler({MethodNotAllowedException.class})
-    public Mono<ResponseDto<?>> handlerException(MethodNotAllowedException exception) {
+    public Mono<ResponseDto<Void>> handlerException(MethodNotAllowedException exception) {
         String message = String.format("不支持的方法: %s", exception.getHttpMethod());
         Set<HttpMethod> supportedMethods = exception.getSupportedMethods();
         if (!supportedMethods.isEmpty()) {
@@ -95,40 +95,40 @@ public class ExceptionController implements ErrorWebExceptionHandler {
             }
         }
         log.warn("请求方法异常, {}", message);
-        return Mono.just(ResponseDto.failure(ResponseStatus.method_error));
+        return ResponseDto.failure(ResponseStatus.method_error);
     }
 
     @ExceptionHandler({MissingRequestValueException.class})
-    public Mono<ResponseDto<?>> handlerException(MissingRequestValueException exception) {
+    public Mono<ResponseDto<Void>> handlerException(MissingRequestValueException exception) {
         String message = String.format("缺少参数: %s, 类型: %s", exception.getName(), exception.getType());
         log.warn("参数缺失错误, {}", message);
-        return Mono.just(ResponseDto.failure(ResponseStatus.parameter_error));
+        return ResponseDto.failure(ResponseStatus.parameter_error);
     }
 
     @ExceptionHandler({MethodArgumentTypeMismatchException.class})
-    public Mono<ResponseDto<?>> handlerException(MethodArgumentTypeMismatchException exception) {
+    public Mono<ResponseDto<Void>> handlerException(MethodArgumentTypeMismatchException exception) {
         String message = String.format("参数: %s, 类型错误", exception.getName());
         Class<?> requiredType = exception.getRequiredType();
         if (requiredType != null) {
             message += String.format(", 需要: %s", requiredType.getSimpleName());
         }
         log.warn("参数类型错误, {}", message);
-        return Mono.just(ResponseDto.failure(ResponseStatus.parameter_error));
+        return ResponseDto.failure(ResponseStatus.parameter_error);
     }
 
     @ExceptionHandler({WebExchangeBindException.class})
-    public Mono<ResponseDto<?>> handlerException(WebExchangeBindException exception) {
+    public Mono<ResponseDto<Void>> handlerException(WebExchangeBindException exception) {
         List<String> messages = new ArrayList<>();
         for (FieldError fieldError : exception.getFieldErrors()) {
             messages.add(String.format("参数: %s, %s", fieldError.getField(), fieldError.getDefaultMessage()));
         }
         String message = String.join(", ", messages);
         log.warn("参数绑定错误, {}", message);
-        return Mono.just(ResponseDto.failure(ResponseStatus.parameter_error));
+        return ResponseDto.failure(ResponseStatus.parameter_error);
     }
 
     @ExceptionHandler({ConstraintViolationException.class})
-    public Mono<ResponseDto<?>> handlerException(ConstraintViolationException exception) {
+    public Mono<ResponseDto<Void>> handlerException(ConstraintViolationException exception) {
         List<String> messages = new ArrayList<>();
         for (ConstraintViolation<?> violation : exception.getConstraintViolations()) {
             Path.Node paramNode = null;
@@ -146,6 +146,6 @@ public class ExceptionController implements ErrorWebExceptionHandler {
         }
         String message = String.join(", ", messages);
         log.warn("参数校验错误, {}", message);
-        return Mono.just(ResponseDto.failure(ResponseStatus.parameter_error));
+        return ResponseDto.failure(ResponseStatus.parameter_error);
     }
 }

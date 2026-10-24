@@ -1,17 +1,15 @@
-package com.sk.rts.application.validation;
+package com.sk.rts.application.component.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
 
-@Constraint(validatedBy = StringsValidator.class)
+@Constraint(validatedBy = NullOrNotEmptyValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface Strings {
-
-    String[] value();
+public @interface NullOrNotEmpty {
 
     String message() default "";
 

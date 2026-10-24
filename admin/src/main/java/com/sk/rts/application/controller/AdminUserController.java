@@ -2,10 +2,10 @@ package com.sk.rts.application.controller;
 
 import com.sk.rts.application.auth.AdminAuthDetails;
 import com.sk.rts.application.auth.AdminAuthToken;
+import com.sk.rts.application.component.validation.NullOrNotBlank;
 import com.sk.rts.application.dto.*;
 import com.sk.rts.application.service.AdminRoleService;
 import com.sk.rts.application.service.AdminUserService;
-import com.sk.rts.application.validation.NullOrNotBlank;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -58,31 +58,31 @@ public class AdminUserController {
     @Operation(summary = "角色查询")
     @RequestMapping(value = "/role/query", method = RequestMethod.POST)
     public Mono<ResponseDto<PageResultDto<AdminRoleDto>>> roleQuery(@RequestBody @Valid PageQueryDto<AdminRoleQueryDto> pageQueryDto) {
-        return adminRoleService.query(pageQueryDto).map(ResponseDto::success);
+        return adminRoleService.query(pageQueryDto).flatMap(ResponseDto::success);
     }
 
     @Operation(summary = "角色添加")
     @RequestMapping(value = "/role/add", method = RequestMethod.POST)
     public Mono<ResponseDto<AdminRoleDto>> roleAdd(@RequestBody @Valid AdminRoleAddDto addDto, AdminAuthToken authToken) {
-        return adminRoleService.add(addDto, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
+        return adminRoleService.add(addDto, (AdminAuthDetails) authToken.getPrincipal()).flatMap(ResponseDto::success);
     }
 
     @Operation(summary = "角色修改")
     @RequestMapping(value = "/role/update", method = RequestMethod.POST)
     public Mono<ResponseDto<AdminRoleDto>> roleUpdate(@RequestBody @Valid AdminRoleUpdateDto updateDto, AdminAuthToken authToken) {
-        return adminRoleService.update(updateDto, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
+        return adminRoleService.update(updateDto, (AdminAuthDetails) authToken.getPrincipal()).flatMap(ResponseDto::success);
     }
 
     @Operation(summary = "角色删除")
     @RequestMapping(value = "/role/delete", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> roleDelete(@RequestBody @Valid MultipleIdDto deleteDto, AdminAuthToken authToken) {
-        return adminRoleService.delete(deleteDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    public Mono<ResponseDto<Void>> roleDelete(@RequestBody @Valid MultipleIdDto deleteDto, AdminAuthToken authToken) {
+        return adminRoleService.delete(deleteDto, (AdminAuthDetails) authToken.getPrincipal()).then(ResponseDto.success());
     }
 
     @Operation(summary = "角色状态修改")
     @RequestMapping(value = "/role/state/change", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> roleStateChange(@RequestBody @Valid StateChangeDto changeDto, AdminAuthToken authToken) {
-        return adminRoleService.changeState(changeDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    public Mono<ResponseDto<Void>> roleStateChange(@RequestBody @Valid StateChangeDto changeDto, AdminAuthToken authToken) {
+        return adminRoleService.changeState(changeDto, (AdminAuthDetails) authToken.getPrincipal()).then(ResponseDto.success());
     }
 
     @Operation(summary = "角色权限查询", parameters = {
@@ -90,19 +90,19 @@ public class AdminUserController {
     })
     @RequestMapping(value = "/role/authority/get", method = RequestMethod.GET)
     public Mono<ResponseDto<Collection<AdminRoleAuthorityDtoAdmin>>> roleAuthorityGet(@NotNull @Positive Long roleId) {
-        return adminRoleService.getAuthorities(roleId).map(ResponseDto::success);
+        return adminRoleService.getAuthorities(roleId).flatMap(ResponseDto::success);
     }
 
     @Operation(summary = "角色权限设置")
     @RequestMapping(value = "/role/authority/set", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> roleAuthoritySet(@RequestBody @Valid AdminRoleAuthoritySetDto setDto, AdminAuthToken authToken) {
-        return adminRoleService.setAuthorities(setDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    public Mono<ResponseDto<Void>> roleAuthoritySet(@RequestBody @Valid AdminRoleAuthoritySetDto setDto, AdminAuthToken authToken) {
+        return adminRoleService.setAuthorities(setDto, (AdminAuthDetails) authToken.getPrincipal()).then(ResponseDto.success());
     }
 
     @Operation(summary = "角色权限对比")
     @RequestMapping(value = "/role/authority/compare", method = RequestMethod.POST)
     public Mono<ResponseDto<AdminRoleAuthorityComparisonListDto>> roleAuthorityCompare(@RequestBody MultipleIdDto idsDto) {
-        return adminRoleService.compareAuthorities(idsDto).map(ResponseDto::success);
+        return adminRoleService.compareAuthorities(idsDto).flatMap(ResponseDto::success);
     }
 
     @Operation(summary = "管理员查询", parameters = {
@@ -127,30 +127,30 @@ public class AdminUserController {
     @Operation(summary = "管理员查询")
     @RequestMapping(value = "/user/query", method = RequestMethod.POST)
     public Mono<ResponseDto<PageResultDto<AdminUserDto>>> query(@RequestBody @Valid PageQueryDto<AdminUserQueryDto> pageQueryDto) {
-        return adminUserService.query(pageQueryDto).map(ResponseDto::success);
+        return adminUserService.query(pageQueryDto).flatMap(ResponseDto::success);
     }
 
     @Operation(summary = "管理员添加")
     @RequestMapping(value = "/user/add", method = RequestMethod.POST)
     public Mono<ResponseDto<AdminUserDto>> add(@RequestBody @Valid AdminUserAddDto addDto, AdminAuthToken authToken) {
-        return adminUserService.add(addDto, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
+        return adminUserService.add(addDto, (AdminAuthDetails) authToken.getPrincipal()).flatMap(ResponseDto::success);
     }
 
     @Operation(summary = "管理员修改")
     @RequestMapping(value = "/user/update", method = RequestMethod.POST)
     public Mono<ResponseDto<AdminUserDto>> update(@RequestBody @Valid AdminUserUpdateDto updateDto, AdminAuthToken authToken) {
-        return adminUserService.update(updateDto, (AdminAuthDetails) authToken.getPrincipal()).map(ResponseDto::success);
+        return adminUserService.update(updateDto, (AdminAuthDetails) authToken.getPrincipal()).flatMap(ResponseDto::success);
     }
 
     @Operation(summary = "管理员删除")
     @RequestMapping(value = "/user/delete", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> delete(@RequestBody @Valid MultipleIdDto deleteDto, AdminAuthToken authToken) {
-        return adminUserService.delete(deleteDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    public Mono<ResponseDto<Void>> delete(@RequestBody @Valid MultipleIdDto deleteDto, AdminAuthToken authToken) {
+        return adminUserService.delete(deleteDto, (AdminAuthDetails) authToken.getPrincipal()).then(ResponseDto.success());
     }
 
     @Operation(summary = "管理员状态修改")
     @RequestMapping(value = "/user/state/change", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> stateChange(@RequestBody @Valid StateChangeDto changeDto, AdminAuthToken authToken) {
-        return adminUserService.changeState(changeDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    public Mono<ResponseDto<Void>> stateChange(@RequestBody @Valid StateChangeDto changeDto, AdminAuthToken authToken) {
+        return adminUserService.changeState(changeDto, (AdminAuthDetails) authToken.getPrincipal()).then(ResponseDto.success());
     }
 }

@@ -1,4 +1,4 @@
-package com.sk.rts.application.validation;
+package com.sk.rts.application.component.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -8,16 +8,20 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class StringsValidator implements ConstraintValidator<Strings, String> {
+public class EnumNamesValidator implements ConstraintValidator<EnumNames, String> {
 
     private String message;
 
     private Set<String> values;
 
     @Override
-    public void initialize(Strings strings) {
-        this.values = Arrays.stream(strings.value()).collect(Collectors.toSet());
-        this.message = strings.message();
+    public void initialize(EnumNames enumNames) {
+        Class<? extends Enum<?>> enumClass = enumNames.value();
+
+        Set<String> excludes = Arrays.stream(enumNames.excludes()).collect(Collectors.toSet());
+
+        this.values = Arrays.stream(enumClass.getEnumConstants()).map(Enum::name).filter(name -> !excludes.contains(name)).collect(Collectors.toSet());
+
         if (!StringUtils.hasText(this.message) && !this.values.isEmpty()) {
             this.message = "允许值：" + this.values.stream().map(String::valueOf).collect(Collectors.joining(", ", "{", "}"));
         }

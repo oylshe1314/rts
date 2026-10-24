@@ -32,13 +32,13 @@ public class SettingController {
 
     @Operation(summary = "详细信息修改")
     @RequestMapping(value = "/details/change", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> changeDetails(@RequestBody @Valid AdminUserDetailsChangeDto changeDto, AdminAuthToken authToken) {
-        return settingService.changeDetails(changeDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    public Mono<ResponseDto<Void>> changeDetails(@RequestBody @Valid AdminUserDetailsChangeDto changeDto, AdminAuthToken authToken) {
+        return settingService.changeDetails(changeDto, (AdminAuthDetails) authToken.getPrincipal()).then(ResponseDto.success());
     }
 
     @Operation(summary = "密码修改")
     @RequestMapping(value = "/password/change", method = RequestMethod.POST)
-    public Mono<ResponseDto<?>> changePassword(@RequestBody @Valid PasswordChangeDto changeDto, AdminAuthToken authToken) {
-        return settingService.changePassword(changeDto, (AdminAuthDetails) authToken.getPrincipal()).thenReturn(ResponseDto.success());
+    public Mono<ResponseDto<Void>> changePassword(@RequestBody @Valid PasswordChangeDto changeDto, AdminAuthToken authToken) {
+        return settingService.changePassword(changeDto, (AdminAuthDetails) authToken.getPrincipal()).then(ResponseDto.success());
     }
 }

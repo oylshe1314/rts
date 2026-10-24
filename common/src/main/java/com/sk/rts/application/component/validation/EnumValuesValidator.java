@@ -1,4 +1,4 @@
-package com.sk.rts.application.validation;
+package com.sk.rts.application.component.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -21,7 +21,9 @@ public class EnumValuesValidator implements ConstraintValidator<EnumValues, Obje
             return;
         }
 
-        this.values = Arrays.stream(enumClass.getEnumConstants()).map(EnumValue::value).collect(Collectors.toSet());
+        Set<String> excludes = Arrays.stream(enumValues.excludes()).collect(Collectors.toSet());
+
+        this.values = Arrays.stream(enumClass.getEnumConstants()).filter(e -> !excludes.contains(e.name())).map(EnumValue::value).collect(Collectors.toSet());
 
         if (!StringUtils.hasText(this.message) && !this.values.isEmpty()) {
             this.message = "允许值：" + this.values.stream().map(Object::toString).collect(Collectors.joining(", ", "{", "}"));

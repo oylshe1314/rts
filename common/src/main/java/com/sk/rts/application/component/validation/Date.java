@@ -1,17 +1,17 @@
-package com.sk.rts.application.validation;
+package com.sk.rts.application.component.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
 
-@Constraint(validatedBy = EnumOrdinalsValidator.class)
+@Constraint(validatedBy = DateValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface EnumOrdinals {
+public @interface Date {
 
-    Class<? extends Enum<?>> value();
+    String value() default "yyyy-MM-dd";
 
     String message() default "";
 

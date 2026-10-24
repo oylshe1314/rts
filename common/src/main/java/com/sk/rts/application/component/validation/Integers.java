@@ -1,17 +1,17 @@
-package com.sk.rts.application.validation;
+package com.sk.rts.application.component.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
 
-@Constraint(validatedBy = DateValidator.class)
+@Constraint(validatedBy = IntegersValidator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface Date {
+public @interface Integers {
 
-    String value() default "yyyy-MM-dd";
+    int[] value();
 
     String message() default "";
 

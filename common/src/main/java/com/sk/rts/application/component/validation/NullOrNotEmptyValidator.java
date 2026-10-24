@@ -1,24 +1,27 @@
-package com.sk.rts.application.validation;
+package com.sk.rts.application.component.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-public class NullOrNotBlankValidator implements ConstraintValidator<NullOrNotBlank, String> {
+import java.util.Collection;
+
+public class NullOrNotEmptyValidator implements ConstraintValidator<NullOrNotEmpty, Collection> {
 
     private String message;
 
     @Override
-    public void initialize(NullOrNotBlank in) {
+    public void initialize(NullOrNotEmpty in) {
         this.message = in.message();
         if (!StringUtils.hasText(this.message)) {
-            this.message = "值只能为null或者非空白字符串";
+            this.message = "值只能为null或者非空白集合";
         }
     }
 
     @Override
-    public boolean isValid(String value, ConstraintValidatorContext context) {
-        if (value == null || StringUtils.hasText(value)) {
+    public boolean isValid(Collection value, ConstraintValidatorContext context) {
+        if (value == null || !CollectionUtils.isEmpty(value)) {
             return true;
         }
 
