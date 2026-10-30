@@ -3,7 +3,7 @@
         <div class="user">
             <el-avatar class="tt ta" :size="60" :src="getAvatar(userDetails.avatar)"/>
             <router-link to="/setting/details" style="text-decoration: none"><span class="tt ts">{{ userDetails.nickname }}</span></router-link>
-            <el-link type="primary" :underline="'never'" @click="emits('onLogout')"><span class="tt ts">退出</span></el-link>
+            <el-link type="primary" :underline="'never'" @click="onLogout()"><span class="tt ts">退出</span></el-link>
         </div>
     </div>
 </template>
@@ -13,6 +13,7 @@
 import type {UserDetailsDto} from "@/api/common.ts";
 
 import {getAvatar} from "@/util/avatars.ts";
+import {ElMessageBox} from "element-plus";
 
 defineProps<{ userDetails: UserDetailsDto; }>();
 
@@ -21,6 +22,15 @@ interface Emits {
 }
 
 const emits = defineEmits<Emits>();
+
+function onLogout() {
+    ElMessageBox.confirm('确认退出登录？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+        .then(() => {
+            emits('onLogout');
+        })
+        .catch(() => {
+        });
+}
 
 </script>
 

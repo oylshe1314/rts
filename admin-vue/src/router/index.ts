@@ -56,9 +56,9 @@ const routes: RouteRecordRaw[] = [
                 }
             },
             {
-                path: '/menu/index',
+                path: '/admin/menu/index',
                 name: 'MenuIndex',
-                component: () => import('@/pages/views/menu/MenuIndex.vue'),
+                component: () => import('@/pages/views/admin/menu/MenuIndex.vue'),
                 meta: {
                     tabView: true,
                     title: "菜单列表",
@@ -76,9 +76,9 @@ const routes: RouteRecordRaw[] = [
                 }
             },
             {
-                path: '/admin/index',
+                path: '/admin/user/index',
                 name: 'AdminIndex',
-                component: () => import('@/pages/views/admin/AdminIndex.vue'),
+                component: () => import('@/pages/views/admin/user/AdminIndex.vue'),
                 meta: {
                     tabView: true,
                     title: "管理员列表",
@@ -86,9 +86,9 @@ const routes: RouteRecordRaw[] = [
                 }
             },
             {
-                path: '/operation/record/index',
+                path: '/admin/operation/record/index',
                 name: 'OperationRecordIndex',
-                component: () => import('@/pages/views/operation/record/RecordIndex.vue'),
+                component: () => import('@/pages/views/admin/operation/record/RecordIndex.vue'),
                 meta: {
                     tabView: true,
                     title: "操作记录列表",
@@ -97,8 +97,8 @@ const routes: RouteRecordRaw[] = [
             },
             {
                 name: 'DetailsView',
-                path: '/setting/details',
-                component: () => import('@/pages/views/setting/DetailsView.vue'),
+                path: '/admin/setting/details',
+                component: () => import('@/pages/views/admin/setting/DetailsView.vue'),
                 meta: {
                     title: "用户详情",
                     tabView: true,
@@ -107,8 +107,8 @@ const routes: RouteRecordRaw[] = [
             },
             {
                 name: 'ChangePassword',
-                path: '/setting/password',
-                component: () => import('@/pages/views/setting/ChangePassword.vue'),
+                path: '/admin/setting/password',
+                component: () => import('@/pages/views/admin/setting/ChangePassword.vue'),
                 meta: {
                     title: "修改密码",
                     tabView: true,

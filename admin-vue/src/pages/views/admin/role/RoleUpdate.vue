@@ -28,8 +28,8 @@ import {ElMessage, ElMessageBox} from "element-plus";
 
 import {closeLoading, openLoading} from "@/util/loading.ts";
 
-import type {RoleUpdateDto} from "@/api/admin";
-import adminApi from "@/api/admin";
+import type {RoleUpdateDto} from "@/api/admin.ts";
+import adminApi from "@/api/admin.ts";
 
 interface Props {
     modelValue: boolean;
@@ -110,7 +110,7 @@ function handleSubmit() {
         updateDto.remark = formData.remark;
     }
 
-    ElMessageBox.confirm('确认提交', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+    ElMessageBox.confirm('确认提交？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
         .then(() => {
             openLoading('#update', '正在提交，请稍候...');
             adminApi.roleUpdate(updateDto)

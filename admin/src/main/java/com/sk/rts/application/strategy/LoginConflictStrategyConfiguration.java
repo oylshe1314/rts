@@ -15,9 +15,8 @@ public class LoginConflictStrategyConfiguration {
     private SettingProperties settingProperties;
 
     @Bean
-    public LoginConflictStrategy loginConflictStrategy() throws ClassNotFoundException {
-        Class<?> clazz = Class.forName(settingProperties.getLoginConflictStrategy());
+    public LoginConflictStrategy loginConflictStrategy() {
         DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) applicationContext.getAutowireCapableBeanFactory();
-        return (LoginConflictStrategy) beanFactory.createBean(clazz);
+        return beanFactory.createBean(settingProperties.getLoginConflictStrategy());
     }
 }

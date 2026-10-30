@@ -1,8 +1,8 @@
 package com.sk.rts.application.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.sk.rts.application.validation.Integers;
-import com.sk.rts.application.validation.NullOrNotBlank;
+import com.sk.rts.application.component.validation.Integers;
+import com.sk.rts.application.component.validation.NullOrNotBlank;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -37,7 +37,7 @@ public class AdminMenuUpdateDto {
 
     @Positive
     @Schema(description = "排序值")
-    private final Integer sort;
+    private final Integer sortBy;
 
     @Schema(description = "备注")
     private final String remark;
@@ -48,7 +48,7 @@ public class AdminMenuUpdateDto {
                               @JsonProperty("icon") String icon,
                               @JsonProperty("name") String name,
                               @JsonProperty("path") String path,
-                              @JsonProperty("sortBy") Integer sort,
+                              @JsonProperty("sortBy") Integer sortBy,
                               @JsonProperty("remark") String remark) {
         this.id = id;
         this.parentId = parentId;
@@ -56,7 +56,7 @@ public class AdminMenuUpdateDto {
         this.icon = icon;
         this.name = name;
         this.path = path;
-        this.sort = sort;
+        this.sortBy = sortBy;
         this.remark = remark;
     }
 }

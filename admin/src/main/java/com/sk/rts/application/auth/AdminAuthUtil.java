@@ -14,10 +14,14 @@ public final class AdminAuthUtil {
     }
 
     public static String buildTokenKey(String subject) {
-        return "message:admin:token:" + subject;
+        return "admin:admin:token:" + subject;
     }
 
     public static String buildDetailsKey(long id) {
-        return "message:admin:details:" + id;
+        return "admin:admin:details:" + id;
+    }
+
+    public static String buildLoggedIdsKey() {
+        return "admin:admin:loggedIds";
     }
 }

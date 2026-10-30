@@ -47,7 +47,7 @@ public class SecurityConfiguration {
     private final AdminSecurityContextRepository adminSecurityContextRepository;
 
     @Bean
-    public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity httpSecurity) throws Exception {
+    public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity httpSecurity) {
         httpSecurity.cors(ServerHttpSecurity.CorsSpec::disable);
         httpSecurity.csrf(ServerHttpSecurity.CsrfSpec::disable);
         httpSecurity.formLogin(ServerHttpSecurity.FormLoginSpec::disable);

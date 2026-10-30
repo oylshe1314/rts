@@ -56,9 +56,9 @@ public class AdminMenuService {
      * @param type 菜单类型，1：目录，2：菜单，3：接口
      * @return 菜单选择列表
      */
-    public Mono<List<MenuOptionDto>> menuSelectList(Integer type) {
+    public Mono<List<AdminMenuOptionDto>> menuSelectList(Integer type) {
         Select<?> query = dslContext.select(Tables.ADMIN_MENU.ID, Tables.ADMIN_MENU.NAME).from(Tables.ADMIN_MENU).where(Tables.ADMIN_MENU.TYPE.eq(type));
-        Future<List<MenuOptionDto>> future = pool.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.stream().map(row -> new MenuOptionDto(row.getLong(0), row.getString(1))).toList());
+        Future<List<AdminMenuOptionDto>> future = pool.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).map(rows -> rows.stream().map(row -> new AdminMenuOptionDto(row.getLong(0), row.getString(1))).toList());
         return ReactiveUtil.toMono(future);
     }
 
@@ -68,8 +68,8 @@ public class AdminMenuService {
      * @param pageQueryDto 分页查询参数
      * @return 分页查询结果
      */
-    public Mono<PageResultDto<AdminMenuDto>> query(PageQueryDto<@Nullable MenuQueryDto> pageQueryDto) {
-        MenuQueryDto menuQueryDto = pageQueryDto.getQuery();
+    public Mono<PageResultDto<AdminMenuDto>> query(PageQueryDto<@Nullable AdminMenuQueryDto> pageQueryDto) {
+        AdminMenuQueryDto adminMenuQueryDto = pageQueryDto.getQuery();
 
         TableAdminMenu m = Tables.ADMIN_MENU.as("m");
         TableAdminMenu p = Tables.ADMIN_MENU.as("p");
@@ -95,15 +95,15 @@ public class AdminMenuService {
         Select<?> countQuery = dslContext.selectCount().from(m).leftJoin(p).on(p.ID.eq(m.PARENT_ID));
 
         List<Condition> conditions = new ArrayList<>();
-        if (menuQueryDto != null) {
-            if (menuQueryDto.getType() != null) {
-                conditions.add(m.TYPE.eq(menuQueryDto.getType()));
+        if (adminMenuQueryDto != null) {
+            if (adminMenuQueryDto.getType() != null) {
+                conditions.add(m.TYPE.eq(adminMenuQueryDto.getType()));
             }
-            if (menuQueryDto.getName() != null) {
-                conditions.add(m.NAME.like("%" + menuQueryDto.getName() + "%"));
+            if (adminMenuQueryDto.getName() != null) {
+                conditions.add(m.NAME.like("%" + adminMenuQueryDto.getName() + "%"));
             }
-            if (menuQueryDto.getPath() != null) {
-                conditions.add(p.NAME.like("%" + menuQueryDto.getPath() + "%"));
+            if (adminMenuQueryDto.getPath() != null) {
+                conditions.add(p.NAME.like("%" + adminMenuQueryDto.getPath() + "%"));
             }
         }
 
@@ -237,7 +237,7 @@ public class AdminMenuService {
                     return adminMenuRepository.insert(connection, menu)
                             .compose(id -> {
                                 menu.setId(id);
-                                return adminOperationRecordRepository.add(connection, Operation.add, menu.getId().toString(), "menu", operator);
+                                return adminOperationRecordRepository.add(connection, Operation.add, menu.getId().toString(), "admin_menu", "", operator);
                             })
                             .map(_ -> new AdminMenuDto(menu))
                             .recover(this::recoverUniqueIndexException);
@@ -255,6 +255,7 @@ public class AdminMenuService {
      */
     public Mono<AdminMenuDto> update(AdminMenuUpdateDto updateDto, AdminAuthDetails operator) {
         Map<Field<?>, Object> values = new HashMap<>();
+        UpdateRemarkBuilder remarkBuilder = new UpdateRemarkBuilder();
         Future<AdminMenuDto> future = pool.withTransaction(connection -> adminMenuRepository.getForUpdate(connection, updateDto.getId())
                 .flatMap(menu -> {
                     if (menu == null) {
@@ -268,6 +269,7 @@ public class AdminMenuService {
                         if (menuType == null) {
                             return Future.failedFuture(new StandardStatusException("菜单类型错误"));
                         }
+                        remarkBuilder.add("type", menu.getType(), updateDto.getType());
                         menu.setType(menuType.value());
                         values.put(Tables.ADMIN_MENU.TYPE, menu.getType());
                     }
@@ -275,10 +277,12 @@ public class AdminMenuService {
                 })
                 .compose(menu -> {
                     if (MenuType.isDir(menu.getType())) {
+                        remarkBuilder.add("parentId", menu.getParentId(), 0L);
                         menu.setParentId(0L);
                         values.put(Tables.ADMIN_MENU.PARENT_ID, 0L);
                     } else {
                         if (updateDto.getParentId() != null && !updateDto.getParentId().equals(menu.getParentId())) {
+                            remarkBuilder.add("parentId", menu.getParentId(), updateDto.getParentId());
                             menu.setParentId(updateDto.getParentId());
                             values.put(Tables.ADMIN_MENU.PARENT_ID, menu.getParentId());
                         }
@@ -309,6 +313,7 @@ public class AdminMenuService {
                 })
                 .compose(menu -> {
                     if (updateDto.getName() != null && !updateDto.getName().equals(menu.getName())) {
+                        remarkBuilder.add("name", menu.getName(), updateDto.getName());
                         menu.setName(updateDto.getName());
                         values.put(Tables.ADMIN_MENU.NAME, menu.getName());
                     }
@@ -317,6 +322,7 @@ public class AdminMenuService {
                         if (MenuType.isApi(menu.getType()) && StringUtils.hasText(updateDto.getIcon())) {
                             return Future.failedFuture(new StandardStatusException("接口无法设置图标"));
                         }
+                        remarkBuilder.add("icon", menu.getIcon(), updateDto.getIcon());
                         menu.setIcon(updateDto.getIcon());
                         values.put(Tables.ADMIN_MENU.ICON, menu.getIcon());
                     }
@@ -325,12 +331,14 @@ public class AdminMenuService {
                         if ((MenuType.isMenu(menu.getType()) || MenuType.isApi(menu.getType())) && !StringUtils.hasText(updateDto.getPath())) {
                             return Future.failedFuture(new StandardStatusException("菜单和接口路径不能为空"));
                         }
+                        remarkBuilder.add("path", menu.getPath(), updateDto.getPath());
                         menu.setPath(updateDto.getPath());
                         values.put(Tables.ADMIN_MENU.PATH, menu.getPath());
                     }
 
-                    if (updateDto.getSort() != null) {
-                        menu.setSortBy(updateDto.getSort());
+                    if (updateDto.getSortBy() != null) {
+                        remarkBuilder.add("sortBy", menu.getSortBy(), updateDto.getSortBy());
+                        menu.setSortBy(updateDto.getSortBy());
                         values.put(Tables.ADMIN_MENU.SORT_BY, menu.getSortBy());
                     }
 
@@ -341,7 +349,7 @@ public class AdminMenuService {
 
                     Update<?> query = dslContext.update(Tables.ADMIN_MENU).set(values).where(Tables.ADMIN_MENU.ID.eq(menu.getId()));
                     return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
-                            .compose(_ -> adminOperationRecordRepository.add(connection, Operation.update, menu.getId().toString(), "menu", operator))
+                            .compose(_ -> adminOperationRecordRepository.add(connection, Operation.update, menu.getId().toString(), "admin_menu", remarkBuilder.build(), operator))
                             .map(_ -> new AdminMenuDto(menu))
                             .recover(this::recoverUniqueIndexException);
                 })
@@ -368,9 +376,8 @@ public class AdminMenuService {
                     Delete<?> query = dslContext.deleteFrom(Tables.ADMIN_MENU).where(Tables.ADMIN_MENU.ID.in(ids));
                     return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()));
                 })
-                .compose(_ -> adminOperationRecordRepository.add(connection, Operation.delete, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "menu", operator))
+                .compose(_ -> adminOperationRecordRepository.add(connection, Operation.delete, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "admin_menu", "", operator))
         );
-
         return ReactiveUtil.toMono(future);
     }
 
@@ -390,7 +397,7 @@ public class AdminMenuService {
 
         Update<?> query = dslContext.update(Tables.ADMIN_MENU).set(Tables.ADMIN_MENU.STATE, state.value()).set(Tables.ADMIN_MENU.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN_MENU.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN_MENU.STATE.in(ids));
         Future<Void> future = pool.withTransaction(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
-                .compose(_ -> adminOperationRecordRepository.add(connection, Operation.changeState, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "menu," + state.name(), operator))
+                .compose(_ -> adminOperationRecordRepository.add(connection, Operation.changeState, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "admin_menu", state.name(), operator))
         );
         return ReactiveUtil.toMono(future);
     }

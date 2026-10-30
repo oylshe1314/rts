@@ -166,35 +166,35 @@ export default {
     },
     query: (pageNo: number, pageSize: number, params: AdminQueryDto): Promise<PageResultDto<AdminDto>> => {
         return service({
-            url: '/admin/query',
+            url: '/admin/user/query',
             method: 'get',
             params: {pageNo: pageNo, pageSize: pageSize, ...params}
         })
     },
     add: (data: AdminAddDto): Promise<AdminDto> => {
         return service({
-            url: '/admin/add',
+            url: '/admin/user/add',
             method: 'post',
             data: data
         })
     },
     update: (data: AdminUpdateDto): Promise<AdminDto> => {
         return service({
-            url: '/admin/update',
+            url: '/admin/user/update',
             method: 'post',
             data: data
         })
     },
     stateChange: (ids: number[], state: number): Promise<void> => {
         return service({
-            url: '/admin/state/change',
+            url: '/admin/user/state/change',
             method: 'post',
             data: {ids: ids, state: state}
         })
     },
     delete: (ids: number[]): Promise<void> => {
         return service({
-            url: '/admin/delete',
+            url: '/admin/user/delete',
             method: 'post',
             data: {ids: ids}
         })

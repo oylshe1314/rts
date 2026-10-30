@@ -1,8 +1,8 @@
 package com.sk.rts.application.controller;
 
+import com.sk.rts.application.component.validation.NullOrNotBlank;
 import com.sk.rts.application.dto.*;
-import com.sk.rts.application.service.OperationRecordService;
-import com.sk.rts.application.validation.NullOrNotBlank;
+import com.sk.rts.application.service.AdminOperationRecordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -27,11 +27,11 @@ import reactor.core.publisher.Mono;
 @NullMarked
 @RestController
 @AllArgsConstructor
-@RequestMapping("/operation/record")
+@RequestMapping("/admin/operation/record")
 @Tag(name = "operationRecord", description = "操作记录相关接口")
 public class AdminOperationRecordController {
 
-    private final OperationRecordService operationRecordService;
+    private final AdminOperationRecordService adminOperationRecordService;
 
     @Operation(summary = "操作记录查询", parameters = {
             @Parameter(name = "pageNo", required = true, description = "页码(从1开始)"),
@@ -43,17 +43,17 @@ public class AdminOperationRecordController {
             @Parameter(name = "operation", description = "查询参数 - 操作", schema = @Schema(implementation = String.class)),
     })
     @RequestMapping(value = "/query", method = RequestMethod.GET)
-    public Mono<ResponseDto<PageResultDto<OperationRecordDto>>> query(@NotNull @Positive Integer pageNo,
-                                                                      @NotNull @Range(min = 10, max = 100) Integer pageSize,
-                                                                      @Nullable @NullOrNotBlank String sort,
-                                                                      @Nullable Boolean desc,
-                                                                      @Parameter(hidden = true) @Nullable @Valid OperationRecordQueryDto queryDto) {
-        return operationRecordService.query(Mono.just(new PageQueryDto<>(pageNo, pageSize, sort, desc, queryDto))).map(ResponseDto::success);
+    public Mono<ResponseDto<PageResultDto<AdminOperationRecordDto>>> query(@NotNull @Positive Integer pageNo,
+                                                                           @NotNull @Range(min = 10, max = 100) Integer pageSize,
+                                                                           @Nullable @NullOrNotBlank String sort,
+                                                                           @Nullable Boolean desc,
+                                                                           @Parameter(hidden = true) @Nullable @Valid AdminOperationRecordQueryDto queryDto) {
+        return adminOperationRecordService.query(new PageQueryDto<>(pageNo, pageSize, sort, desc, queryDto)).flatMap(ResponseDto::success);
     }
 
     @Operation(summary = "操作记录查询")
     @RequestMapping(value = "/query", method = RequestMethod.POST)
-    public Mono<ResponseDto<PageResultDto<OperationRecordDto>>> query(@RequestBody @Valid Mono<PageQueryDto<OperationRecordQueryDto>> pageRequestDtoMono) {
-        return operationRecordService.query(pageRequestDtoMono).map(ResponseDto::success);
+    public Mono<ResponseDto<PageResultDto<AdminOperationRecordDto>>> query(@RequestBody @Valid PageQueryDto<@Nullable AdminOperationRecordQueryDto> pageQueryDto) {
+        return adminOperationRecordService.query(pageQueryDto).flatMap(ResponseDto::success);
     }
 }

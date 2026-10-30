@@ -8,7 +8,9 @@ import lombok.Setter;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 
 @Getter
@@ -41,7 +43,7 @@ public class AdminAuthDetails implements UserDetails {
         this.nickname = admin.getNickname();
         this.avatar = admin.getAvatar();
         this.ipAddress = remoteDetails.getIpAddress();
-        this.authorities = new HashSet<>();
+        this.authorities = new ArrayList<>();
     }
 
     public AdminAuthDetails(AdminUser admin, AdminRemoteDetails remoteDetails, Collection<ApiPatternAuthority> authorities) {

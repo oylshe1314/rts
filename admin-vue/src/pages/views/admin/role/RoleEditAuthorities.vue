@@ -28,8 +28,8 @@ import {ElMessage, ElMessageBox} from "element-plus";
 
 import {closeLoading, openLoading} from "@/util/loading.ts";
 
-import type {RoleAuthorityDto} from '@/api/admin';
-import adminApi from '@/api/admin';
+import type {RoleAuthorityDto} from '@/api/admin.ts';
+import adminApi from '@/api/admin.ts';
 
 interface Props {
     modelValue: boolean;
@@ -141,7 +141,7 @@ function handleSubmit() {
     menuIds.push(...treeRef.value.getHalfCheckedKeys());
     menuIds.push(...treeRef.value.getCheckedKeys());
 
-    ElMessageBox.confirm('确认保存角色菜单', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
+    ElMessageBox.confirm('确认保存角色菜单？', '警告', {type: 'warning', confirmButtonText: '确认', cancelButtonText: '取消'})
         .then(() => {
             openLoading('#authorities', '正在提交，请稍候...');
             adminApi.roleAuthoritySet(props.editData.roleId, menuIds)

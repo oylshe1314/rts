@@ -1,7 +1,7 @@
 package com.sk.rts.application.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.sk.rts.application.validation.Integers;
+import com.sk.rts.application.component.validation.Integers;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -1,6 +1,6 @@
 package com.sk.rts.application.auth;
 
-import com.sk.rts.application.component.ValidationUtil;
+import com.sk.rts.application.component.validation.ValidationUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import lombok.AllArgsConstructor;

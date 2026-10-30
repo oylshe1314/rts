@@ -20,15 +20,15 @@ public abstract class CustomRestHandler {
 
     private final JsonMapper jsonMapper;
 
-    protected Mono<Void> respond(ServerHttpResponse response, ResponseDto<?> responseDto) {
+    protected <T> Mono<Void> respond(ServerHttpResponse response, Mono<ResponseDto<T>> responseDtoMono) {
         response.setStatusCode(HttpStatus.OK);
         response.getHeaders().set(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
-        return response.writeWith(Mono.just(responseDto).map(dto -> response.bufferFactory().wrap(jsonMapper.writeValueAsBytes(dto))));
+        return response.writeWith(responseDtoMono.map(dto -> response.bufferFactory().wrap(jsonMapper.writeValueAsBytes(dto))));
     }
 
-    protected Mono<Void> respond(ServerHttpResponse response, ResponseDto<?> responseDto, HttpHeaders headers) {
+    protected <T> Mono<Void> respond(ServerHttpResponse response, Mono<ResponseDto<T>> responseDtoMono, HttpHeaders headers) {
         response.getHeaders().addAll(headers);
-        return respond(response, responseDto);
+        return respond(response, responseDtoMono);
     }
 
     protected Mono<Void> respondError(ServerHttpResponse response, HttpStatus httpStatus) {
