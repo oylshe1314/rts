@@ -10,11 +10,11 @@ import lombok.Getter;
 @Schema(description = "菜单")
 public class AdminMenuDto extends StatefulDto {
 
-    @Schema(description = "上级菜单ID")
-    private final Long parentId;
-
     @Schema(description = "类型, 1.目录, 2.菜单, 3.接口")
     private final Integer type;
+
+    @Schema(description = "上级菜单ID")
+    private final Long parentId;
 
     @Schema(description = "类型名称")
     private final String typeName;
@@ -36,6 +36,7 @@ public class AdminMenuDto extends StatefulDto {
 
     public AdminMenuDto(AdminMenu menu) {
         super(menu.getId(), menu.getRemark(), menu.getUpdateBy(), menu.getUpdateTime(), menu.getState());
+        this.type = menu.getType();
         if (menu.getParentId() == 0L) {
             this.parentId = 0L;
             this.parentName = "";
@@ -43,7 +44,6 @@ public class AdminMenuDto extends StatefulDto {
             this.parentId = menu.getParent().getId();
             this.parentName = menu.getParent().getName();
         }
-        this.type = menu.getType();
         this.typeName = MenuType.desc(this.type);
         this.name = menu.getName();
         this.icon = menu.getIcon();

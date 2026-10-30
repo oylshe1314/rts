@@ -10,14 +10,14 @@ import lombok.Setter;
 public class AdminMenu extends StateEntity {
 
     /**
-     * 父级菜单ID
-     */
-    private Long parentId;
-
-    /**
      * 菜单类型，1：目录，2：菜单，3：接口(所有增删改查都是接口, 用来控制读写权限)
      */
     private Integer type;
+
+    /**
+     * 父级菜单ID
+     */
+    private Long parentId;
 
     /**
      * 菜单图标

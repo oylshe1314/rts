@@ -183,6 +183,12 @@ public class AdminMenuService {
             return Mono.error(new StandardStatusException("菜单类型错误"));
         }
 
+        if (addDto.getParentId() == null || addDto.getParentId() == 0) {
+            if (menuType == MenuType.menu || menuType == MenuType.api) {
+                return Mono.error(new StandardStatusException("上级菜单不能为空"));
+            }
+        }
+
         if (!StringUtils.hasText(addDto.getPath())) {
             if (menuType == MenuType.menu || menuType == MenuType.api) {
                 return Mono.error(new StandardStatusException("菜单和接口路径不能为空"));
@@ -192,11 +198,7 @@ public class AdminMenuService {
         Future<AdminMenuDto> future = pool.withTransaction(connection -> Future.succeededFuture()
                 .compose(_ -> {
                     if (addDto.getParentId() == null || addDto.getParentId() == 0L) {
-                        if (menuType != MenuType.dir) {
-                            return Future.failedFuture(new StandardStatusException("上级菜单ID错误"));
-                        } else {
-                            return Future.succeededFuture();
-                        }
+                        return Future.succeededFuture();
                     } else {
                         if (menuType == MenuType.dir) {
                             return Future.succeededFuture();
@@ -221,11 +223,11 @@ public class AdminMenuService {
                 })
                 .compose(parent -> {
                     AdminMenu menu = new AdminMenu();
-                    menu.setParentId(parent == null ? 0L : parent.getId());
                     menu.setType(menuType.value());
+                    menu.setParentId(menuType == MenuType.dir ? 0L : parent.getId());
                     menu.setName(addDto.getName());
                     menu.setIcon(menuType == MenuType.api ? "" : addDto.getIcon());
-                    menu.setPath(addDto.getPath() == null ? "" : addDto.getPath());
+                    menu.setPath(menuType == MenuType.dir ? "" : addDto.getPath());
                     menu.setSortBy(addDto.getSortBy());
                     menu.setState(State.disable.value());
                     menu.initOperation(addDto.getRemark(), operator.getUsername());
@@ -353,43 +355,43 @@ public class AdminMenuService {
      * @param deleteDto 删除参数
      */
     public Mono<Void> delete(MultipleIdDto deleteDto, AdminAuthDetails operator) {
-            Set<Long> ids = new HashSet<>(deleteDto.getIds());
-            if (ids.containsAll(SYSTEM_MENU_IDS)) {
-                return Mono.error(new StandardStatusException("系统菜单禁止删除"));
-            }
+        Set<Long> ids = new HashSet<>(deleteDto.getIds());
+        if (ids.containsAll(SYSTEM_MENU_IDS)) {
+            return Mono.error(new StandardStatusException("系统菜单禁止删除"));
+        }
 
-            Future<Void> future = pool.withTransaction(connection -> adminMenuRepository.existsByParentIdIn(connection, ids)
-                    .compose(exists -> {
-                        if (exists) {
-                            return Future.failedFuture(new StandardStatusException("请先删除子菜单"));
-                        }
-                        Delete<?> query = dslContext.deleteFrom(Tables.ADMIN_MENU).where(Tables.ADMIN_MENU.ID.in(ids));
-                        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()));
-                    })
-                    .compose(_ -> adminOperationRecordRepository.add(connection, Operation.delete, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "menu", operator))
-            );
+        Future<Void> future = pool.withTransaction(connection -> adminMenuRepository.existsByParentIdIn(connection, ids)
+                .compose(exists -> {
+                    if (exists) {
+                        return Future.failedFuture(new StandardStatusException("请先删除子菜单"));
+                    }
+                    Delete<?> query = dslContext.deleteFrom(Tables.ADMIN_MENU).where(Tables.ADMIN_MENU.ID.in(ids));
+                    return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()));
+                })
+                .compose(_ -> adminOperationRecordRepository.add(connection, Operation.delete, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "menu", operator))
+        );
 
-            return ReactiveUtil.toMono(future);
+        return ReactiveUtil.toMono(future);
     }
 
     /**
      * 菜单状态修改(启用/禁用)，默认菜单禁止禁用
      *
      * @param changeDto 状态修改参数
-     * @param operator      操作员
+     * @param operator  操作员
      */
     public Mono<Void> changeState(StateChangeDto changeDto, AdminAuthDetails operator) {
-            Set<Long> ids = new HashSet<>(changeDto.getIds());
-            if (changeDto.getState() == State.disable.value() && ids.containsAll(SYSTEM_MENU_IDS)) {
-                return Mono.error(new StandardStatusException("系统菜单禁止禁用"));
-            }
+        Set<Long> ids = new HashSet<>(changeDto.getIds());
+        if (changeDto.getState() == State.disable.value() && ids.containsAll(SYSTEM_MENU_IDS)) {
+            return Mono.error(new StandardStatusException("系统菜单禁止禁用"));
+        }
 
-            State state = State.valueOf(changeDto.getState());
+        State state = State.valueOf(changeDto.getState());
 
-            Update<?> query = dslContext.update(Tables.ADMIN_MENU).set(Tables.ADMIN_MENU.STATE, state.value()).set(Tables.ADMIN_MENU.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN_MENU.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN_MENU.STATE.in(ids));
-            Future<Void> future = pool.withTransaction(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
-                    .compose(_ -> adminOperationRecordRepository.add(connection, Operation.changeState, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "menu," + state.name(), operator))
-            );
-            return ReactiveUtil.toMono(future);
+        Update<?> query = dslContext.update(Tables.ADMIN_MENU).set(Tables.ADMIN_MENU.STATE, state.value()).set(Tables.ADMIN_MENU.UPDATE_BY, operator.getUsername()).set(Tables.ADMIN_MENU.UPDATE_TIME, OffsetDateTime.now()).where(Tables.ADMIN_MENU.STATE.in(ids));
+        Future<Void> future = pool.withTransaction(connection -> connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues()))
+                .compose(_ -> adminOperationRecordRepository.add(connection, Operation.changeState, ids.stream().map(Object::toString).collect(Collectors.joining(",")), "menu," + state.name(), operator))
+        );
+        return ReactiveUtil.toMono(future);
     }
 }

@@ -14,14 +14,14 @@ import lombok.Getter;
 public class AdminMenuAddDto {
 
     @NotNull
-    @PositiveOrZero
-    @Schema(description = "上级菜单ID, 类型为2,3时必填")
-    private final Long parentId;
-
-    @NotNull
     @Integers({1, 2, 3})
     @Schema(description = "类型, 1.目录, 2.菜单, 3.接口")
     private final Integer type;
+
+    @NotNull
+    @PositiveOrZero
+    @Schema(description = "上级菜单ID, 类型为2,3时必填")
+    private final Long parentId;
 
     @Schema(description = "图标")
     private final String icon;
