@@ -1,5 +1,7 @@
 package com.sk.rts.application.dto;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sk.rts.application.util.IteratorUtil;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -11,9 +13,8 @@ import java.util.Collection;
 import java.util.function.Function;
 
 @Getter
-@NullMarked
 @Schema(description = "分页查询结果")
-public class PageResultDto<T> {
+public class PageResultDto<Result> {
 
     @Schema(description = "页码，从1开始")
     private final int pageNo;
@@ -28,25 +29,29 @@ public class PageResultDto<T> {
     private final long pages;
 
     @Schema(description = "结果数据")
-    private final Collection<T> results;
+    private final Collection<Result> results;
 
-    public PageResultDto(int pageNo, int pageSize, long total, Collection<T> results) {
+    @JsonCreator
+    public PageResultDto(@JsonProperty("pageNo") int pageNo,
+                         @JsonProperty("pageSize") int pageSize,
+                         @JsonProperty("total") long total,
+                         @JsonProperty("results") Collection<Result> results) {
         this.pageNo = pageNo + 1;
         this.pageSize = pageSize;
         this.total = total;
-        this.pages = total / pageSize + ((total % pageSize == 0) ? 0 : 1);
+        this.pages = (total  + pageSize - 1) / pageSize;
         this.results = results;
     }
 
-    public<S>  PageResultDto(int pageNo, int pageSize, long total, Collection<S> results, Function<S, T> mapper) {
+    public <Source> PageResultDto(int pageNo, int pageSize, long total, Collection<Source> results, Function<Source, Result> mapper) {
         this.pageNo = pageNo + 1;
         this.pageSize = pageSize;
         this.total = total;
-        this.pages = total / pageSize + ((total % pageSize == 0) ? 0 : 1);
+        this.pages = (total  + pageSize - 1) / pageSize;
         this.results = IteratorUtil.convert(results, mapper);
     }
 
-    public PageResultDto(Pageable pageable, Page<T> page) {
+    public PageResultDto(Pageable pageable, Page<Result> page) {
         this.pageNo = pageable.getPageNumber() + 1;
         this.pageSize = pageable.getPageSize();
         this.total = page.getTotalElements();
@@ -54,7 +59,7 @@ public class PageResultDto<T> {
         this.results = page.getContent();
     }
 
-    public <S> PageResultDto(Pageable pageable, Page<S> page, Function<S, T> mapper) {
+    public <Source> PageResultDto(Pageable pageable, Page<Source> page, Function<Source, Result> mapper) {
         this.pageNo = pageable.getPageNumber() + 1;
         this.pageSize = pageable.getPageSize();
         this.total = page.getTotalElements();

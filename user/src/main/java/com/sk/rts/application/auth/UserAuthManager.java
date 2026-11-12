@@ -26,16 +26,9 @@ public abstract class UserAuthManager implements ReactiveAuthenticationManager {
         String credentials = (String) authRequest.getCredentials();
 
         UserRemoteDetails remoteDetails = (UserRemoteDetails) authRequest.getDetails();
-        if (remoteDetails == null) {
-            return Mono.error(new BadCredentialsException("", new StandardStatusException(ResponseStatus.internal_error)));
-        }
 
-        return authenticate(principal, credentials, remoteDetails).flatMap(authDetails -> authService.generateToken(authDetails).map(tokenDetails -> {
-                UserAuthToken authResult = new UserAuthToken(authDetails, tokenDetails.getAccessToken());
-                authResult.setDetails(tokenDetails);
-                return authResult;
-        }));
+        return authenticate(principal, credentials, remoteDetails);
     }
 
-    protected abstract Mono<UserAuthDetails> authenticate(String principal, String credentials, UserRemoteDetails remoteDetails);
+    protected abstract Mono<Authentication> authenticate(String principal, String credentials, UserRemoteDetails remoteDetails);
 }

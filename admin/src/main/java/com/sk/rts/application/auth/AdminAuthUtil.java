@@ -12,16 +12,4 @@ public final class AdminAuthUtil {
     public static long parseSubject(String subject) {
         return FeistelUtil.decode(CodecUtil.decode64(subject));
     }
-
-    public static String buildTokenKey(String subject) {
-        return "admin:admin:token:" + subject;
-    }
-
-    public static String buildDetailsKey(long id) {
-        return "admin:admin:details:" + id;
-    }
-
-    public static String buildLoggedIdsKey() {
-        return "admin:admin:loggedIds";
-    }
 }

@@ -1,7 +1,7 @@
 package com.sk.rts.application.auth;
 
 import com.sk.rts.application.component.TokenUtil;
-import com.sk.rts.application.config.TokenProperties;
+import com.sk.rts.application.component.builder.RedisKeyBuilder;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.util.ReactiveUtil;
@@ -22,8 +22,6 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.util.List;
-
 @Slf4j
 @Component
 @NullMarked
@@ -32,10 +30,11 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
 
     private final Redis redis;
 
+    private final TokenUtil tokenUtil;
+
     private final JsonMapper jsonMapper;
 
-    private final TokenUtil tokenUtil;
-    private final TokenProperties tokenProperties;
+    private final RedisKeyBuilder redisKeyBuilder;
 
     @Override
     public Mono<Void> save(ServerWebExchange exchange, @Nullable SecurityContext context) {
@@ -47,20 +46,19 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
             AdminAuthDetails authDetails = (AdminAuthDetails) authToken.getPrincipal();
             AdminAccessToken accessToken = (AdminAccessToken) authToken.getCredentials();
 
-            Request request1 = Request.cmd(Command.MSETEX);
-            request1.arg(2);
-            request1.arg(AdminAuthUtil.buildTokenKey(accessToken.getSubject()));
-            request1.arg(jsonMapper.writeValueAsString(accessToken));
-            request1.arg(AdminAuthUtil.buildDetailsKey(authDetails.getAdminId()));
-            request1.arg(jsonMapper.writeValueAsString(authDetails));
-            request1.arg("EX");
-            request1.arg(tokenProperties.getExpiration().toSeconds());
+            Request request = Request.cmd(Command.MSETEX);
+            request.arg(2);
 
-            Request request2 = Request.cmd(Command.SADD);
-            request2.arg(AdminAuthUtil.buildLoggedIdsKey());
-            request2.arg(authDetails.getAdminId());
+            request.arg(redisKeyBuilder.build("authDetails", authDetails.getAdminId()));
+            request.arg(jsonMapper.writeValueAsString(authDetails));
 
-            return ReactiveUtil.toMono(redis.batch(List.of(request1, request2)).mapEmpty());
+            request.arg(redisKeyBuilder.build("accessToken", accessToken.getSubject()));
+            request.arg(jsonMapper.writeValueAsString(accessToken));
+
+            request.arg("EXAT");
+            request.arg(accessToken.getExpireTime());
+
+            return ReactiveUtil.toMono(redis.send(request).mapEmpty());
         } else {
             return Mono.empty();
         }
@@ -78,16 +76,20 @@ public class AdminSecurityContextRepository implements ServerSecurityContextRepo
         long adminId = AdminAuthUtil.parseSubject(subject);
 
         Request redisRequest = Request.cmd(Command.MGET);
-        redisRequest.arg(AdminAuthUtil.buildTokenKey(subject));
-        redisRequest.arg(AdminAuthUtil.buildDetailsKey(adminId));
+        redisRequest.arg(redisKeyBuilder.build("authDetails", adminId));
+        redisRequest.arg(redisKeyBuilder.build("accessToken", subject));
 
         Future<SecurityContext> future = redis.send(redisRequest).flatMap(response -> {
             if (response.get(0) == null || response.get(1) == null) {
                 return Future.failedFuture(new StandardStatusException(ResponseStatus.token_expired));
             }
 
-            AdminAccessToken accessToken = jsonMapper.readValue(response.get(0).toString(), AdminAccessToken.class);
             AdminAuthDetails authDetails = jsonMapper.readValue(response.get(1).toString(), AdminAuthDetails.class);
+            AdminAccessToken accessToken = jsonMapper.readValue(response.get(2).toString(), AdminAccessToken.class);
+
+            if (!accessToken.getToken().equals(token)) {
+                return Future.failedFuture(new StandardStatusException(ResponseStatus.token_expired));
+            }
 
             AdminAuthToken authResult = new AdminAuthToken(authDetails, accessToken);
             authResult.setDetails(new AdminRemoteDetails(request));

@@ -9,6 +9,8 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.PathMatcher;
 
 import java.util.Random;
 
@@ -16,8 +18,8 @@ import java.util.Random;
 public class BeanConfiguration {
 
     @Bean
-    public Random random() {
-        return new Random(System.currentTimeMillis());
+    public PathMatcher pathMatcher() {
+        return new AntPathMatcher();
     }
 
     @Bean

@@ -1,6 +1,6 @@
 package com.sk.rts.application.dto;
 
-import com.sk.rts.application.auth.UserTokenDetails;
+import com.sk.rts.application.auth.TokenDetails;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
@@ -14,7 +14,7 @@ public class UserTokenDto {
     @Schema(description = "刷新TOKEN, 为空则不需要刷新TOKEN")
     private final UserRefreshTokenDto refreshToken;
 
-    public UserTokenDto(UserTokenDetails tokenDetails) {
+    public UserTokenDto(TokenDetails tokenDetails) {
         this(new UserAccessTokenDto(tokenDetails.getAccessToken()), tokenDetails.getRefreshToken() == null ? null : new UserRefreshTokenDto(tokenDetails.getRefreshToken()));
     }
 

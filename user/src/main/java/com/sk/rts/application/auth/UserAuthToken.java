@@ -21,10 +21,26 @@ public class UserAuthToken extends AbstractAuthenticationToken {
         this.setAuthenticated(false);
     }
 
-    public UserAuthToken(UserAuthDetails authDetails, UserAccessToken accessToken) {
+    public UserAuthToken(AuthDetails authDetails, UserAccessToken accessToken) {
         super(authDetails.getAuthorities());
         this.principal = authDetails;
         this.credentials = accessToken;
         this.setAuthenticated(true);
+    }
+
+    @Override
+    public String getName() {
+        if (isAuthenticated()) {
+            return ((AuthDetails) principal).getUsername();
+        } else {
+            return (String) principal;
+        }
+    }
+
+    @Override
+    public Object getDetails() {
+        Object details = super.getDetails();
+        assert details != null;
+        return details;
     }
 }

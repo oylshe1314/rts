@@ -2,7 +2,6 @@ plugins {
     id "java"
     id "org.springframework.boot" version "${springBootVersion}"
     id "org.jooq.jooq-codegen-gradle" version "${jooqVersion}"
-    id 'com.google.protobuf' version '0.10.0'
     id "com.bmuschko.docker-spring-boot-application" version "10.0.0"
 }
 
@@ -35,7 +34,7 @@ dependencies {
     implementation "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
     implementation "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 
-    implementation "commons-codec:commons-codec:1.22.0"
+    implementation "commons-codec:commons-codec:1.23.0"
 
     compileOnly "org.jooq:jooq-codegen:${jooqVersion}"
     jooqCodegen "org.postgresql:postgresql:${postgresqlVersion}"
@@ -132,31 +131,6 @@ jooq {
 compileJava.dependsOn 'jooqCodegen'
 
 final String active = project.hasProperty('active') ? project.property("active") : null
-
-processResources {
-    exclude {
-        if (active == null) {
-            return false
-        }
-
-        final String filename = it.file.name
-        final String filePrefix = "application-"
-        if (!filename.endsWithAny(".properties", ".yaml", ".yml")) {
-            return false
-        }
-
-        if (!filename.startsWith(filePrefix)) {
-            return false
-        }
-
-        int endIndex = filename.lastIndexOf('.')
-        if (endIndex < 0) {
-            endIndex = filename.length()
-        }
-        final String fileActive = filename.substring(filePrefix.length(), endIndex)
-        return fileActive != active
-    }
-}
 
 bootJar {
     archiveFileName = "rts-admin-server-${version}.jar"

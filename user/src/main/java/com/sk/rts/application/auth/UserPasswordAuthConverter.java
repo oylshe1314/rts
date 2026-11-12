@@ -4,6 +4,7 @@ import com.sk.rts.application.component.validation.ValidationUtil;
 import com.sk.rts.application.dto.PasswordLoginDto;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
+import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -15,11 +16,11 @@ import tools.jackson.databind.json.JsonMapper;
 @Primary
 @Component
 @NullMarked
+@AllArgsConstructor
 public class UserPasswordAuthConverter extends UserAuthConverter {
 
-    public UserPasswordAuthConverter(JsonMapper jsonMapper, ValidationUtil validationUtil) {
-        super(jsonMapper, validationUtil);
-    }
+    private final JsonMapper jsonMapper;
+    private final ValidationUtil validationUtil;
 
     @Override
     protected UserAuthToken parse(DataBuffer buffer) {

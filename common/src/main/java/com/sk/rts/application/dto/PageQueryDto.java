@@ -12,7 +12,7 @@ import org.jspecify.annotations.Nullable;
 
 @Getter
 @Schema(description = "分页查询参数")
-public class PageQueryDto<T> {
+public class PageQueryDto<Query> {
 
     @NotNull
     @Min(value = 1, message = "页码最小从1开始)")
@@ -32,14 +32,14 @@ public class PageQueryDto<T> {
     private final Boolean desc;
 
     @Schema(description = "查询参数")
-    private final T query;
+    private final Query query;
 
     @JsonCreator
     public PageQueryDto(@JsonProperty("pageNo") Integer pageNo,
                         @JsonProperty("pageSize") Integer pageSize,
                         @JsonProperty("sort") String sort,
                         @JsonProperty("desc") Boolean desc,
-                        @JsonProperty("query") @Nullable T query) {
+                        @JsonProperty("query") @Nullable Query query) {
         this.pageNo = pageNo;
         this.pageSize = pageSize;
         this.sort = sort;

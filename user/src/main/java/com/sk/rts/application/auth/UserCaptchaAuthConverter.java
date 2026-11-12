@@ -4,6 +4,7 @@ import com.sk.rts.application.component.validation.ValidationUtil;
 import com.sk.rts.application.dto.CaptchaLoginDto;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
+import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,11 +14,11 @@ import tools.jackson.databind.json.JsonMapper;
 
 @Component
 @NullMarked
+@AllArgsConstructor
 public class UserCaptchaAuthConverter extends UserAuthConverter {
 
-    public UserCaptchaAuthConverter(JsonMapper jsonMapper, ValidationUtil validationUtil) {
-        super(jsonMapper, validationUtil);
-    }
+    private final JsonMapper jsonMapper;
+    private final ValidationUtil validationUtil;
 
     @Override
     protected UserAuthToken parse(DataBuffer buffer) {

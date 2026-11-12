@@ -8,18 +8,18 @@ import lombok.Getter;
 @Schema(description = "访问TOKEN")
 public class UserAccessTokenDto {
 
-    @Schema(description = "TOKEN")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "TOKEN")
     private final String token;
 
-    @Schema(description = "有效时间戳")
-    private final Long expiration;
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "过期时间戳")
+    private final Long expireTime;
 
     public UserAccessTokenDto(UserAccessToken accessToken) {
         this(accessToken.getToken(), accessToken.getExpireTime());
     }
 
-    public UserAccessTokenDto(String token, Long expiration) {
+    public UserAccessTokenDto(String token, Long expireTime) {
         this.token = token;
-        this.expiration = expiration;
+        this.expireTime = expireTime;
     }
 }

@@ -14,4 +14,8 @@ public class AdminAccessToken {
     private String subject;
 
     private String token;
+
+    private Long issueTime;
+
+    private Long expireTime;
 }

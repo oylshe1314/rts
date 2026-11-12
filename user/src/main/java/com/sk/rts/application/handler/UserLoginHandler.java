@@ -1,7 +1,7 @@
 package com.sk.rts.application.handler;
 
 import com.sk.rts.application.auth.UserAuthToken;
-import com.sk.rts.application.auth.UserTokenDetails;
+import com.sk.rts.application.auth.TokenDetails;
 import com.sk.rts.application.dto.ResponseDto;
 import com.sk.rts.application.dto.UserTokenDto;
 import com.sk.rts.application.exception.ResponseStatus;
@@ -27,7 +27,7 @@ public class UserLoginHandler extends CustomRestHandler implements ServerAuthent
     @Override
     public Mono<Void> onAuthenticationSuccess(WebFilterExchange exchange, Authentication authentication) {
         if (authentication instanceof UserAuthToken authToken) {
-            UserTokenDetails tokenDetails = (UserTokenDetails) authToken.getDetails();
+            TokenDetails tokenDetails = (TokenDetails) authToken.getDetails();
             if (tokenDetails != null) {
                 return respond(exchange.getExchange().getResponse(), ResponseDto.success(new UserTokenDto(tokenDetails)));
             } else {

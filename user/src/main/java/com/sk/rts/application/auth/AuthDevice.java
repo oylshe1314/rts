@@ -5,13 +5,21 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.OffsetDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserTokenDetails {
+public class AuthDevice {
 
-    private UserAccessToken accessToken;
+    private Long id;
 
-    private UserRefreshToken refreshToken;
+    private String platform;
+
+    private String deviceId;
+
+    private String deviceNo;
+
+    private OffsetDateTime addTime;
 }

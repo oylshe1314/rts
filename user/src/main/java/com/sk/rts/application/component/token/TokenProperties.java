@@ -1,4 +1,4 @@
-package com.sk.rts.application.config;
+package com.sk.rts.application.component.token;
 
 import io.jsonwebtoken.security.Keys;
 import lombok.Getter;

@@ -1,9 +1,7 @@
 package com.sk.rts.application.auth;
 
-import com.sk.rts.application.component.validation.ValidationUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
-import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferUtils;
@@ -14,14 +12,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import tools.jackson.databind.json.JsonMapper;
 
 @NullMarked
-@AllArgsConstructor
 public abstract class UserAuthConverter implements ServerAuthenticationConverter {
-
-    protected final JsonMapper jsonMapper;
-    protected final ValidationUtil validationUtil;
 
     @Override
     public Mono<Authentication> convert(ServerWebExchange exchange) {

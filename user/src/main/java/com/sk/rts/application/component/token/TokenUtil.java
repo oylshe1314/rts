@@ -1,7 +1,5 @@
-package com.sk.rts.application.component;
+package com.sk.rts.application.component.token;
 
-import com.sk.rts.application.auth.UserAccessToken;
-import com.sk.rts.application.config.TokenProperties;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.util.TimeUtil;

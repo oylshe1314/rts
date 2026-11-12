@@ -34,7 +34,7 @@ dependencies {
     implementation "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
     implementation "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 
-    implementation "commons-codec:commons-codec:1.22.0"
+    implementation "commons-codec:commons-codec:1.23.0"
 
     compileOnly "org.jooq:jooq-codegen:${jooqVersion}"
     jooqCodegen "org.postgresql:postgresql:${postgresqlVersion}"

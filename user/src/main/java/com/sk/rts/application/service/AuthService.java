@@ -1,8 +1,8 @@
 package com.sk.rts.application.service;
 
 import com.sk.rts.application.auth.*;
-import com.sk.rts.application.component.TokenUtil;
-import com.sk.rts.application.config.TokenProperties;
+import com.sk.rts.application.component.token.TokenUtil;
+import com.sk.rts.application.component.token.TokenProperties;
 import com.sk.rts.application.entity.UserAccount;
 import com.sk.rts.application.entity.UserDetails;
 import com.sk.rts.application.entity.UserDevice;
@@ -149,7 +149,7 @@ public class AuthService {
         OffsetDateTime expireTime = issueTime.plus(tokenProperties.getAccessToken().getExpiration());
 
         UserAccessToken accessToken = new UserAccessToken();
-        accessToken.setSubject(UserAuthUtil.buildSubject(authDetails.getUserId(), authDetails.getDeviceId()));
+        accessToken.setSubject(UserAuthUtils.buildSubject(authDetails.getUserId(), authDetails.getDeviceId()));
         accessToken.setUserId(authDetails.getUserId());
         accessToken.setDeviceId(authDetails.getDeviceId());
         accessToken.setToken(tokenUtil.generate(accessToken.getSubject(), issueTime, expireTime));
@@ -164,7 +164,7 @@ public class AuthService {
         OffsetDateTime refreshTime = expireTime.minus(tokenProperties.getRefreshToken().getRefreshAdvance());
 
         UserRefreshToken refreshToken = new UserRefreshToken();
-        refreshToken.setSubject(UserAuthUtil.buildSubject(authDetails.getUserId(), authDetails.getDeviceId()));
+        refreshToken.setSubject(UserAuthUtils.buildSubject(authDetails.getUserId(), authDetails.getDeviceId()));
         refreshToken.setUserId(authDetails.getUserId());
         refreshToken.setDeviceId(authDetails.getDeviceId());
         refreshToken.setHash(RandomUtil.randomRefreshToken(authDetails.getUserId(), authDetails.getDeviceId()));
@@ -175,7 +175,7 @@ public class AuthService {
         return refreshToken;
     }
 
-    private Future<UserTokenDetails> generateUserToken(UserAuthDetails authDetails) {
+    private Future<TokenDetails> generateUserToken(UserAuthDetails authDetails) {
         OffsetDateTime now = OffsetDateTime.now();
         UserAccessToken userAccessToken = generateAccessToken(authDetails, now);
         UserRefreshToken userRefreshToken = generateRefreshToken(authDetails, now);
@@ -185,15 +185,15 @@ public class AuthService {
 
         return cacheService.saveUserRefreshToken(userRefreshToken).map(_ -> {
             userRefreshToken.setHash(hash);
-            return new UserTokenDetails(userAccessToken, userRefreshToken);
+            return new TokenDetails(userAccessToken, userRefreshToken);
         });
     }
 
-    public Mono<UserTokenDetails> generateToken(UserAuthDetails authDetails) {
+    public Mono<TokenDetails> generateToken(UserAuthDetails authDetails) {
         return Mono.create(sink -> generateUserToken(authDetails).onSuccess(sink::success).onFailure(sink::error));
     }
 
-    public Mono<UserTokenDetails> refreshToken(String subject, String hash, UserRemoteDetails remoteDetails) {
+    public Mono<TokenDetails> refreshToken(String subject, String hash, UserRemoteDetails remoteDetails) {
         UserRefreshToken userRefreshToken = new UserRefreshToken();
         userRefreshToken.setSubject(subject);
 
@@ -261,7 +261,7 @@ public class AuthService {
                                 if (nowTimestamp >= userRefreshToken.getRefreshTime()) {
                                     return generateUserToken(authDetails);
                                 } else {
-                                    return Future.succeededFuture(new UserTokenDetails(userAccessToken, userRefreshToken));
+                                    return Future.succeededFuture(new TokenDetails(userAccessToken, userRefreshToken));
                                 }
                             });
                 })

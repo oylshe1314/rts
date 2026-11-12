@@ -10,11 +10,11 @@ import lombok.Getter;
 public class PasswordLoginDto {
 
     @NotBlank
-    @Schema(description = "用户名")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "用户名")
     private final  String account;
 
     @NotBlank
-    @Schema(description = "密码")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "密码")
     private final String password;
 
     public PasswordLoginDto(@JsonProperty("account") String account, @JsonProperty("password") String password) {
