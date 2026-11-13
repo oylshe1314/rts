@@ -7,6 +7,7 @@ import com.sk.rts.application.component.token.TokenUtil;
 import com.sk.rts.application.entity.UserAccount;
 import com.sk.rts.application.entity.UserDetails;
 import com.sk.rts.application.entity.UserDevice;
+import com.sk.rts.application.entity.enums.CaptchaType;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.jooq.Tables;
@@ -16,7 +17,7 @@ import com.sk.rts.application.jooq.tables.TableUserDevice;
 import com.sk.rts.application.repository.UserDeviceRepository;
 import com.sk.rts.application.util.CheckUtil;
 import com.sk.rts.application.util.RandomUtil;
-import com.sk.rts.application.util.ReactiveUtil;
+import com.sk.rts.application.util.TimeUtil;
 import io.vertx.core.Future;
 import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
@@ -38,7 +39,6 @@ import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -52,6 +52,8 @@ public class AuthService {
     private final Redis redis;
 
     private final UserDeviceRepository userDeviceRepository;
+
+    private final CaptchaService captchaService;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -130,7 +132,7 @@ public class AuthService {
         refreshToken.setSubject(UserAuthUtil.buildSubject(authDetails.getUserId(), authDetails.getDeviceId()));
         refreshToken.setUserId(authDetails.getUserId());
         refreshToken.setDeviceId(authDetails.getDeviceId());
-        refreshToken.setHash(RandomUtil.randomRefreshToken(authDetails.getUserId(), authDetails.getDeviceId()));
+        refreshToken.setHash(RandomUtil.randomHash(authDetails.getUserId(), authDetails.getDeviceId()));
         refreshToken.setIssueTime(issueTime.toEpochSecond());
         refreshToken.setExpireTime(expireTime.toEpochSecond());
         refreshToken.setRefreshTime(refreshTime.toEpochSecond());
@@ -146,7 +148,7 @@ public class AuthService {
         return new TokenDetails(accessToken, refreshToken);
     }
 
-    private Authentication buildAuthResult(AuthUser authUser, AuthDevice authDevice, UserRemoteDetails remoteDetails) {
+    private AuthDetails buildAuthDetails(AuthUser authUser, AuthDevice authDevice, UserRemoteDetails remoteDetails) {
         AuthDetails authDetails = new AuthDetails();
         authDetails.setUserId(authUser.getId());
         authDetails.setDeviceId(authDevice.getId());
@@ -155,10 +157,25 @@ public class AuthService {
         authDetails.setPassword("");
         authDetails.setLocale(remoteDetails.getLocale());
         authDetails.setIpAddress(remoteDetails.getIpAddress());
+        return authDetails;
+    }
 
-        TokenDetails tokenDetails = buildTokenDetails(authDetails);
+    private Future<Void> saveRefreshToken(UserRefreshToken refreshToken) {
+        String hash = refreshToken.getHash();
+        refreshToken.setHash(passwordEncoder.encode(hash));
 
-        return new UserAuthToken(authDetails, tokenDetails);
+        Request request = Request.cmd(Command.MSETEX);
+        request.arg(1);
+
+        request.arg(redisKeyBuilder.build("refreshToken", refreshToken.getSubject()));
+        request.arg(jsonMapper.writeValueAsString(refreshToken));
+
+        request.arg("EXAT");
+        request.arg(refreshToken.getExpireTime());
+
+        refreshToken.setHash(hash);
+
+        return redis.send(request).mapEmpty();
     }
 
     private Future<Authentication> saveUserDetails(UserDetails userDetails, UserRemoteDetails remoteDetails) {
@@ -186,139 +203,154 @@ public class AuthService {
         request.arg(redisKeyBuilder.build("authDevice", authDevice.getId()));
         request.arg(jsonMapper.writeValueAsString(authDevice));
 
-        return redis.send(request).map(buildAuthResult(authUser, authDevice, remoteDetails));
+        return redis.send(request).flatMap(_ -> {
+            AuthDetails authDetails = buildAuthDetails(authUser, authDevice, remoteDetails);
+            TokenDetails tokenDetails = buildTokenDetails(authDetails);
+            return saveRefreshToken(tokenDetails.getRefreshToken()).map(new UserAuthToken(authDetails, tokenDetails));
+        });
     }
 
-    public Mono<Authentication> passwordLogin(String account, String password, UserRemoteDetails remoteDetails) {
+    public UserDevice createUserDevice(UserDetails userDetails, UserRemoteDetails remoteDetails) {
+        UserDevice device = new UserDevice();
+        device.setUserId(userDetails.getId());
+        device.setPlatform(remoteDetails.getPlatform());
+        device.setDeviceId(remoteDetails.getDeviceId());
+        device.setDeviceNo(RandomUtil.randomNumbers(8));
+        device.setCreateTime(OffsetDateTime.now());
+        return device;
+    }
+
+    private Future<Authentication> login(SqlConnection connection, UserDetails userDetails, UserRemoteDetails remoteDetails) {
+        if (userDetails.getDevice() == null) {
+            UserDevice device = createUserDevice(userDetails, remoteDetails);
+            return userDeviceRepository.insert(connection, device).flatMap(id -> {
+                device.setId(id);
+                userDetails.setDevice(device);
+                return saveUserDetails(userDetails, remoteDetails);
+            });
+        } else {
+            return saveUserDetails(userDetails, remoteDetails);
+        }
+    }
+
+    public Future<Authentication> passwordLogin(String account, String password, UserRemoteDetails remoteDetails) {
         try {
             CheckUtil.checkDevice(remoteDetails.getPlatform(), remoteDetails.getDeviceId());
             CheckUtil.checkAccount(account);
             CheckUtil.safetyPassword(password);
         } catch (Exception exception) {
-            return Mono.error(exception);
+            return Future.failedFuture(new BadCredentialsException("", exception));
         }
 
-        Future<Authentication> future = pool.withConnection(connection -> queryUserDetails(connection, account, remoteDetails).flatMap(userDetails -> {
+        return pool.withConnection(connection -> queryUserDetails(connection, account, remoteDetails).flatMap(userDetails -> {
                     if (!passwordEncoder.matches(password, userDetails.getAccount().getPassword())) {
                         return Future.failedFuture(new BadCredentialsException("", new StandardStatusException("user.password.incorrect", "账号或密码不正确")));
                     }
-
-                    if (userDetails.getDevice() == null) {
-                        UserDevice device = new UserDevice();
-                        device.setUserId(userDetails.getId());
-                        device.setPlatform(remoteDetails.getPlatform());
-                        device.setDeviceId(remoteDetails.getDeviceId());
-                        device.setDeviceNo(RandomUtil.randomNumber(9));
-                        device.setCreateTime(OffsetDateTime.now());
-
-                        return userDeviceRepository.insert(connection, device).flatMap(id -> {
-                            device.setId(id);
-                            userDetails.setDevice(device);
-                            return saveUserDetails(userDetails, remoteDetails);
-                        });
-                    } else {
-                        return saveUserDetails(userDetails, remoteDetails);
-                    }
+                    return login(connection, userDetails, remoteDetails);
                 })
         );
-
-        return ReactiveUtil.toMono(future);
     }
 
 
-    public Mono<Authentication> captchaLogin(String account, String captcha, UserRemoteDetails remoteDetails) {
+    public Future<Authentication> captchaLogin(String account, String captcha, UserRemoteDetails remoteDetails) {
         try {
             CheckUtil.checkDevice(remoteDetails.getPlatform(), remoteDetails.getDeviceId());
             CheckUtil.checkAccount(account);
         } catch (Exception exception) {
-            return Mono.error(exception);
+            return Future.failedFuture(exception);
         }
 
-
+        return captchaService.verify(CaptchaType.login, account, captcha).transform(ar -> {
+            if (ar.failed()) {
+                return Future.failedFuture(new BadCredentialsException("", ar.cause()));
+            }
+            return pool.withConnection(connection -> queryUserDetails(connection, account, remoteDetails).flatMap(userDetails -> login(connection, userDetails, remoteDetails)));
+        });
     }
 
-    public Mono<Authentication> tokenRefresh(String subject, String hash, UserRemoteDetails remoteDetails) {
+    private Select<?> buildQuery(Long userId, Long deviceId) {
+        TableUserDetails u = Tables.USER_DETAILS.as("u");
+        TableUserAccount a = Tables.USER_ACCOUNT.as("a");
+        TableUserDevice d = Tables.USER_DEVICE.as("d");
 
+        return dslContext.select(
+                        u.ID, // 0
+                        u.NICKNAME, // 1
+                        u.AVATAR, // 2
+                        u.GENDER, // 3
+                        u.BIRTHDAY, // 4
+                        u.CREATE_TIME, // 5
+                        a.ID, // 6
+                        a.USERNAME, // 7
+                        a.PHONE, // 8
+                        a.EMAIL, // 9
+                        a.PASSWORD, // 10
+                        d.ID, // 11
+                        d.USER_ID, // 12
+                        d.PLATFORM, // 13
+                        d.SERIAL_NO, // 14
+                        d.DEVICE_NO, // 15
+                        d.CREATE_TIME) // 16
+                .from(u)
+                .innerJoin(a).on(a.ID.eq(u.ID))
+                .innerJoin(d).on(d.ID.eq(deviceId)).and(d.USER_ID.eq(u.ID))
+                .where(u.ID.eq(userId));
     }
 
-    public Mono<TokenDetails> refreshToken(String subject, String hash, UserRemoteDetails remoteDetails) {
-        UserRefreshToken userRefreshToken = new UserRefreshToken();
-        userRefreshToken.setSubject(subject);
+    public Future<UserDetails> queryUserDetails(SqlConnection connection, Long userId, Long deviceId) {
+        Select<?> query = buildQuery(userId, deviceId);
+        return connection.preparedQuery(query.getSQL()).execute(Tuple.tuple(query.getBindValues())).flatMap(rows -> {
+            if (rows.size() == 0) {
+                return Future.failedFuture(new BadCredentialsException("", new StandardStatusException(ResponseStatus.internal_error)));
+            }
 
-        OffsetDateTime now = OffsetDateTime.now();
-        long nowTimestamp = now.toEpochSecond();
-        return Mono.create(sink -> cacheService.queryUserRefreshToken(userRefreshToken)
-                .flatMap(_ -> {
-                    if (nowTimestamp >= userRefreshToken.getExpireTime()) {
-                        return Future.failedFuture(new StandardStatusException(ResponseStatus.token_expired));
-                    }
+            Row row = rows.iterator().next();
+            UserDetails details = UserDetails.fromRow(row, 0);
+            details.setAccount(UserAccount.fromRow(row, 6));
+            if (row.getLong(11) != null) {
+                details.setDevice(UserDevice.fromRow(row, 11));
+            }
 
-                    if (!passwordEncoder.matches(hash, userRefreshToken.getHash())) {
-                        return Future.failedFuture(new StandardStatusException(ResponseStatus.token_invalid));
-                    }
-
-                    TableUserDetails u = Tables.USER_DETAILS.as("u");
-                    TableUserAccount a = Tables.USER_ACCOUNT.as("a");
-                    TableUserDevice d = Tables.USER_DEVICE.as("d");
-
-                    Select<?> query = dslContext.select(
-                                    u.ID, // 0
-                                    u.NICKNAME, // 1
-                                    u.AVATAR, // 2
-                                    u.GENDER, // 3
-                                    u.BIRTHDAY, // 4
-                                    u.CREATE_TIME, // 5
-                                    a.ID, // 6
-                                    a.USERNAME, // 7
-                                    a.PHONE, // 8
-                                    a.EMAIL, // 9
-                                    a.PASSWORD, // 10
-                                    d.ID, // 11
-                                    d.USER_ID, // 12
-                                    d.PLATFORM, // 13
-                                    d.SERIAL_NO, // 14
-                                    d.DEVICE_NO, // 15
-                                    d.CREATE_TIME) // 16
-                            .from(u)
-                            .innerJoin(a).on(a.ID.eq(u.ID))
-                            .leftJoin(d).on(d.USER_ID.eq(u.ID)).and(d.ID.eq(userRefreshToken.getDeviceId()))
-                            .where(u.ID.eq(userRefreshToken.getUserId()));
-
-                    String sql = query.getSQL();
-                    List<Object> args = query.getBindValues();
-                    return pool.preparedQuery(sql).execute(Tuple.tuple(args))
-                            .flatMap(rows -> {
-                                if (rows.size() == 0) {
-                                    return Future.failedFuture(new StandardStatusException(ResponseStatus.token_invalid));
-                                }
-
-                                Row row = rows.iterator().next();
-                                UserDetails userDetails = UserDetails.fromRow(row, 0);
-                                userDetails.setAccount(UserAccount.fromRow(row, 6));
-                                if (row.getLong(11) != null) {
-                                    userDetails.setDevice(UserDevice.fromRow(row, 11));
-                                }
-
-                                if (!userDetails.getDevice().getSerialNo().equals(remoteDetails.getDevice())) {
-                                    return Future.failedFuture(new StandardStatusException(ResponseStatus.token_invalid));
-                                }
-
-                                UserAuthDetails authDetails = new UserAuthDetails(userDetails, remoteDetails);
-
-                                UserAccessToken userAccessToken = generateAccessToken(authDetails, now);
-                                if (nowTimestamp >= userRefreshToken.getRefreshTime()) {
-                                    return generateUserToken(authDetails);
-                                } else {
-                                    return Future.succeededFuture(new TokenDetails(userAccessToken, userRefreshToken));
-                                }
-                            });
-                })
-                .onSuccess(sink::success)
-                .onFailure(sink::error)
-        );
+            return Future.succeededFuture(details);
+        });
     }
 
-    public Mono<Void> logout(UserAuthDetails authDetails, UserAccessToken accessToken) {
+    public Future<Authentication> tokenRefresh(String subject, String hash, UserRemoteDetails remoteDetails) {
+        try {
+            CheckUtil.checkDevice(remoteDetails.getPlatform(), remoteDetails.getDeviceId());
+        } catch (Exception exception) {
+            return Future.failedFuture(new BadCredentialsException("", exception));
+        }
+
+        String redisKey = redisKeyBuilder.build("refreshToken", subject);
+
+        long now = TimeUtil.nowSeconds();
+        return redis.send(Request.cmd(Command.GET).arg(redisKey)).flatMap(response -> {
+            if (response == null) {
+                return Future.failedFuture(new BadCredentialsException("", new StandardStatusException(ResponseStatus.token_expired)));
+            }
+
+            UserRefreshToken refreshToken = jsonMapper.readValue(response.toBytes(), UserRefreshToken.class);
+            if (now >= refreshToken.getExpireTime()) {
+                return Future.failedFuture(new BadCredentialsException("", new StandardStatusException(ResponseStatus.token_expired)));
+            }
+
+            if (!passwordEncoder.matches(hash, refreshToken.getHash())) {
+                return Future.failedFuture(new BadCredentialsException("", new StandardStatusException(ResponseStatus.token_invalid)));
+            }
+
+            return pool.withConnection(connection -> queryUserDetails(connection, refreshToken.getUserId(), refreshToken.getDeviceId()).flatMap(userDetails -> {
+                if (!remoteDetails.getPlatform().equals(userDetails.getDevice().getPlatform()) || !remoteDetails.getDeviceId().equals(userDetails.getDevice().getDeviceId())) {
+                    return Future.failedFuture(new BadCredentialsException("", new StandardStatusException(ResponseStatus.token_invalid)));
+                }
+
+                return saveUserDetails(userDetails, remoteDetails);
+            }));
+
+        });
+    }
+
+    public Mono<Void> logout(AuthDetails authDetails, UserAccessToken accessToken) {
         UserRefreshToken refreshToken = new UserRefreshToken();
         refreshToken.setSubject(accessToken.getSubject());
         return Mono.create(sink -> Future.all(cacheService.removeUserAuthDetails(authDetails, accessToken), cacheService.removeUserRefreshToken(refreshToken)).onSuccess(_ -> sink.success()).onFailure(sink::error));

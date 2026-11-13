@@ -34,27 +34,6 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
 
     @Override
     public Mono<Void> save(ServerWebExchange exchange, @Nullable SecurityContext context) {
-        if (context != null && context.getAuthentication() instanceof UserAuthToken authToken && authToken.isAuthenticated()) {
-            TokenDetails tokenDetails = (TokenDetails) authToken.getCredentials();
-            UserRefreshToken refreshToken = tokenDetails.getRefreshToken();
-            if (refreshToken != null) {
-                String hash = refreshToken.getHash();
-                refreshToken.setHash(passwordEncoder.encode(hash));
-
-                Request request = Request.cmd(Command.MSETEX);
-                request.arg(1);
-
-                request.arg(redisKeyBuilder.build("refreshToken", refreshToken.getSubject()));
-                request.arg(jsonMapper.writeValueAsString(refreshToken));
-
-                request.arg("EXAT");
-                request.arg(refreshToken.getExpireTime());
-
-                refreshToken.setHash(hash);
-
-                return ReactiveUtil.toMono(redis.send(request).mapEmpty());
-            }
-        }
         return Mono.empty();
     }
 

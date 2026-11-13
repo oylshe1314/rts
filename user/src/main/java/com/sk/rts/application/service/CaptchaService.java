@@ -98,17 +98,11 @@ public class CaptchaService {
         return redis.send(request).map(captcha);
     }
 
-    public Future<Void> verify(Integer captchaType, String account, String captcha) {
-        CaptchaType type = CaptchaType.valueOf(captchaType);
-        if (type == null) {
-            return Future.failedFuture(new StandardStatusException(ResponseStatus.parameter_error));
-        }
-
-        Request request = Request.cmd(Command.GET);
-        request.arg(redisKeyBuilder.build("captcha", type.value(), account));
+    public Future<Void> verify(CaptchaType captchaType, String account, String captcha) {
+        String redisKey =redisKeyBuilder.build("captcha", captchaType.value(), account);
 
         long now = TimeUtil.nowSeconds();
-        return redis.send(request).flatMap(response -> {
+        return redis.send(Request.cmd(Command.GET).arg(redisKey)).flatMap(response -> {
             if (response == null) {
                 return Future.failedFuture(new StandardStatusException("user.captcha.incorrect", "验证码错误"));
             }
@@ -122,12 +116,17 @@ public class CaptchaService {
                 return Future.failedFuture(new StandardStatusException("user.captcha.incorrect", "验证码错误"));
             }
 
-            return Future.succeededFuture();
+            return redis.send(Request.cmd(Command.DEL).arg(redisKey)).mapEmpty();
         });
     }
 
     public Future<String> verify(CaptchaVerifyDto verifyDto) {
-        return this.verify(verifyDto.getType(), verifyDto.getAccount(), verifyDto.getCaptcha()).flatMap(_ -> {
+        CaptchaType captchaType = CaptchaType.valueOf(verifyDto.getType());
+        if (captchaType == null) {
+            return Future.failedFuture(new StandardStatusException(ResponseStatus.parameter_error));
+        }
+
+        return this.verify(captchaType, verifyDto.getAccount(), verifyDto.getCaptcha()).flatMap(_ -> {
             String hash = RandomUtil.randomHash(9527L, 12138L);
 
             CaptchaData data = new CaptchaData();
