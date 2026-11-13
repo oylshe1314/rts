@@ -14,31 +14,19 @@ import java.util.Locale;
 @NullUnmarked
 public class AuthDetails implements UserDetails {
 
-    private AuthUser user;
+    private Long userId;
 
-    private AuthDevice device;
+    private Long deviceId;
+
+    private String subject;
+
+    private String username;
+
+    private String password;
 
     private Locale locale;
 
     private String ipAddress;
 
-    private Collection<? extends  GrantedAuthority> authorities;
-
-    public Long getUserId() {
-        return user.getId();
-    }
-
-    public Long getDeviceId() {
-        return device.getId();
-    }
-
-    @Override
-    public String getUsername() {
-        return user.getUsername();
-    }
-
-    @Override
-    public String getPassword() {
-        return user.getPassword();
-    }
+    private Collection<? extends GrantedAuthority> authorities;
 }

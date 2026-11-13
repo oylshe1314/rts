@@ -1,6 +1,6 @@
 package com.sk.rts.application.auth;
 
-import com.bds.user.application.service.AuthService;
+import com.sk.rts.application.service.AuthService;
 import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.core.Authentication;

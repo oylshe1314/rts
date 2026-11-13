@@ -3,64 +3,49 @@ package com.sk.rts.application.util;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.nio.ByteBuffer;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public final class RandomUtil {
+    private static final byte[] NUMBERS= "0123456789".getBytes();
+    private static final byte[] UPPERS= "ABCDEFGHIJKLMNOPQRSTUVWXYZ".getBytes();
+    private static final byte[] LOWERS= "abcdefghijklmnopqrstuvwxyz".getBytes();
+    private static final byte[] LETTERS= "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".getBytes();
+    private static final byte[] CHARACTERS= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".getBytes();
 
-    private final static Random random = new Random();
-
-    private static byte randomByte(int min, int range) {
-        return (byte) (min + random.nextInt(range));
-    }
-
-    public static String randomUpper(int length) {
+    private static String randomString(byte[] characters, int length) {
         byte[] bytes = new byte[length];
         for (int i = 0; i < length; i++) {
-            bytes[i] = randomByte(65, 26);
+            bytes[i] = characters[ThreadLocalRandom.current().nextInt(characters.length)];
         }
         return new String(bytes);
     }
 
-    public static String randomLower(int length) {
-        byte[] bytes = new byte[length];
-        for (int i = 0; i < length; i++) {
-            bytes[i] = randomByte(97, 26);
-        }
-        return new String(bytes);
+    public static String randomNumbers(int length) {
+        return randomString(NUMBERS, length);
     }
 
-    public static String randomString(int length) {
-        byte[] bytes = new byte[length];
-        for (int i = 0; i < length; i++) {
-            bytes[i] = random.nextInt() % 2 == 0 ? randomByte(65, 26) : randomByte(97, 26);
-        }
-        return new String(bytes);
+    public static String randomUppers(int length) {
+        return randomString(UPPERS, length);
     }
 
-    public static String randomNumber(int length) {
-        byte[] bytes = new byte[length];
-        for (int i = 0; i < length; i++) {
-            bytes[i] = randomByte(48, 10);
-        }
-        return new String(bytes);
+    public static String randomLowers(int length) {
+        return randomString(LOWERS, length);
     }
 
-    public static Long randomPositive(int length) {
-        if (length <= 0) {
-            return 0L;
-        }
-
-        Random random = new Random(System.currentTimeMillis());
-        long b = (long) Math.pow(10.0, length - 1);
-        return random.nextLong(b * 9) + b;
+    public static String randomLetters(int length) {
+        return randomString(LETTERS, length);
     }
 
-    public static String randomRefreshToken(Long userId, Long deviceId) {
+    public static String randomCharacters(int length) {
+        return randomString(CHARACTERS, length);
+    }
+
+    public static String randomHash(Long number1, Long number2) {
         ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES * 4);
         buffer.putLong(System.currentTimeMillis());
-        buffer.putLong(userId);
-        buffer.putLong(deviceId);
-        buffer.putLong(random.nextLong());
+        buffer.putLong(number1);
+        buffer.putLong(number2);
+        buffer.putLong(ThreadLocalRandom.current().nextLong());
         return DigestUtils.sha256Hex(buffer.array());
     }
 }

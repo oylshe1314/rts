@@ -15,7 +15,12 @@ public class UserTokenDto {
     private final UserRefreshTokenDto refreshToken;
 
     public UserTokenDto(TokenDetails tokenDetails) {
-        this(new UserAccessTokenDto(tokenDetails.getAccessToken()), tokenDetails.getRefreshToken() == null ? null : new UserRefreshTokenDto(tokenDetails.getRefreshToken()));
+        this.accessToken = new UserAccessTokenDto(tokenDetails.getAccessToken());
+        if (tokenDetails.getRefreshToken() == null) {
+            this.refreshToken = null;
+        } else {
+            this.refreshToken = new UserRefreshTokenDto(tokenDetails.getRefreshToken());
+        }
     }
 
     public UserTokenDto(UserAccessTokenDto accessToken, UserRefreshTokenDto refreshToken) {

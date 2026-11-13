@@ -1,5 +1,8 @@
 package com.sk.rts.application.component.token;
 
+import com.sk.rts.application.auth.AuthDetails;
+import com.sk.rts.application.auth.UserAccessToken;
+import com.sk.rts.application.auth.UserAuthUtil;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.util.TimeUtil;
@@ -12,11 +15,12 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.time.OffsetDateTime;
-import java.util.function.Function;
+import java.util.Collection;
 
 @Component
 @NullMarked
@@ -51,10 +55,12 @@ public class TokenUtil {
         return token;
     }
 
-    public String generate(String subject, OffsetDateTime issueTime, OffsetDateTime expireTime) {
+    public String generate(AuthDetails authDetails, OffsetDateTime issueTime, OffsetDateTime expireTime) {
         return Jwts.builder()
                 .issuer("rts")
-                .subject(subject)
+                .subject(authDetails.getSubject())
+                .claim("n", authDetails.getUsername())
+                .claim("a", authDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
                 .issuedAt(TimeUtil.toDate(issueTime))
                 .expiration(TimeUtil.toDate(expireTime))
                 .signWith(tokenProperties.getAccessToken().getSecretKey())
@@ -69,17 +75,30 @@ public class TokenUtil {
                 .getPayload();
     }
 
-    private <T> T extractClaim(String token, Function<Claims, T> function) throws StandardStatusException {
+    public AuthDetails verify(UserAccessToken accessToken) throws StandardStatusException {
         try {
-            return function.apply(parse(token));
+            Claims claims = parse(accessToken.getToken());
+            String subject = claims.getSubject();
+            Long[] ids = UserAuthUtil.parseSubject(subject);
+
+            AuthDetails authDetails = new AuthDetails();
+            authDetails.setUserId(ids[0]);
+            authDetails.setDeviceId(ids[1]);
+            authDetails.setSubject(subject);
+            authDetails.setUsername(claims.get("n", String.class));
+            authDetails.setAuthorities(claims.get("a", Collection.class));
+
+            accessToken.setUserId(authDetails.getUserId());
+            accessToken.setDeviceId(authDetails.getDeviceId());
+            accessToken.setSubject(authDetails.getSubject());
+            accessToken.setIssueTime(TimeUtil.toEpochSeconds(claims.getIssuedAt()));
+            accessToken.setExpireTime(TimeUtil.toEpochSeconds(claims.getExpiration()));
+
+            return authDetails;
         } catch (ExpiredJwtException e) {
             throw new StandardStatusException(ResponseStatus.token_expired);
-        } catch (JwtException e) {
+        } catch (Exception e) {
             throw new StandardStatusException(ResponseStatus.token_invalid);
         }
-    }
-
-    public String extractSubject(String token) throws StandardStatusException {
-        return extractClaim(token, Claims::getSubject);
     }
 }

@@ -24,7 +24,7 @@ public class UserDevice extends BaseEntity {
     /**
      * 序列号
      */
-    private String serialNo;
+    private String deviceId;
 
     /**
      * 设备编号
@@ -45,7 +45,7 @@ public class UserDevice extends BaseEntity {
         device.setId(row.getLong(indexOffset + 0));
         device.setUserId(row.getLong(indexOffset + 1));
         device.setPlatform(row.getString(indexOffset + 2));
-        device.setSerialNo(row.getString(indexOffset + 3));
+        device.setDeviceId(row.getString(indexOffset + 3));
         device.setDeviceNo(row.getString(indexOffset + 4));
         device.setCreateTime(row.getOffsetDateTime(indexOffset + 5));
         return device;

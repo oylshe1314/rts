@@ -4,7 +4,7 @@ import com.sk.rts.application.util.FeistelUtil;
 
 import java.util.UUID;
 
-public final class UserAuthUtils {
+public final class UserAuthUtil {
 
     public static String buildSubject(long userId, long deviceId) {
         return new UUID(FeistelUtil.encode(userId), FeistelUtil.encode(deviceId)).toString();

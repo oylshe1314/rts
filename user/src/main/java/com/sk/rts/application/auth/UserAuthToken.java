@@ -21,10 +21,10 @@ public class UserAuthToken extends AbstractAuthenticationToken {
         this.setAuthenticated(false);
     }
 
-    public UserAuthToken(AuthDetails authDetails, UserAccessToken accessToken) {
+    public UserAuthToken(AuthDetails authDetails, TokenDetails tokenDetails) {
         super(authDetails.getAuthorities());
         this.principal = authDetails;
-        this.credentials = accessToken;
+        this.credentials = tokenDetails;
         this.setAuthenticated(true);
     }
 
