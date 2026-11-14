@@ -1,6 +1,7 @@
 package com.sk.rts.application.auth;
 
 import com.sk.rts.application.service.AuthService;
+import com.sk.rts.application.util.ReactiveUtil;
 import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.core.Authentication;
@@ -16,6 +17,6 @@ public class UserTokenRefreshManager extends UserAuthManager {
 
     @Override
     protected Mono<Authentication> authenticate(String principal, String credentials, UserRemoteDetails remoteDetails) {
-        return authService.tokenRefresh(principal, credentials, remoteDetails);
+        return ReactiveUtil.toMono(authService.tokenRefresh(principal, credentials, remoteDetails));
     }
 }

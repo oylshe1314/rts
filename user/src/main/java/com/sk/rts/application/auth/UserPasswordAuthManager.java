@@ -1,6 +1,7 @@
 package com.sk.rts.application.auth;
 
 import com.sk.rts.application.service.AuthService;
+import com.sk.rts.application.util.ReactiveUtil;
 import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.context.annotation.Primary;
@@ -18,6 +19,6 @@ public class UserPasswordAuthManager extends UserAuthManager {
 
     @Override
     protected Mono<Authentication> authenticate(String principal, String credentials, UserRemoteDetails remoteDetails) {
-        return authService.passwordLogin(principal, credentials, remoteDetails);
+        return ReactiveUtil.toMono(authService.passwordLogin(principal, credentials, remoteDetails));
     }
 }

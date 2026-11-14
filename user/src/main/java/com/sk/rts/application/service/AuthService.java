@@ -35,7 +35,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.OffsetDateTime;
@@ -350,9 +349,13 @@ public class AuthService {
         });
     }
 
-    public Mono<Void> logout(AuthDetails authDetails, UserAccessToken accessToken) {
+    public Future<Void> logout(AuthDetails authDetails, UserAccessToken accessToken) {
         UserRefreshToken refreshToken = new UserRefreshToken();
         refreshToken.setSubject(accessToken.getSubject());
-        return Mono.create(sink -> Future.all(cacheService.removeUserAuthDetails(authDetails, accessToken), cacheService.removeUserRefreshToken(refreshToken)).onSuccess(_ -> sink.success()).onFailure(sink::error));
+        Request request = Request.cmd(Command.DEL);
+        request.arg(redisKeyBuilder.build("authUser", authDetails.getUserId()));
+        request.arg(redisKeyBuilder.build("authDevice", authDetails.getDeviceId()));
+        request.arg(redisKeyBuilder.build("refreshToken", accessToken.getSubject()));
+        return redis.send(request).mapEmpty();
     }
 }

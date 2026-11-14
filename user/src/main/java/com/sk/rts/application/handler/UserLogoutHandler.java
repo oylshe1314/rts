@@ -1,10 +1,12 @@
 package com.sk.rts.application.handler;
 
+import com.sk.rts.application.auth.AuthDetails;
 import com.sk.rts.application.auth.UserAccessToken;
-import com.sk.rts.application.auth.UserAuthDetails;
 import com.sk.rts.application.auth.UserAuthToken;
 import com.sk.rts.application.dto.ResponseDto;
 import com.sk.rts.application.service.AuthService;
+import com.sk.rts.application.util.ReactiveUtil;
+import io.vertx.core.Future;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -14,6 +16,7 @@ import org.springframework.security.web.server.authentication.logout.ServerLogou
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
+
 
 @Component
 @NullMarked
@@ -29,10 +32,12 @@ public class UserLogoutHandler extends CustomRestHandler implements ServerLogout
     @Override
     public Mono<Void> logout(WebFilterExchange exchange, Authentication authentication) {
         if (authentication instanceof UserAuthToken authToken) {
-            return authService.logout((UserAuthDetails) authToken.getPrincipal(), (UserAccessToken) authToken.getCredentials()).doOnSuccess(_ -> {
+            Future<Void> future = authService.logout((AuthDetails) authToken.getPrincipal(), (UserAccessToken) authToken.getCredentials());
+            future.onSuccess(_ -> {
                 SecurityContextHolder.getContext().setAuthentication(null);
                 SecurityContextHolder.clearContext();
             });
+            return ReactiveUtil.toMono(future);
         } else {
             return Mono.empty();
         }

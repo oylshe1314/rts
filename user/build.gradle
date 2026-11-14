@@ -159,6 +159,10 @@ processResources {
     }
 }
 
+springBoot {
+    buildInfo()
+}
+
 bootJar {
     archiveFileName = "rts-user-server-${version}.jar"
     mainClass = "com.sk.rts.application.UserApplication"

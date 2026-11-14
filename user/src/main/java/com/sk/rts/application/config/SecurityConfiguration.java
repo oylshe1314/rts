@@ -42,6 +42,9 @@ public class SecurityConfiguration {
     private final UserCaptchaAuthConverter userCaptchaAuthConverter;
     private final UserCaptchaAuthManager userCaptchaAuthManager;
 
+    private final UserTokenRefreshConverter userTokenRefreshConverter;
+    private final UserTokenRefreshManager userTokenRefreshManager;
+
     private final UserLoginHandler userLoginHandler;
     private final UserLogoutHandler userLogoutHandler;
     private final UserAccessDeniedHandler userAccessDeniedHandler;
@@ -68,6 +71,7 @@ public class SecurityConfiguration {
 
         httpSecurity.addFilterAt(authenticationWebFilter(PATH_AUTH_PASSWORD_LOGIN, userPasswordAuthManager, userPasswordAuthConverter), SecurityWebFiltersOrder.AUTHENTICATION);
         httpSecurity.addFilterAt(authenticationWebFilter(PATH_AUTH_CAPTCHA_LOGIN, userCaptchaAuthManager, userCaptchaAuthConverter), SecurityWebFiltersOrder.AUTHENTICATION);
+        httpSecurity.addFilterAt(authenticationWebFilter(PATH_AUTH_TOKEN_REFRESH, userTokenRefreshManager, userTokenRefreshConverter), SecurityWebFiltersOrder.AUTHENTICATION);
 
         return httpSecurity.build();
     }

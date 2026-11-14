@@ -23,14 +23,7 @@ import tools.jackson.databind.json.JsonMapper;
 @AllArgsConstructor
 public class UserSecurityContextRepository implements ServerSecurityContextRepository {
 
-    private final Redis redis;
-
     private final TokenUtil tokenUtil;
-
-    private final JsonMapper jsonMapper;
-
-    private final RedisKeyBuilder redisKeyBuilder;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Mono<Void> save(ServerWebExchange exchange, @Nullable SecurityContext context) {

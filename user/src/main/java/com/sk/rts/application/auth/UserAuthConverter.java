@@ -18,15 +18,14 @@ public abstract class UserAuthConverter implements ServerAuthenticationConverter
 
     @Override
     public Mono<Authentication> convert(ServerWebExchange exchange) {
-        ServerHttpRequest request = exchange.getRequest();
-        MediaType mediaType = request.getHeaders().getContentType();
+        MediaType mediaType = exchange.getRequest().getHeaders().getContentType();
         if (!MediaType.APPLICATION_JSON.equals(mediaType)) {
             return Mono.error(new BadCredentialsException("", new StandardStatusException(ResponseStatus.content_type_error)));
         }
 
-        return DataBufferUtils.join(request.getBody()).map(buffer -> {
+        return DataBufferUtils.join(exchange.getRequest().getBody()).map(buffer -> {
             UserAuthToken authRequest = parse(buffer);
-            authRequest.setDetails(new UserRemoteDetails(request));
+            authRequest.setDetails(new UserRemoteDetails(exchange));
             return authRequest;
         });
     }

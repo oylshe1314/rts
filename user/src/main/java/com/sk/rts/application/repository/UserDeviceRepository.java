@@ -31,7 +31,7 @@ public class UserDeviceRepository {
                         device.getUserId(),
                         device.getDeviceNo(),
                         device.getPlatform(),
-                        device.getSerialNo(),
+                        device.getDeviceId(),
                         device.getCreateTime()
                 )
                 .returning(Tables.USER_DEVICE.ID);
