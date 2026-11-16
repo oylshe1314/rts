@@ -1,10 +1,11 @@
 package com.sk.rts.application.util;
 
 import io.vertx.core.Future;
-import org.jspecify.annotations.NullMarked;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-@NullMarked
+import java.util.List;
+
 public final class ReactiveUtil {
 
     public static <T> Mono<T> toMono(Future<T> future) {
@@ -13,5 +14,9 @@ public final class ReactiveUtil {
 
     public static <T> Future<T> toFuture(Mono<T> mono) {
         return Future.fromCompletionStage(mono.toFuture());
+    }
+
+    public static <T> Future<List<T>> toFuture(Flux<T> flux) {
+        return Future.fromCompletionStage(flux.collectList().toFuture());
     }
 }

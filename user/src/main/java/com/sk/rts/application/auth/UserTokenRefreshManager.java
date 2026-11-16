@@ -17,6 +17,6 @@ public class UserTokenRefreshManager extends UserAuthManager {
 
     @Override
     protected Mono<Authentication> authenticate(String principal, String credentials, UserRemoteDetails remoteDetails) {
-        return ReactiveUtil.toMono(authService.tokenRefresh(principal, credentials, remoteDetails));
+        return authService.tokenRefresh(principal, credentials, remoteDetails);
     }
 }

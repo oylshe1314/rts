@@ -8,6 +8,7 @@ import com.sk.rts.application.entity.redis.CaptchaData;
 import com.sk.rts.application.exception.ResponseStatus;
 import com.sk.rts.application.exception.StandardStatusException;
 import com.sk.rts.application.util.RandomUtil;
+import com.sk.rts.application.util.ReactiveUtil;
 import com.sk.rts.application.util.TimeUtil;
 import io.vertx.core.Future;
 import io.vertx.redis.client.Command;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
@@ -66,10 +68,10 @@ public class CaptchaService {
         return captchaExpiration;
     }
 
-    public Future<String> generate(Integer captchaType, String account) {
+    public Mono<String> generate(Integer captchaType, String account) {
         CaptchaType type = CaptchaType.valueOf(captchaType);
         if (type == null) {
-            return Future.failedFuture(new StandardStatusException(ResponseStatus.parameter_error));
+            return Mono.error(new StandardStatusException(ResponseStatus.parameter_error));
         }
 
         Integer captchaLength = getCaptchaLength(type);
@@ -79,7 +81,7 @@ public class CaptchaService {
 
         long now = TimeUtil.nowSeconds();
 
-        CaptchaData data = new CaptchaData(        );
+        CaptchaData data = new CaptchaData();
         data.setType(type.value());
         data.setKey(account);
         data.setValue(passwordEncoder.encode(captcha));
@@ -95,11 +97,11 @@ public class CaptchaService {
             captcha = "";
         }
 
-        return redis.send(request).map(captcha);
+        return ReactiveUtil.toMono(redis.send(request).map(captcha));
     }
 
     public Future<Void> verify(CaptchaType captchaType, String account, String captcha) {
-        String redisKey =redisKeyBuilder.build("captcha", captchaType.value(), account);
+        String redisKey = redisKeyBuilder.build("captcha", captchaType.value(), account);
 
         long now = TimeUtil.nowSeconds();
         return redis.send(Request.cmd(Command.GET).arg(redisKey)).flatMap(response -> {
@@ -120,13 +122,13 @@ public class CaptchaService {
         });
     }
 
-    public Future<String> verify(CaptchaVerifyDto verifyDto) {
+    public Mono<String> verify(CaptchaVerifyDto verifyDto) {
         CaptchaType captchaType = CaptchaType.valueOf(verifyDto.getType());
         if (captchaType == null) {
-            return Future.failedFuture(new StandardStatusException(ResponseStatus.parameter_error));
+            return Mono.error(new StandardStatusException(ResponseStatus.parameter_error));
         }
 
-        return this.verify(captchaType, verifyDto.getAccount(), verifyDto.getCaptcha()).flatMap(_ -> {
+        Future<String> future = this.verify(captchaType, verifyDto.getAccount(), verifyDto.getCaptcha()).flatMap(_ -> {
             String hash = RandomUtil.randomHash(9527L, 12138L);
 
             CaptchaData data = new CaptchaData();
@@ -143,5 +145,7 @@ public class CaptchaService {
 
             return redis.send(request).map(hash);
         });
+
+        return ReactiveUtil.toMono(future);
     }
 }

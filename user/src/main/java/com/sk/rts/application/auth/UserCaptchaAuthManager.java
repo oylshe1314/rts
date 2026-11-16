@@ -17,6 +17,6 @@ public class UserCaptchaAuthManager extends UserAuthManager {
 
     @Override
     protected Mono<Authentication> authenticate(String principal, String credentials, UserRemoteDetails remoteDetails) {
-        return ReactiveUtil.toMono(authService.captchaLogin(principal, credentials, remoteDetails));
+        return authService.captchaLogin(principal, credentials, remoteDetails);
     }
 }

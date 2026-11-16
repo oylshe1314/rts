@@ -5,7 +5,6 @@ import com.sk.rts.application.dto.CaptchaVerifyDto;
 import com.sk.rts.application.dto.ResponseDto;
 import com.sk.rts.application.entity.enums.CaptchaType;
 import com.sk.rts.application.service.CaptchaService;
-import com.sk.rts.application.util.ReactiveUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,12 +36,12 @@ public class OpenCaptchaController {
     })
     @RequestMapping(value = "/generate", method = RequestMethod.GET)
     public Mono<ResponseDto<String>> get(@NotNull @EnumOrdinals(value = CaptchaType.class, excludes = {"none"}) Integer type, @NotBlank String account) {
-        return ReactiveUtil.toMono(captchaService.generate(type, account)).flatMap(ResponseDto::success);
+        return captchaService.generate(type, account).flatMap(ResponseDto::success);
     }
 
     @Operation(summary = "校验验证码")
     @RequestMapping(value = "/verify", method = RequestMethod.POST)
     public Mono<ResponseDto<String>> verify(@RequestBody @Valid CaptchaVerifyDto verifyDto) {
-        return ReactiveUtil.toMono(captchaService.verify(verifyDto)).flatMap(ResponseDto::success);
+        return captchaService.verify(verifyDto).flatMap(ResponseDto::success);
     }
 }

@@ -19,6 +19,6 @@ public class UserPasswordAuthManager extends UserAuthManager {
 
     @Override
     protected Mono<Authentication> authenticate(String principal, String credentials, UserRemoteDetails remoteDetails) {
-        return ReactiveUtil.toMono(authService.passwordLogin(principal, credentials, remoteDetails));
+        return authService.passwordLogin(principal, credentials, remoteDetails);
     }
 }

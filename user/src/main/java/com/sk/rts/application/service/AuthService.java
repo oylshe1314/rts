@@ -17,6 +17,7 @@ import com.sk.rts.application.jooq.tables.TableUserDevice;
 import com.sk.rts.application.repository.UserDeviceRepository;
 import com.sk.rts.application.util.CheckUtil;
 import com.sk.rts.application.util.RandomUtil;
+import com.sk.rts.application.util.ReactiveUtil;
 import com.sk.rts.application.util.TimeUtil;
 import io.vertx.core.Future;
 import io.vertx.redis.client.Command;
@@ -35,6 +36,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.OffsetDateTime;
@@ -242,39 +244,43 @@ public class AuthService {
         }
     }
 
-    public Future<Authentication> passwordLogin(String account, String password, UserRemoteDetails remoteDetails) {
+    public Mono<Authentication> passwordLogin(String account, String password, UserRemoteDetails remoteDetails) {
         try {
             CheckUtil.checkDevice(remoteDetails.getPlatform(), remoteDetails.getDeviceId());
             CheckUtil.checkAccount(account);
             CheckUtil.safetyPassword(password);
         } catch (Exception exception) {
-            return Future.failedFuture(new BadCredentialsException("", exception));
+            return Mono.error(new BadCredentialsException("", exception));
         }
 
-        return pool.withConnection(connection -> queryUserDetails(connection, account, remoteDetails).flatMap(userDetails -> {
+        Future<Authentication> future = pool.withConnection(connection -> queryUserDetails(connection, account, remoteDetails).flatMap(userDetails -> {
                     if (!passwordEncoder.matches(password, userDetails.getAccount().getPassword())) {
                         return Future.failedFuture(new BadCredentialsException("", new StandardStatusException("user.password.incorrect", "账号或密码不正确")));
                     }
                     return login(connection, userDetails, remoteDetails);
                 })
         );
+
+        return ReactiveUtil.toMono(future);
     }
 
 
-    public Future<Authentication> captchaLogin(String account, String captcha, UserRemoteDetails remoteDetails) {
+    public Mono<Authentication> captchaLogin(String account, String captcha, UserRemoteDetails remoteDetails) {
         try {
             CheckUtil.checkDevice(remoteDetails.getPlatform(), remoteDetails.getDeviceId());
             CheckUtil.checkAccount(account);
         } catch (Exception exception) {
-            return Future.failedFuture(exception);
+            return Mono.error(exception);
         }
 
-        return captchaService.verify(CaptchaType.login, account, captcha).transform(ar -> {
+        Future<Authentication> future = captchaService.verify(CaptchaType.login, account, captcha).transform(ar -> {
             if (ar.failed()) {
                 return Future.failedFuture(new BadCredentialsException("", ar.cause()));
             }
             return pool.withConnection(connection -> queryUserDetails(connection, account, remoteDetails).flatMap(userDetails -> login(connection, userDetails, remoteDetails)));
         });
+
+        return ReactiveUtil.toMono(future);
     }
 
     private Select<?> buildQuery(Long userId, Long deviceId) {
@@ -324,17 +330,17 @@ public class AuthService {
         });
     }
 
-    public Future<Authentication> tokenRefresh(String subject, String hash, UserRemoteDetails remoteDetails) {
+    public Mono<Authentication> tokenRefresh(String subject, String hash, UserRemoteDetails remoteDetails) {
         try {
             CheckUtil.checkDevice(remoteDetails.getPlatform(), remoteDetails.getDeviceId());
         } catch (Exception exception) {
-            return Future.failedFuture(new BadCredentialsException("", exception));
+            return Mono.error(new BadCredentialsException("", exception));
         }
 
         String redisKey = redisKeyBuilder.build("refreshToken", subject);
 
         long now = TimeUtil.nowSeconds();
-        return redis.send(Request.cmd(Command.GET).arg(redisKey)).flatMap(response -> {
+        Future<Authentication> future = redis.send(Request.cmd(Command.GET).arg(redisKey)).flatMap(response -> {
             if (response == null) {
                 return Future.failedFuture(new BadCredentialsException("", new StandardStatusException(ResponseStatus.token_expired)));
             }
@@ -354,8 +360,9 @@ public class AuthService {
                 }
                 return saveUserDetails(userDetails, remoteDetails, now >= refreshToken.getRefreshTime());
             }));
-
         });
+
+        return ReactiveUtil.toMono(future);
     }
 
     public Future<Void> logout(AuthDetails authDetails, UserAccessToken accessToken) {
