@@ -9,17 +9,17 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserAccessToken {
-
-    private Long userId;
-
-    private Long deviceId;
-
-    private String subject;
+public class UserAccessToken implements AuthSubject {
 
     private String token;
+
+    private String subject;
 
     private Long issueTime;
 
     private Long expireTime;
+
+    private Long userId;
+
+    private Long deviceId;
 }

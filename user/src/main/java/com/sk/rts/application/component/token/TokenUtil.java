@@ -78,21 +78,20 @@ public class TokenUtil {
     public AuthDetails verify(UserAccessToken accessToken) throws StandardStatusException {
         try {
             Claims claims = parse(accessToken.getToken());
-            String subject = claims.getSubject();
-            Long[] ids = UserAuthUtil.parseSubject(subject);
+            accessToken.setSubject(claims.getSubject());
+            accessToken.setIssueTime(TimeUtil.toEpochSeconds(claims.getIssuedAt()));
+            accessToken.setExpireTime(TimeUtil.toEpochSeconds(claims.getExpiration()));
+            UserAuthUtil.parseSubject(accessToken);
 
             AuthDetails authDetails = new AuthDetails();
-            authDetails.setUserId(ids[0]);
-            authDetails.setDeviceId(ids[1]);
-            authDetails.setSubject(subject);
+            authDetails.setSubject(accessToken.getSubject());
+            authDetails.setUserId(accessToken.getUserId());
+            authDetails.setDeviceId(accessToken.getDeviceId());
             authDetails.setUsername(claims.get("n", String.class));
             authDetails.setAuthorities(claims.get("a", Collection.class));
 
             accessToken.setUserId(authDetails.getUserId());
             accessToken.setDeviceId(authDetails.getDeviceId());
-            accessToken.setSubject(authDetails.getSubject());
-            accessToken.setIssueTime(TimeUtil.toEpochSeconds(claims.getIssuedAt()));
-            accessToken.setExpireTime(TimeUtil.toEpochSeconds(claims.getExpiration()));
 
             return authDetails;
         } catch (ExpiredJwtException e) {

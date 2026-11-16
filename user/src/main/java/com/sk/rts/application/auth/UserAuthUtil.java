@@ -15,6 +15,12 @@ public final class UserAuthUtil {
         return new Long[]{FeistelUtil.decode(uuid.getMostSignificantBits()), FeistelUtil.decode(uuid.getLeastSignificantBits())};
     }
 
+    public static void parseSubject(AuthSubject authSubject) {
+        UUID uuid = UUID.fromString(authSubject.getSubject());
+        authSubject.setUserId(FeistelUtil.decode(uuid.getMostSignificantBits()));
+        authSubject.setDeviceId(FeistelUtil.decode(uuid.getLeastSignificantBits()));
+    }
+
     public static Long parseUserId(String subject) {
         return parseSubject(subject)[0];
     }

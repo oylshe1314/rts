@@ -12,13 +12,13 @@ import java.util.Locale;
 @Getter
 @Setter
 @NullUnmarked
-public class AuthDetails implements UserDetails {
+public class AuthDetails implements UserDetails, AuthSubject {
+
+    private String subject;
 
     private Long userId;
 
     private Long deviceId;
-
-    private String subject;
 
     private String username;
 

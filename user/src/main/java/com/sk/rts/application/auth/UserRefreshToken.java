@@ -9,11 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserRefreshToken {
-
-    private Long userId;
-
-    private Long deviceId;
+public class UserRefreshToken implements AuthSubject {
 
     private String subject;
 
@@ -24,4 +20,8 @@ public class UserRefreshToken {
     private Long expireTime;
 
     private Long refreshTime;
+
+    private Long userId;
+
+    private Long deviceId;
 }

@@ -1,22 +1,15 @@
 package com.sk.rts.application.auth;
 
-import com.sk.rts.application.component.builder.RedisKeyBuilder;
 import com.sk.rts.application.component.token.TokenUtil;
-import com.sk.rts.application.util.ReactiveUtil;
-import io.vertx.redis.client.Command;
-import io.vertx.redis.client.Redis;
-import io.vertx.redis.client.Request;
 import lombok.AllArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextImpl;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.context.ServerSecurityContextRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import tools.jackson.databind.json.JsonMapper;
 
 @Component
 @NullMarked
