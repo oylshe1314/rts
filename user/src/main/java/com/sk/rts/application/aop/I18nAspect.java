@@ -152,7 +152,7 @@ public class I18nAspect {
      * @param joinPoint 切入点参数
      * @return 返回结果
      */
-    @Around("@annotation(com.bds.user.application.aop.I18nMethod)")
+    @Around("@annotation(com.sk.rts.application.aop.I18nMethod)")
     public Mono<?> i18nProcess(ProceedingJoinPoint joinPoint) throws Throwable {
         Mono<?> result = (Mono<?>) joinPoint.proceed();
 
