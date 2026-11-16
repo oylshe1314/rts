@@ -51,7 +51,7 @@ public class TokenProperties {
         /**
          * 是否启用刷新TOKEN
          */
-        private Boolean enabled = false;
+        private boolean enabled = false;
 
         /**
          * 有效时间(天)

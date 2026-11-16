@@ -139,14 +139,6 @@ public class AuthService {
         return refreshToken;
     }
 
-    private TokenDetails buildTokenDetails(AuthDetails authDetails) {
-        OffsetDateTime now = OffsetDateTime.now();
-        UserAccessToken accessToken = generateAccessToken(authDetails, now);
-        UserRefreshToken refreshToken = generateRefreshToken(authDetails, now);
-
-        return new TokenDetails(accessToken, refreshToken);
-    }
-
     private AuthDetails buildAuthDetails(AuthUser authUser, AuthDevice authDevice, UserRemoteDetails remoteDetails) {
         AuthDetails authDetails = new AuthDetails();
         authDetails.setUserId(authUser.getId());
@@ -157,6 +149,17 @@ public class AuthService {
         authDetails.setLocale(remoteDetails.getLocale());
         authDetails.setIpAddress(remoteDetails.getIpAddress());
         return authDetails;
+    }
+
+    private TokenDetails buildTokenDetails(AuthDetails authDetails, boolean generateRefreshToken) {
+        OffsetDateTime now = OffsetDateTime.now();
+        UserAccessToken accessToken = generateAccessToken(authDetails, now);
+        UserRefreshToken refreshToken = null;
+        if (generateRefreshToken) {
+            refreshToken = generateRefreshToken(authDetails, now);
+        }
+
+        return new TokenDetails(accessToken, refreshToken);
     }
 
     private Future<Void> saveRefreshToken(UserRefreshToken refreshToken) {
@@ -177,7 +180,7 @@ public class AuthService {
         return redis.send(request).mapEmpty();
     }
 
-    private Future<Authentication> saveUserDetails(UserDetails userDetails, UserRemoteDetails remoteDetails) {
+    private Future<Authentication> saveUserDetails(UserDetails userDetails, UserRemoteDetails remoteDetails, boolean generateRefreshToken) {
         AuthUser authUser = new AuthUser();
         authUser.setId(userDetails.getId());
         authUser.setUsername(userDetails.getAccount().getUsername());
@@ -195,17 +198,24 @@ public class AuthService {
         authDevice.setDeviceNo(userDetails.getDevice().getDeviceNo());
         authDevice.setAddTime(userDetails.getDevice().getCreateTime());
 
+        AuthDetails authDetails = buildAuthDetails(authUser, authDevice, remoteDetails);
+        TokenDetails tokenDetails = buildTokenDetails(authDetails, generateRefreshToken);
+
         Request request = Request.cmd(Command.MSETEX);
         request.arg(2);
         request.arg(redisKeyBuilder.build("authUser", authUser.getId()));
         request.arg(jsonMapper.writeValueAsString(authUser));
         request.arg(redisKeyBuilder.build("authDevice", authDevice.getId()));
         request.arg(jsonMapper.writeValueAsString(authDevice));
+        request.arg("EXAT");
+        request.arg(tokenDetails.getAccessToken().getExpireTime());
 
         return redis.send(request).flatMap(_ -> {
-            AuthDetails authDetails = buildAuthDetails(authUser, authDevice, remoteDetails);
-            TokenDetails tokenDetails = buildTokenDetails(authDetails);
-            return saveRefreshToken(tokenDetails.getRefreshToken()).map(new UserAuthToken(authDetails, tokenDetails));
+            if (generateRefreshToken) {
+                return saveRefreshToken(tokenDetails.getRefreshToken()).map(new UserAuthToken(authDetails, tokenDetails));
+            } else {
+                return Future.succeededFuture(new UserAuthToken(authDetails, tokenDetails));
+            }
         });
     }
 
@@ -225,10 +235,10 @@ public class AuthService {
             return userDeviceRepository.insert(connection, device).flatMap(id -> {
                 device.setId(id);
                 userDetails.setDevice(device);
-                return saveUserDetails(userDetails, remoteDetails);
+                return saveUserDetails(userDetails, remoteDetails, tokenProperties.getRefreshToken().isEnabled());
             });
         } else {
-            return saveUserDetails(userDetails, remoteDetails);
+            return saveUserDetails(userDetails, remoteDetails, tokenProperties.getRefreshToken().isEnabled());
         }
     }
 
@@ -342,8 +352,7 @@ public class AuthService {
                 if (!remoteDetails.getPlatform().equals(userDetails.getDevice().getPlatform()) || !remoteDetails.getDeviceId().equals(userDetails.getDevice().getDeviceId())) {
                     return Future.failedFuture(new BadCredentialsException("", new StandardStatusException(ResponseStatus.token_invalid)));
                 }
-
-                return saveUserDetails(userDetails, remoteDetails);
+                return saveUserDetails(userDetails, remoteDetails, now >= refreshToken.getRefreshTime());
             }));
 
         });
