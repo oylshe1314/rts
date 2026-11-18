@@ -213,10 +213,12 @@ public class AuthService {
         request.arg(tokenDetails.getAccessToken().getExpireTime());
 
         return redis.send(request).flatMap(_ -> {
+            UserAuthToken authResult = new UserAuthToken(authDetails, tokenDetails);
+            authResult.setDetails(remoteDetails);
             if (generateRefreshToken) {
-                return saveRefreshToken(tokenDetails.getRefreshToken()).map(new UserAuthToken(authDetails, tokenDetails));
+                return saveRefreshToken(tokenDetails.getRefreshToken()).map(authResult);
             } else {
-                return Future.succeededFuture(new UserAuthToken(authDetails, tokenDetails));
+                return Future.succeededFuture(authResult);
             }
         });
     }
