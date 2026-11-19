@@ -25,21 +25,25 @@ public class UserSecurityContextRepository implements ServerSecurityContextRepos
 
     @Override
     public Mono<SecurityContext> load(ServerWebExchange exchange) {
-        String token = TokenUtil.getTokenFromRequest(exchange.getRequest());
-        if (token == null) {
-            return Mono.empty();
-        }
-
         UserRemoteDetails remoteDetails = new UserRemoteDetails(exchange);
 
-        UserAccessToken accessToken = new UserAccessToken();
-        accessToken.setToken(token);
+        String token = TokenUtil.getTokenFromRequest(exchange.getRequest());
 
-        AuthDetails authDetails = tokenUtil.verify(accessToken);
+        UserAuthToken authResult;
+        if (token != null) {
+            UserAccessToken accessToken = new UserAccessToken();
+            accessToken.setToken(token);
 
-        authDetails.setLocale(remoteDetails.getLocale());
-        authDetails.setIpAddress(remoteDetails.getIpAddress());
+            AuthDetails authDetails = tokenUtil.verify(accessToken);
+            authDetails.setLocale(remoteDetails.getLocale());
+            authDetails.setIpAddress(remoteDetails.getIpAddress());
 
-        return Mono.just(new SecurityContextImpl(new UserAuthToken(authDetails, new TokenDetails(accessToken, null))));
+            authResult = new UserAuthToken(authDetails, new TokenDetails(accessToken, null));
+        } else {
+            authResult = new UserAuthToken("anonymousUser", "");
+            authResult.setDetails(remoteDetails);
+        }
+
+        return Mono.<SecurityContext>just(new SecurityContextImpl(authResult)).cache();
     }
 }
