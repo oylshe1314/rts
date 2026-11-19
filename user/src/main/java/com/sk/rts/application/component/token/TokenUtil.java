@@ -59,8 +59,8 @@ public class TokenUtil {
         return Jwts.builder()
                 .issuer("rts")
                 .subject(authDetails.getSubject())
-                .claim("n", authDetails.getUsername())
-                .claim("a", authDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
+                .claim("a", authDetails.getUsername())
+                .claim("r", authDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
                 .issuedAt(TimeUtil.toDate(issueTime))
                 .expiration(TimeUtil.toDate(expireTime))
                 .signWith(tokenProperties.getAccessToken().getSecretKey())
@@ -87,8 +87,8 @@ public class TokenUtil {
             authDetails.setSubject(accessToken.getSubject());
             authDetails.setUserId(accessToken.getUserId());
             authDetails.setDeviceId(accessToken.getDeviceId());
-            authDetails.setUsername(claims.get("n", String.class));
-            authDetails.setAuthorities(claims.get("a", Collection.class));
+            authDetails.setUsername(claims.get("a", String.class));
+            authDetails.setAuthorities(claims.get("r", Collection.class));
 
             accessToken.setUserId(authDetails.getUserId());
             accessToken.setDeviceId(authDetails.getDeviceId());
