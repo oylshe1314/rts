@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.util.StringUtils;
 
 import java.time.OffsetDateTime;
 
@@ -28,4 +29,16 @@ public class AuthUser {
     private String avatar;
 
     private OffsetDateTime registerTime;
+
+    public String getAccount() {
+        if (StringUtils.hasText(username)) {
+            return username;
+        }
+
+        if (StringUtils.hasText(phone)) {
+            return phone;
+        }
+
+        return email;
+    }
 }

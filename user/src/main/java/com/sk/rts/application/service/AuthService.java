@@ -146,7 +146,7 @@ public class AuthService {
         authDetails.setUserId(authUser.getId());
         authDetails.setDeviceId(authDevice.getId());
         authDetails.setSubject(UserAuthUtil.buildSubject(authDetails.getUserId(), authDetails.getDeviceId()));
-        authDetails.setUsername(authUser.getUsername());
+        authDetails.setUsername(authUser.getAccount());
         authDetails.setPassword("");
         authDetails.setLocale(remoteDetails.getLocale());
         authDetails.setIpAddress(remoteDetails.getIpAddress());
