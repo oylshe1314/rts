@@ -15,7 +15,6 @@ import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -60,7 +59,7 @@ public class TokenUtil {
                 .issuer("rts")
                 .subject(authDetails.getSubject())
                 .claim("a", authDetails.getUsername())
-                .claim("r", authDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
+                .claim("r", authDetails.getRoles())
                 .issuedAt(TimeUtil.toDate(issueTime))
                 .expiration(TimeUtil.toDate(expireTime))
                 .signWith(tokenProperties.getAccessToken().getSecretKey())
@@ -88,7 +87,7 @@ public class TokenUtil {
             authDetails.setUserId(accessToken.getUserId());
             authDetails.setDeviceId(accessToken.getDeviceId());
             authDetails.setUsername(claims.get("a", String.class));
-            authDetails.setAuthorities(claims.get("r", Collection.class));
+            authDetails.setRoles((Collection<String>) claims.get("r", Collection.class));
 
             accessToken.setUserId(authDetails.getUserId());
             accessToken.setDeviceId(authDetails.getDeviceId());

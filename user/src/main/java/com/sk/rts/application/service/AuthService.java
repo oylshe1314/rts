@@ -40,6 +40,7 @@ import reactor.core.publisher.Mono;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.OffsetDateTime;
+import java.util.Collections;
 
 @Slf4j
 @Service
@@ -115,7 +116,7 @@ public class AuthService {
         OffsetDateTime expireTime = issueTime.plus(tokenProperties.getAccessToken().getExpiration());
 
         UserAccessToken accessToken = new UserAccessToken();
-        accessToken.setSubject(UserAuthUtil.buildSubject(authDetails.getUserId(), authDetails.getDeviceId()));
+        accessToken.setSubject(authDetails.getSubject());
         accessToken.setUserId(authDetails.getUserId());
         accessToken.setDeviceId(authDetails.getDeviceId());
         accessToken.setToken(tokenUtil.generate(authDetails, issueTime, expireTime));
@@ -130,7 +131,7 @@ public class AuthService {
         OffsetDateTime refreshTime = expireTime.minus(tokenProperties.getRefreshToken().getRefreshAdvance());
 
         UserRefreshToken refreshToken = new UserRefreshToken();
-        refreshToken.setSubject(UserAuthUtil.buildSubject(authDetails.getUserId(), authDetails.getDeviceId()));
+        refreshToken.setSubject(authDetails.getSubject());
         refreshToken.setUserId(authDetails.getUserId());
         refreshToken.setDeviceId(authDetails.getDeviceId());
         refreshToken.setHash(RandomUtil.randomHash(authDetails.getUserId(), authDetails.getDeviceId()));
@@ -150,6 +151,7 @@ public class AuthService {
         authDetails.setPassword("");
         authDetails.setLocale(remoteDetails.getLocale());
         authDetails.setIpAddress(remoteDetails.getIpAddress());
+        authDetails.setRoles(Collections.emptyList());
         return authDetails;
     }
 
